@@ -5,6 +5,9 @@ pyarrow
 requests
 python-dotenv
 
+# Modeling
+scikit-learn
+
 # GIS
 geopandas
 rasterio

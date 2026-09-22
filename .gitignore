@@ -2,6 +2,9 @@
 .env
 .streamlit/secrets.toml
 
+# --- Working notes (kept local, not published) ---
+notes/
+
 # --- Virtual environments ---
 .venv*/
 venv/

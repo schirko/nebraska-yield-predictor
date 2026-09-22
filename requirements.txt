@@ -1,27 +1,17 @@
-# Core data
+# Runtime dependencies for the Streamlit app ONLY.
+#
+# Streamlit Community Cloud installs this file, so it stays minimal: the app reads
+# pre-computed files from data/processed/ and draws maps. It never downloads data,
+# trains a model, or runs spatial statistics.
+#
+# For the full pipeline (downloads, modelling, tests) install requirements-dev.txt.
+
 pandas>=2.2
 numpy
 pyarrow
-requests
-python-dotenv
-
-# Modeling
-scikit-learn
-
-# GIS
 geopandas
-rasterio
 matplotlib
-
-# Spatial statistics (Moran's I and the weights it needs)
-esda
-libpysal
-
-# App
 streamlit
-
-# Testing
-pytest
 
 # This project's own code (src/yieldpred), installed in editable mode
 -e .

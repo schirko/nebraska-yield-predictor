@@ -1,0 +1,130 @@
+"""The teaching page: architecture, data sources, and the vocabulary."""
+
+import streamlit as st
+
+st.set_page_config(page_title="How it works", page_icon="🛠️", layout="wide")
+
+st.title("How it works")
+st.caption("The architecture, the data, and the ideas — for anyone who wants to know "
+           "what's under the hood")
+
+tab_flow, tab_data, tab_model, tab_words = st.tabs(
+    ["Data flow", "Data sources", "The model", "Vocabulary"])
+
+with tab_flow:
+    st.subheader("From API to app")
+    st.code("""
+USDA NASS Quick Stats ──┐
+                        ├──► data/processed/*.parquet ──► model ──► this app
+NASA POWER            ──┘
+US Census (boundaries) ─┘
+
+scripts/fetch_nass_yields.py   county corn yields, 2000-2025
+scripts/fetch_weather.py       daily weather -> growing-season features
+scripts/fetch_irrigation.py    irrigated share of corn acres
+scripts/train_baseline.py      models, validation, per-county errors
+scripts/analyze_errors.py      Moran's I and the maps
+""", language="text")
+
+    st.markdown("""
+**Every stage writes a file.** That means any step can be re-run without repeating the
+ones before it, downloads are cached, and this app starts instantly because it only
+*reads* results — it never trains anything or calls an API.
+
+**The code is layered deliberately:**
+
+| Layer | Location | Job |
+|---|---|---|
+| Core logic | `src/yieldpred/` | Data access, features, models, maps. Knows nothing about any UI |
+| Steps | `scripts/` | Thin wrappers: parse arguments, call the logic, print a summary |
+| Interface | `app/` | This app. Presentation only |
+| Tests | `tests/` | 27 tests that run offline in seconds, no API key needed |
+
+Keeping the logic out of the UI is what makes it testable, reusable in a notebook, and
+movable behind an API later. If the yield-cleaning code lived inside a Streamlit page, none
+of that would be possible.
+""")
+
+with tab_data:
+    st.subheader("Where the numbers come from")
+    st.markdown("""
+| Source | Provides | Notes |
+|---|---|---|
+| **USDA NASS Quick Stats** | County corn yields, harvested acres by practice | Free API key. County estimates thin out over time: 91 counties in 2000, 46 in 2025 |
+| **NASA POWER** | Daily temperature and rainfall, ~0.5° grid | No key needed. One point per county |
+| **USDA Census of Agriculture** | Irrigated acres every five years | Carries irrigation share past the 2018 survey cutoff |
+| **US Census Bureau** | County boundaries | Used for maps and for defining which counties neighbour which |
+
+**Three data decisions worth knowing about:**
+
+1. **Withheld values are missing, not zero.** USDA publishes `(D)` when reporting a number
+   would expose an individual farm. Treating that as zero would invent crop failures.
+2. **Irrigation share is interpolated between observations**, because centre pivots are
+   multi-decade investments rather than annual decisions. Every value is flagged as measured
+   or interpolated.
+3. **Missing counties are not random.** The counties that stop reporting are Sandhills
+   ranching counties with little corn, so results describe Nebraska's corn-growing counties
+   rather than all of Nebraska.
+""")
+
+with tab_model:
+    st.subheader("What the model actually does")
+    st.markdown("""
+For each county-year the model sees ten numbers — the year, eight weather summaries, and
+the irrigation share — and predicts yield in bushels per acre.
+
+**Two models working together.** Corn yields rise about **2.2 bu/acre per year** from better
+genetics and management. A linear model captures that trend and can extend it into future
+years. Gradient boosting captures the interactions — how heat, rain and irrigation combine —
+but *cannot* produce a value outside the range it was trained on, so it can't extend a trend.
+
+So the two are composed: fit the trend with a line, subtract it, let hundreds of small
+decision trees model the leftover deviation, then add the trend back. Each does the part it
+is good at.
+
+**Following one prediction through:**
+
+1. Assemble the row: 2023, 3,510 growing degree days, 417 mm of rain, 30 days above 32°C,
+   78% irrigated, and the rest.
+2. The trend line gives the year's baseline expectation.
+3. The trees read the weather and irrigation and return a deviation — positive for a kind
+   season, negative for a hostile one.
+4. Add them. That's the prediction.
+5. Actual minus predicted is the error, which gets mapped and tested for clustering.
+
+**The weather features, and why each is there:**
+
+| Feature | Why |
+|---|---|
+| Growing degree days | Accumulated heat drives crop development |
+| Season / July / August rainfall | July is pollination, the most drought-sensitive stage |
+| Mean July high | Heat stress during pollination |
+| Days above 32°C and 35°C | Extreme heat damage, which averages hide |
+| Longest dry spell | *When* the rain failed, not just how much fell |
+
+**A known limitation:** weather is sampled at one point per county, which ignores where the
+corn actually grows — a real issue in large western counties that mix cropland and
+rangeland. Weighting by the USDA Cropland Data Layer is the planned improvement.
+""")
+
+with tab_words:
+    st.subheader("Vocabulary")
+    st.markdown("""
+| Term | What it means here |
+|---|---|
+| **Feature** | An input column, such as days above 32°C |
+| **Target** | The value being predicted — yield in bu/acre |
+| **Fit / train** | Adjust a model until it predicts the examples well |
+| **Hyperparameter** | A setting chosen before training, such as how many trees to build |
+| **Residual** | Actual minus predicted — what's left over |
+| **Cross-validation** | Repeatedly hold out part of the data, train on the rest, score the held-out part |
+| **Leakage** | Information about the test data reaching the model during training |
+| **R²** | Share of variation explained: 1 perfect, 0 no better than the average, negative worse |
+| **RMSE** | Typical error size in bu/acre, with large misses penalized extra |
+| **Spatial autocorrelation** | Nearby places resemble each other, so their data isn't independent |
+| **Moran's I** | A number summarizing whether a map is clustered (+), random (0) or alternating (−) |
+| **Queen contiguity** | Two counties are neighbours if their borders touch anywhere, even at a corner |
+| **Zonal statistics** | Summarizing a grid of pixels within a boundary, like average rainfall over a county |
+| **FIPS code** | The federal ID for a county — 31109 is Lancaster County, Nebraska |
+| **CRS** | Coordinate reference system: how points on a round Earth become a flat map |
+""")

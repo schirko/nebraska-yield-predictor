@@ -1,0 +1,21 @@
+# Everything needed to run the full pipeline: downloads, modelling, spatial stats, tests.
+# Use this locally:  pip install -r requirements-dev.txt
+
+-r requirements.txt
+
+# Data download
+requests
+python-dotenv
+
+# Modelling
+scikit-learn
+
+# Spatial statistics (Moran's I and the contiguity weights it needs)
+esda
+libpysal
+
+# Raster work (Cropland Data Layer step, planned)
+rasterio
+
+# Testing
+pytest

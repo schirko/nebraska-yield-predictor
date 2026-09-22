@@ -22,8 +22,8 @@ from sklearn.model_selection import GroupKFold, KFold, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from yieldpred.dataset import (PROCESSED, build_modeling_table, feature_matrix,
-                               load_irrigation_observed)
+from yieldpred.dataset import (PROCESSED, available_extras, build_modeling_table,
+                               feature_matrix, load_irrigation_observed)
 from yieldpred.irrigation import build_share_series
 from yieldpred.trend import DetrendedRegressor
 
@@ -90,6 +90,7 @@ def main() -> None:
         })
 
     results = pd.DataFrame(rows).set_index("model")
+    results.reset_index().to_parquet(PROCESSED / "model_scores.parquet", index=False)
     for scheme, label in [("random", "Random 5-fold (optimistic)"),
                           ("spatial", "Leave-district-out (spatial)"),
                           ("future", "Train <=2018, test >=2019 (temporal)")]:
@@ -97,50 +98,60 @@ def main() -> None:
         print(f"\n{label}")
         print(results[cols].rename(columns=lambda c: c.split("_", 1)[1]).round(2).to_string())
 
-    # Does irrigation share help? Compare the same model with and without it.
-    if "irrigation_share" in df.columns:
-        print("\n" + "=" * 70)
-        print("EFFECT OF ADDING IRRIGATION SHARE (detrended boosting)")
-        print("=" * 70)
-        X_irr, y_irr, groups_irr, used_irr = feature_matrix(df, extra=["irrigation_share"])
-        print(f"Rows with an irrigation share: {len(X_irr):,} of {len(df):,}")
-        print(f"Correlation of irrigation share with yield: "
-              f"{X_irr['irrigation_share'].corr(y_irr):.3f}")
+    # What does each added feature buy? Build them up one at a time, same model,
+    # same folds, same rows - so every difference is attributable to one column.
+    extras = available_extras(df)
+    if extras:
+        print("\n" + "=" * 78)
+        print("WHAT EACH FEATURE ADDS (detrended boosting, cumulative)")
+        print("=" * 78)
 
-        # Third variant: rebuild the share using only observations from 2018 or
-        # earlier, so the temporal test cannot borrow the 2022 Census values.
-        variants = {
-            "without irrigation": (X_irr.drop(columns=["irrigation_share"]), y_irr, groups_irr, used_irr),
-            "with irrigation": (X_irr, y_irr, groups_irr, used_irr),
-        }
-        observed = load_irrigation_observed()
-        if observed is not None:
-            past_only = build_share_series(observed[observed["year"] <= 2018],
-                                           range(int(df["year"].min()), int(df["year"].max()) + 1))
-            df_past = (df.drop(columns=["irrigation_share", "share_observed"], errors="ignore")
-                       .merge(past_only[["fips", "year", "irrigation_share"]],
-                              on=["fips", "year"], how="left"))
-            variants["with irrigation (no look-ahead)"] = feature_matrix(
-                df_past, extra=["irrigation_share"])
+        X_all, y_all, groups_all, used_all = feature_matrix(df, extra=extras)
+        print(f"Rows with every feature present: {len(X_all):,} of {len(df):,}")
+        for name in extras:
+            print(f"  correlation of {name} with yield: "
+                  f"{X_all[name].corr(y_all):+.3f}")
 
-        comparison = []
-        for label, (Xc, yc, gc, uc) in variants.items():
+        def evaluate(Xc, yc, gc, uc, label):
             model = DetrendedRegressor(boosting())
             spatial = cross_val_predict(model, Xc, yc, cv=GroupKFold(5), groups=gc)
             train, test = uc["year"] <= 2018, uc["year"] >= 2019
             model.fit(Xc[train], yc[train])
             future = model.predict(Xc[test])
-            comparison.append({
-                "features": label,
-                **{f"spatial_{k}": v for k, v in scores(yc, spatial).items()},
-                **{f"future_{k}": v for k, v in scores(yc[test], future).items()},
-            })
-        print("\n" + pd.DataFrame(comparison).set_index("features").round(2).to_string())
+            return {"features": label,
+                    **{f"spatial_{k}": v for k, v in scores(yc, spatial).items()},
+                    **{f"future_{k}": v for k, v in scores(yc[test], future).items()}}
+
+        ladder = [evaluate(X_all.drop(columns=extras), y_all, groups_all, used_all,
+                           "weather only")]
+        for k, name in enumerate(extras, start=1):
+            keep = extras[:k]
+            ladder.append(evaluate(X_all.drop(columns=[c for c in extras if c not in keep]),
+                                   y_all, groups_all, used_all, f"+ {name}"))
+
+        # Control: rebuild irrigation share from pre-2019 observations only, so the
+        # temporal test cannot borrow information from the 2022 Census.
+        observed = load_irrigation_observed()
+        if observed is not None and "irrigation_share" in extras:
+            past_only = build_share_series(
+                observed[observed["year"] <= 2018],
+                range(int(df["year"].min()), int(df["year"].max()) + 1))
+            df_past = (df.drop(columns=["irrigation_share", "share_observed"],
+                               errors="ignore")
+                       .merge(past_only[["fips", "year", "irrigation_share"]],
+                              on=["fips", "year"], how="left"))
+            ladder.append(evaluate(*feature_matrix(df_past, extra=extras),
+                                   "all features (no look-ahead)"))
+
+        comparison_df = pd.DataFrame(ladder)
+        comparison_df.to_parquet(PROCESSED / "irrigation_comparison.parquet", index=False)
+        print("\n" + comparison_df.set_index("features").round(2).to_string())
+        print("\nEach row adds one feature to the row above. Same model, same folds, "
+              "same rows.")
 
     # Where does the best model miss? Save errors for mapping later.
     # Use the best available feature set, which includes irrigation share when present.
-    extra = ["irrigation_share"] if "irrigation_share" in df.columns else None
-    X, y, groups, used = feature_matrix(df, extra=extra)
+    X, y, groups, used = feature_matrix(df, extra=available_extras(df) or None)
     best = DetrendedRegressor(boosting())
     pred = cross_val_predict(best, X, y, cv=GroupKFold(5), groups=groups)
     errors = used[["fips", "county_name", "year", "asd_desc", "yield_bu_acre"]].copy()

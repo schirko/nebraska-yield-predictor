@@ -90,6 +90,11 @@ def main() -> None:
                      "mean_error": round(group["error"].mean(), 1),
                      "verdict": year_result.verdict})
     by_year = pd.DataFrame(rows).set_index("year")
+    by_year.reset_index().to_parquet(PROCESSED / "morans_by_year.parquet", index=False)
+    pd.DataFrame([{"scope": "pooled", "morans_i": result.i, "expected": result.expected,
+                   "p_value": result.p_value, "counties": result.n,
+                   "mean_neighbors": report["mean_neighbors"]}]
+                 ).to_parquet(PROCESSED / "morans_pooled.parquet", index=False)
     print(by_year.to_string())
 
     clustered = by_year[by_year["p_value"] < 0.05]

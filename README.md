@@ -37,6 +37,46 @@ Nebraska is one of the top corn-producing states and among the most heavily irri
   84.5 bu/acre on average** — and the gap widens sharply in drought years (139.7 in 2012,
   119.7 in 2002, versus about 60 in wet years).
 
+## Modeling results
+
+Every model is scored three ways, because the answers differ and only two of them are
+honest. Random cross-validation leaks: neighbouring counties in the same year are near
+duplicates. Holding out whole agricultural districts, or whole years, is the real test.
+
+| Model | Random 5-fold | Leave-district-out | Train ≤2018 / test ≥2019 |
+|---|---|---|---|
+| Mean yield (dummy) | R² −0.00 | −0.06 | −0.60 |
+| Ridge (trend + weather) | 0.40 | 0.25 | 0.20 |
+| Gradient boosting | 0.57 | 0.40 | −0.42 |
+| Detrended boosting | 0.54 | 0.31 | −0.05 |
+| **+ irrigation share** | — | **0.58** | **0.35** |
+
+Three things that took real work:
+
+1. **Random cross-validation inflated the score by about 40%.** Reporting only the
+   optimistic number would have overstated the model's accuracy on unseen counties.
+2. **Tree models cannot extrapolate.** Trained through 2018, gradient boosting scored
+   R² −0.42 on later years — worse than guessing the average — because it can't produce a
+   yield outside the range it has seen. Fitting a linear trend first and modelling the
+   residual (`DetrendedRegressor`) fixed it.
+3. **Irrigation share was the single most valuable feature**, lifting the spatial score from
+   0.31 to 0.58 — more than any amount of model tuning, and it came from domain knowledge.
+
+## Maps
+
+![Average prediction error by county](figures/error_map.png)
+
+Errors cluster in every year of the record (Moran's I = +0.598, p = 0.001). The east–west
+gradient — overprediction in the sandy, high-elevation west, underprediction in the
+loess-soil northeast — points at soil productivity and season length as the next features to
+add.
+
+![Share of corn acres irrigated](figures/irrigation_map.png)
+
+Irrigation share, recovered from NASS acreage ratios, reproduces Nebraska's real
+agricultural geography: the central Platte Valley and west irrigate heavily, the wetter
+southeast barely at all.
+
 ## Project structure
 
 ```
@@ -57,13 +97,16 @@ tests/                Unit tests (no network or API key needed)
 ```bash
 python -m venv .venv          # Python 3.12
 .venv\Scripts\activate        # Windows (macOS/Linux: source .venv/bin/activate)
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # full pipeline (requirements.txt is app-only)
 
 copy .env.example .env        # then paste your NASS API key into .env
 python scripts/fetch_nass_yields.py    # county yields
 python scripts/explore_coverage.py     # what the data covers
 python scripts/fetch_weather.py        # ~4 min, cached afterwards
+python scripts/fetch_irrigation.py     # irrigation share
+python scripts/fetch_soil_terrain.py   # soil water capacity + elevation
 python scripts/train_baseline.py       # models + validation
+python scripts/analyze_errors.py       # spatial diagnostics + maps
 streamlit run app/streamlit_app.py
 ```
 

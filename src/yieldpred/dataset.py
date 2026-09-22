@@ -38,6 +38,12 @@ def load_irrigation_observed(state: str = "ne") -> pd.DataFrame | None:
     return pd.read_parquet(path) if path.exists() else None
 
 
+def load_static(state: str = "ne") -> pd.DataFrame | None:
+    """County characteristics that don't vary by year: soil rating, elevation."""
+    path = PROCESSED / f"county_static_{state}.parquet"
+    return pd.read_parquet(path) if path.exists() else None
+
+
 def build_modeling_table(state: str = "ne", state_fips: str = "31",
                          practice: str = "all") -> pd.DataFrame:
     """One row per county-year: the yield to predict plus its weather.
@@ -55,7 +61,17 @@ def build_modeling_table(state: str = "ne", state_fips: str = "31",
     if irrigation is not None:
         df = df.merge(irrigation, on=["fips", "year"], how="left", validate="one_to_one")
 
+    static = load_static(state)
+    if static is not None:
+        df = df.merge(static, on="fips", how="left", validate="many_to_one")
+
     return df.sort_values(["fips", "year"]).reset_index(drop=True)
+
+
+def available_extras(df: pd.DataFrame) -> list[str]:
+    """Optional feature columns present in this table, in the order they were added."""
+    return [c for c in ("irrigation_share", "nccpi_corn", "soil_water_cm", "elevation_m")
+            if c in df.columns]
 
 
 def feature_matrix(df: pd.DataFrame, extra: list[str] | None = None):

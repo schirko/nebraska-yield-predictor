@@ -1,0 +1,70 @@
+# Nebraska Corn Yield Predictor
+
+Predicting county-level corn yields across Nebraska from weather, soils and cropland data, with a focus on how **irrigated and non-irrigated** fields respond differently to growing-season conditions.
+
+> 🚧 Work in progress. Built as a portfolio project during my M.S. in Data Science.
+
+## Why Nebraska?
+
+Nebraska is one of the top corn-producing states and among the most heavily irrigated states in the U.S. USDA NASS reports county yields separately for irrigated and non-irrigated corn, and rainfall drops sharply from east to west across the state. Together, those make it a natural experiment in how much weather matters when irrigation isn't there to buffer it.
+
+## Approach (planned)
+
+1. **Target:** county corn yields (bu/acre) from USDA NASS Quick Stats, 2000–present
+2. **Features:** growing-season weather (PRISM / NASA POWER), soil productivity (gSSURGO), drought (US Drought Monitor), all summarized over cropland only using the USDA Cropland Data Layer
+3. **Models:** baseline trend model → gradient boosting
+4. **Spatial validation:** hold out whole regions (spatial cross-validation) instead of random rows
+5. **Diagnostics:** maps of prediction error and Moran's I to check whether errors cluster geographically
+6. **App:** interactive Streamlit map of predicted vs. actual yields
+
+## Data sources
+
+| Source | Used for |
+|---|---|
+| [USDA NASS Quick Stats](https://quickstats.nass.usda.gov/) | County yields (target) |
+| [USDA Cropland Data Layer](https://www.nass.usda.gov/Research_and_Science/Cropland/SARS1a.php) | Cropland mask |
+| gSSURGO | Soil properties |
+| PRISM / NASA POWER | Weather |
+| US Drought Monitor | Drought severity |
+| Census TIGER | County boundaries |
+
+## Project structure
+
+```
+app/            Streamlit app
+src/yieldpred/  Core logic (data access, features, models)
+scripts/        Data download and preprocessing
+notebooks/      Exploration
+data/raw/       Raw downloads (not committed)
+data/processed/ Small cleaned files used by the app
+tests/          Unit tests
+```
+
+## Getting started
+
+```bash
+python -m venv .venv          # Python 3.12
+.venv\Scripts\activate        # Windows (macOS/Linux: source .venv/bin/activate)
+pip install -r requirements.txt
+
+copy .env.example .env        # then paste your NASS API key into .env
+python scripts/fetch_nass_yields.py
+streamlit run app/streamlit_app.py
+```
+
+Run the tests with `pytest`.
+
+## Roadmap
+
+- [x] Project setup
+- [ ] Download NASS county yields
+- [ ] Exploratory analysis
+- [ ] Weather and soil features
+- [ ] Cropland masking and zonal statistics
+- [ ] Baseline and ML models with spatial cross-validation
+- [ ] Interactive map in Streamlit
+- [ ] Deploy to Streamlit Community Cloud
+
+## Author
+
+Scott — add your LinkedIn / GitHub links here

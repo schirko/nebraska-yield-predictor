@@ -1,0 +1,19 @@
+# Core data
+pandas>=2.2
+numpy
+pyarrow
+requests
+python-dotenv
+
+# GIS
+geopandas
+rasterio
+
+# App
+streamlit
+
+# Testing
+pytest
+
+# This project's own code (src/yieldpred), installed in editable mode
+-e .

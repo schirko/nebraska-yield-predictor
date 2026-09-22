@@ -37,9 +37,6 @@ Nebraska is one of the top corn-producing states and among the most heavily irri
   84.5 bu/acre on average** — and the gap widens sharply in drought years (139.7 in 2012,
   119.7 in 2002, versus about 60 in wet years).
 
-See [docs/METHODS.md](docs/METHODS.md) for data cleaning decisions, feature definitions,
-and the validation strategy.
-
 ## Project structure
 
 ```
@@ -49,7 +46,6 @@ src/yieldpred/        Core logic
   weather.py          NASA POWER download and growing-season features
   dataset.py          Joins yields and weather into the modeling table
 scripts/              Runnable steps (download, explore, train)
-docs/METHODS.md       Data decisions, features, validation
 notebooks/            Exploration
 data/raw/             Raw downloads and API cache (not committed)
 data/processed/       Small cleaned files used by the app

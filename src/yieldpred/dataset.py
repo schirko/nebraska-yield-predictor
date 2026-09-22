@@ -22,17 +22,39 @@ def load_weather(state_fips: str = "31") -> pd.DataFrame:
     return pd.read_parquet(PROCESSED / f"weather_county_{state_fips}.parquet")
 
 
+def load_irrigation(state: str = "ne") -> pd.DataFrame | None:
+    """County irrigation share, if scripts/fetch_irrigation.py has been run."""
+    path = PROCESSED / f"irrigation_share_{state}.parquet"
+    return pd.read_parquet(path) if path.exists() else None
+
+
+def load_irrigation_observed(state: str = "ne") -> pd.DataFrame | None:
+    """The raw (non-interpolated) irrigation observations, if available.
+
+    Kept separately so an experiment can rebuild the feature using only the
+    years it is allowed to see, avoiding look-ahead in the temporal test.
+    """
+    path = PROCESSED / f"irrigation_observed_{state}.parquet"
+    return pd.read_parquet(path) if path.exists() else None
+
+
 def build_modeling_table(state: str = "ne", state_fips: str = "31",
                          practice: str = "all") -> pd.DataFrame:
     """One row per county-year: the yield to predict plus its weather.
 
-    `year` is kept as a feature so the model can pick up the long-run yield
-    trend from better genetics and management (~2 bu/acre per year).
+    `year` is kept as a column so models can use the long-run yield trend
+    (~2 bu/acre per year), either as a feature or via DetrendedRegressor.
+    Irrigation share is joined when available.
     """
     yields = load_yields(state, practice)
     weather = load_weather(state_fips).drop(columns=["county_name"])
 
     df = yields.merge(weather, on=["fips", "year"], how="inner", validate="one_to_one")
+
+    irrigation = load_irrigation(state)
+    if irrigation is not None:
+        df = df.merge(irrigation, on=["fips", "year"], how="left", validate="one_to_one")
+
     return df.sort_values(["fips", "year"]).reset_index(drop=True)
 
 

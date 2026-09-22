@@ -11,6 +11,11 @@ scikit-learn
 # GIS
 geopandas
 rasterio
+matplotlib
+
+# Spatial statistics (Moran's I and the weights it needs)
+esda
+libpysal
 
 # App
 streamlit

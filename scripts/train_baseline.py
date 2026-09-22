@@ -22,7 +22,10 @@ from sklearn.model_selection import GroupKFold, KFold, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from yieldpred.dataset import PROCESSED, build_modeling_table, feature_matrix
+from yieldpred.dataset import (PROCESSED, build_modeling_table, feature_matrix,
+                               load_irrigation_observed)
+from yieldpred.irrigation import build_share_series
+from yieldpred.trend import DetrendedRegressor
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -51,12 +54,19 @@ def main() -> None:
     corr = X.apply(lambda col: col.corr(y)).sort_values(key=abs, ascending=False)
     print(corr.round(3).to_string())
 
+    def boosting():
+        return HistGradientBoostingRegressor(
+            max_iter=400, learning_rate=0.06, max_depth=6, random_state=0)
+
     models = {
         "Mean yield (baseline)": DummyRegressor(strategy="mean"),
         "Ridge (trend + weather)": make_pipeline(StandardScaler(), Ridge(alpha=1.0)),
-        "Gradient boosting": HistGradientBoostingRegressor(
-            max_iter=400, learning_rate=0.06, max_depth=6, random_state=0),
+        "Gradient boosting": boosting(),
+        "Detrended boosting": DetrendedRegressor(boosting()),
     }
+
+    trend = DetrendedRegressor(boosting()).fit(X, y)
+    print(f"\nFitted yield trend: {trend.trend_slope_:.2f} bu/acre per year")
 
     print("\n" + "=" * 70)
     print("VALIDATION (lower RMSE is better; RMSE is in bu/acre)")
@@ -87,8 +97,51 @@ def main() -> None:
         print(f"\n{label}")
         print(results[cols].rename(columns=lambda c: c.split("_", 1)[1]).round(2).to_string())
 
+    # Does irrigation share help? Compare the same model with and without it.
+    if "irrigation_share" in df.columns:
+        print("\n" + "=" * 70)
+        print("EFFECT OF ADDING IRRIGATION SHARE (detrended boosting)")
+        print("=" * 70)
+        X_irr, y_irr, groups_irr, used_irr = feature_matrix(df, extra=["irrigation_share"])
+        print(f"Rows with an irrigation share: {len(X_irr):,} of {len(df):,}")
+        print(f"Correlation of irrigation share with yield: "
+              f"{X_irr['irrigation_share'].corr(y_irr):.3f}")
+
+        # Third variant: rebuild the share using only observations from 2018 or
+        # earlier, so the temporal test cannot borrow the 2022 Census values.
+        variants = {
+            "without irrigation": (X_irr.drop(columns=["irrigation_share"]), y_irr, groups_irr, used_irr),
+            "with irrigation": (X_irr, y_irr, groups_irr, used_irr),
+        }
+        observed = load_irrigation_observed()
+        if observed is not None:
+            past_only = build_share_series(observed[observed["year"] <= 2018],
+                                           range(int(df["year"].min()), int(df["year"].max()) + 1))
+            df_past = (df.drop(columns=["irrigation_share", "share_observed"], errors="ignore")
+                       .merge(past_only[["fips", "year", "irrigation_share"]],
+                              on=["fips", "year"], how="left"))
+            variants["with irrigation (no look-ahead)"] = feature_matrix(
+                df_past, extra=["irrigation_share"])
+
+        comparison = []
+        for label, (Xc, yc, gc, uc) in variants.items():
+            model = DetrendedRegressor(boosting())
+            spatial = cross_val_predict(model, Xc, yc, cv=GroupKFold(5), groups=gc)
+            train, test = uc["year"] <= 2018, uc["year"] >= 2019
+            model.fit(Xc[train], yc[train])
+            future = model.predict(Xc[test])
+            comparison.append({
+                "features": label,
+                **{f"spatial_{k}": v for k, v in scores(yc, spatial).items()},
+                **{f"future_{k}": v for k, v in scores(yc[test], future).items()},
+            })
+        print("\n" + pd.DataFrame(comparison).set_index("features").round(2).to_string())
+
     # Where does the best model miss? Save errors for mapping later.
-    best = models["Gradient boosting"]
+    # Use the best available feature set, which includes irrigation share when present.
+    extra = ["irrigation_share"] if "irrigation_share" in df.columns else None
+    X, y, groups, used = feature_matrix(df, extra=extra)
+    best = DetrendedRegressor(boosting())
     pred = cross_val_predict(best, X, y, cv=GroupKFold(5), groups=groups)
     errors = used[["fips", "county_name", "year", "asd_desc", "yield_bu_acre"]].copy()
     errors["predicted"] = pred.round(1)

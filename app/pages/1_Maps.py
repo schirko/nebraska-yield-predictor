@@ -4,17 +4,22 @@ import pandas as pd
 import streamlit as st
 
 from yieldpred.appdata import load_counties, load_errors, missing_data_message
-from yieldpred.viz import choropleth
+from yieldpred.geo import display_geometry
+from yieldpred.viz import choropleth, interactive_choropleth
 
 st.set_page_config(page_title="Maps", page_icon="🗺️", layout="wide")
 
 
 @st.cache_data
 def data():
-    return load_errors(), load_counties()
+    errors = load_errors()
+    counties = load_counties()
+    # A lighter geometry for the interactive chart, which embeds its shapes in the page.
+    display = display_geometry(counties) if counties is not None else None
+    return errors, counties, display
 
 
-errors, counties = data()
+errors, counties, display = data()
 
 st.title("Maps")
 
@@ -46,18 +51,25 @@ column, diverging, label, explanation = LAYERS[choice]
 
 if year == "All years (average)":
     values = (errors.groupby(["fips", "county_name"], as_index=False)
-              .agg(**{column: (column, "mean")}))
+              .agg(**{column: (column, "mean"), "years": ("year", "nunique")}))
     subtitle = "Average, 2000–2025"
 else:
-    values = errors[errors["year"] == year][["fips", "county_name", column]]
+    values = errors[errors["year"] == year][["fips", "county_name", column]].copy()
+    values["years"] = 1
     subtitle = str(year)
 
-merged = counties.merge(values, on="fips", how="left")
+merged = display.merge(values, on="fips", how="left")
+merged["label"] = merged["county_name_y"].fillna(merged["county_name_x"])
 
-fig = choropleth(merged, column, f"{choice} — {subtitle}", explanation,
-                 "Data: USDA NASS Quick Stats, NASA POWER, US Census Bureau",
-                 diverging=diverging, legend_label=label, figsize=(10, 5.6))
-st.pyplot(fig, width="stretch")
+st.subheader(f"{choice} — {subtitle}")
+st.caption(explanation + "  Hover a county to see its name and value.")
+
+chart = interactive_choropleth(
+    merged[["label", column, "geometry"]].rename(columns={"label": "County"}),
+    column, legend_label=label,
+    tooltips=[("County", "N", "County"), (column, "Q", choice)],
+    diverging=diverging)
+st.altair_chart(chart)
 
 with st.expander("How to read this map"):
     st.markdown("""
@@ -67,14 +79,13 @@ symmetric so grey lands exactly on nothing-wrong. Yields are a *magnitude*, so t
 get a single hue from light to dark. Rainbow scales are avoided because people read
 the bands as unordered categories.
 
-**Counties in pale grey have no data** for the selected year. USDA publishes county
+**Counties with no colour have no data** for the selected year. USDA publishes county
 estimates only where enough farms report; coverage fell from 91 counties in 2000 to
 46 in 2025.
 
 **The error map is the interesting one.** If the model had learned everything spatial,
 the errors would look like random static. They don't — they form an east–west gradient,
-which says something real and geographic is still missing. Soil productivity and
-elevation are the leading suspects.
+which says something real and geographic is still missing.
 """)
 
 if year != "All years (average)":
@@ -93,3 +104,10 @@ if year != "All years (average)":
         .rename(columns={"county_name": "County", "yield_bu_acre": "Actual",
                          "predicted": "Predicted", "error": "Error"}),
         hide_index=True, width="stretch")
+
+with st.expander("Static version (for reports and the README)"):
+    fig = choropleth(counties.merge(values, on="fips", how="left"), column,
+                     f"{choice} — {subtitle}", explanation,
+                     "Data: USDA NASS Quick Stats, NASA POWER, US Census Bureau",
+                     diverging=diverging, legend_label=label, figsize=(10, 5.6))
+    st.pyplot(fig, width="stretch")

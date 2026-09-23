@@ -78,6 +78,20 @@ def simplify_coverage(geometry: gpd.GeoSeries, tolerance_m: float) -> gpd.GeoSer
     return gpd.GeoSeries(simplified, index=geometry.index, crs=geometry.crs)
 
 
+def display_geometry(gdf: gpd.GeoDataFrame, tolerance_m: float = 500.0) -> gpd.GeoDataFrame:
+    """A lighter copy of the boundaries for interactive maps.
+
+    An interactive chart embeds its geometry in the page, so full-resolution
+    outlines make every render slower. 500 m of coverage simplification is
+    invisible at state scale and shrinks the payload substantially - and being
+    coverage simplification, it doesn't tear the counties apart (see
+    `simplify_coverage`). Analysis still uses the unsimplified geometry.
+    """
+    out = gdf.to_crs(EQUAL_AREA)
+    out["geometry"] = simplify_coverage(out.geometry, tolerance_m)
+    return out.to_crs(WEB)
+
+
 def neighbor_report(gdf: gpd.GeoDataFrame) -> dict:
     """Sanity-check a polygon layer before using it for contiguity analysis.
 

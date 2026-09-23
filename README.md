@@ -8,7 +8,7 @@ Predicting county-level corn yields across Nebraska from weather, soils and crop
 
 Nebraska is one of the top corn-producing states and among the most heavily irrigated states in the U.S. USDA NASS reports county yields separately for irrigated and non-irrigated corn, and rainfall drops sharply from east to west across the state. Together, those make it a natural experiment in how much weather matters when irrigation isn't there to buffer it.
 
-## Approach (planned)
+## Approach (Planned)
 
 1. **Target:** county corn yields (bu/acre) from USDA NASS Quick Stats, 2000–present
 2. **Features:** growing-season weather (PRISM / NASA POWER), soil productivity (gSSURGO), drought (US Drought Monitor), all summarized over cropland only using the USDA Cropland Data Layer
@@ -17,7 +17,7 @@ Nebraska is one of the top corn-producing states and among the most heavily irri
 5. **Diagnostics:** maps of prediction error and Moran's I to check whether errors cluster geographically
 6. **App:** interactive Streamlit map of predicted vs. actual yields
 
-## Data sources
+## Data Sources
 
 | Source | Used for |
 |---|---|
@@ -28,7 +28,7 @@ Nebraska is one of the top corn-producing states and among the most heavily irri
 | US Drought Monitor | Drought severity |
 | Census TIGER | County boundaries |
 
-## What the data shows so far
+## What the Data Shows So Far
 
 - **4,819 county-year yield records** across 91 counties, 2000–2025.
 - **Irrigated vs. non-irrigated yields are reported only through 2018**, so the model
@@ -37,7 +37,7 @@ Nebraska is one of the top corn-producing states and among the most heavily irri
   84.5 bu/acre on average** — and the gap widens sharply in drought years (139.7 in 2012,
   119.7 in 2002, versus about 60 in wet years).
 
-## Modeling results
+## Modeling Results
 
 Every model is scored three ways, because the answers differ and only two of them are
 honest. Random cross-validation leaks: neighbouring counties in the same year are near
@@ -77,7 +77,7 @@ Irrigation share, recovered from NASS acreage ratios, reproduces Nebraska's real
 agricultural geography: the central Platte Valley and west irrigate heavily, the wetter
 southeast barely at all.
 
-## Project structure
+## Project Structure
 
 ```
 app/                  Streamlit app
@@ -85,14 +85,20 @@ src/yieldpred/        Core logic
   nass.py             USDA NASS Quick Stats client and cleaning
   weather.py          NASA POWER download and growing-season features
   dataset.py          Joins yields and weather into the modeling table
-scripts/              Runnable steps (download, explore, train)
+  irrigation.py       Irrigated share of corn acres from NASS acreage
+  soils.py            Soil water capacity from USDA Soil Data Access
+  terrain.py          County elevation from USGS
+  trend.py            DetrendedRegressor - the trend/deviation split
+  spatial.py          Contiguity weights and Moran's I
+  geo.py, viz.py      County boundaries and map rendering
+scripts/              Runnable steps (download, explore, train, diagnose)
 notebooks/            Exploration
 data/raw/             Raw downloads and API cache (not committed)
 data/processed/       Small cleaned files used by the app
 tests/                Unit tests (no network or API key needed)
 ```
 
-## Getting started
+## Getting Started
 
 ```bash
 python -m venv .venv          # Python 3.12
@@ -119,12 +125,13 @@ Run the tests with `pytest`.
 - [x] Data coverage analysis
 - [x] Growing-season weather features
 - [x] Baseline models with spatial and temporal validation
-- [ ] Irrigation share as a feature
-- [ ] Soil productivity (gSSURGO)
-- [ ] Cropland masking and zonal statistics
-- [ ] Moran's I on model errors
-- [ ] Interactive map in Streamlit
+- [x] Irrigation share as a feature
+- [x] Moran's I on model errors and error maps
+- [x] Soil water capacity and elevation features
+- [x] Interactive Streamlit app
 - [ ] Deploy to Streamlit Community Cloud
+- [ ] Cropland-weighted weather (Cropland Data Layer)
+- [ ] Spring weather features (the 2019 flood year)
 
 ## Author
 

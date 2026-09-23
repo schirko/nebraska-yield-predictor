@@ -44,6 +44,52 @@ def _style(ax, title: str, subtitle: str | None, source: str | None):
         ax.text(0, -0.03, source, transform=ax.transAxes, fontsize=8, color=MUTED, va="top")
 
 
+def interactive_choropleth(gdf, column: str, legend_label: str, tooltips: list,
+                           diverging: bool = False, height: int = 460,
+                           value_format: str = ".1f"):
+    """An Altair county map with hover tooltips.
+
+    Altair ships with Streamlit, so this adds no dependency and works on Streamlit
+    Community Cloud. The trade against matplotlib: the geometry is embedded in the
+    page (hence the simplified display copy from `geo.display_geometry`), but the
+    viewer can hover each county to read its name and value - which a PNG can never do.
+
+    The same colour rules apply as for the static maps: a diverging scheme with a
+    symmetric domain when zero is meaningful, a single-hue scheme otherwise.
+    """
+    import json
+
+    import altair as alt
+
+    if diverging:
+        limit = float(gdf[column].abs().max())
+        scale = alt.Scale(scheme="blueorange", domain=[-limit, limit], domainMid=0)
+    else:
+        scale = alt.Scale(scheme="greens")
+
+    # Hand Altair GeoJSON features rather than a GeoDataFrame: a geometry column
+    # can't be converted to a table, and passing one makes Streamlit try. Going
+    # through `to_json` also converts numpy types to plain JSON values.
+    features = json.loads(gdf.to_json())["features"]
+    source = alt.Data(values=features)
+
+    encoded_tooltips = [
+        alt.Tooltip(f"properties.{field}", type="quantitative", title=title,
+                    format=value_format)
+        if kind == "Q" else
+        alt.Tooltip(f"properties.{field}", type="nominal", title=title)
+        for field, kind, title in tooltips
+    ]
+
+    return (alt.Chart(source)
+            .mark_geoshape(stroke="white", strokeWidth=0.6)
+            .encode(color=alt.Color(f"properties.{column}:Q", scale=scale,
+                                    legend=alt.Legend(title=legend_label)),
+                    tooltip=encoded_tooltips)
+            .project(type="mercator")
+            .properties(width="container", height=height))
+
+
 def choropleth(gdf, column: str, title: str, subtitle: str | None = None,
                source: str | None = None, diverging: bool = False,
                legend_label: str | None = None, out_path: Path | None = None,

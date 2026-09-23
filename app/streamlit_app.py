@@ -6,6 +6,16 @@ The app reads pre-computed files from data/processed/. It never calls an API or
 trains a model, so it starts instantly and needs no API key.
 """
 
+import sys
+from pathlib import Path
+
+# Make src/ importable even if the editable install (-e .) didn't take, which can
+# happen on hosted runtimes. Harmless locally, where the install does work.
+_SRC = Path(__file__).resolve().parents[1] / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
+
 import streamlit as st
 
 from yieldpred.appdata import (irrigation_gap, load_morans_pooled, load_scores,

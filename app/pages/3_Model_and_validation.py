@@ -1,5 +1,15 @@
 """The results, and what they mean - including why the three numbers differ."""
 
+import sys
+from pathlib import Path
+
+# Make src/ importable even if the editable install (-e .) didn't take, which can
+# happen on hosted runtimes. Harmless locally, where the install does work.
+_SRC = Path(__file__).resolve().parents[2] / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
+
 import streamlit as st
 
 from yieldpred.appdata import (feature_correlations, load_irrigation_comparison,

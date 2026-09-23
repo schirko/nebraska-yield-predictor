@@ -1,5 +1,15 @@
 """One county at a time: its yields, its weather, and how the model did."""
 
+import sys
+from pathlib import Path
+
+# Make src/ importable even if the editable install (-e .) didn't take, which can
+# happen on hosted runtimes. Harmless locally, where the install does work.
+_SRC = Path(__file__).resolve().parents[2] / "src"
+if str(_SRC) not in sys.path:
+    sys.path.insert(0, str(_SRC))
+
+
 import pandas as pd
 import streamlit as st
 

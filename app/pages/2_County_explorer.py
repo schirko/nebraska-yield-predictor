@@ -81,10 +81,17 @@ if not paired.dropna().empty:
 
 # ------------------------------------------------------------------- weather
 st.subheader("Growing-season weather")
-weather_cols = [c for c in ["precip_mm", "precip_jul_mm", "heat_days_32", "dry_spell_max"]
+weather_cols = [c for c in ["precip_mm", "precip_jul_mm", "heat_days_32", "dry_spell_max",
+                            "precip_mar_mm", "precip_apr_may_mm", "workable_days",
+                            "last_frost_doy", "gdd_may"]
                 if c in history]
 labels = {"precip_mm": "Season rainfall (mm)", "precip_jul_mm": "July rainfall (mm)",
-          "heat_days_32": "Days above 32°C", "dry_spell_max": "Longest dry spell (days)"}
+          "heat_days_32": "Days above 32°C", "dry_spell_max": "Longest dry spell (days)",
+          "precip_mar_mm": "March rainfall (mm)",
+          "precip_apr_may_mm": "April–May rainfall (mm)",
+          "workable_days": "Workable planting days",
+          "last_frost_doy": "Last spring frost (day of year)",
+          "gdd_may": "May growing degree days"}
 picked = st.selectbox("Variable", weather_cols, format_func=lambda c: labels[c])
 st.bar_chart(history.set_index("year")[[picked]].rename(columns=labels),
              y_label=labels[picked], height=260)

@@ -24,14 +24,16 @@ tab_flow, tab_data, tab_model, tab_words = st.tabs(
 with tab_flow:
     st.subheader("From API to app")
     st.code("""
-USDA NASS Quick Stats ──┐
-                        ├──► data/processed/*.parquet ──► model ──► this app
-NASA POWER            ──┘
+USDA NASS Quick Stats  ─┐
+NASA POWER             ─┤
+USDA Soil Data Access  ─┼──► data/processed/*.parquet ──► model ──► this app
+USGS elevation         ─┤
 US Census (boundaries) ─┘
 
 scripts/fetch_nass_yields.py   county corn yields, 2000-2025
 scripts/fetch_weather.py       daily weather -> growing-season features
 scripts/fetch_irrigation.py    irrigated share of corn acres
+scripts/fetch_soil_terrain.py  soil water capacity and elevation
 scripts/train_baseline.py      models, validation, per-county errors
 scripts/analyze_errors.py      Moran's I and the maps
 """, language="text")
@@ -48,7 +50,7 @@ ones before it, downloads are cached, and this app starts instantly because it o
 | Core logic | `src/yieldpred/` | Data access, features, models, maps. Knows nothing about any UI |
 | Steps | `scripts/` | Thin wrappers: parse arguments, call the logic, print a summary |
 | Interface | `app/` | This app. Presentation only |
-| Tests | `tests/` | 27 tests that run offline in seconds, no API key needed |
+| Tests | `tests/` | 45 tests that run offline in seconds, no API key needed |
 
 Keeping the logic out of the UI is what makes it testable, reusable in a notebook, and
 movable behind an API later. If the yield-cleaning code lived inside a Streamlit page, none
@@ -63,6 +65,8 @@ with tab_data:
 | **USDA NASS Quick Stats** | County corn yields, harvested acres by practice | Free API key. County estimates thin out over time: 91 counties in 2000, 46 in 2025 |
 | **NASA POWER** | Daily temperature and rainfall, ~0.5° grid | No key needed. One point per county |
 | **USDA Census of Agriculture** | Irrigated acres every five years | Carries irrigation share past the 2018 survey cutoff |
+| **USDA Soil Data Access** | Soil water capacity per county | A public SQL endpoint over the national soil database — no multi-gigabyte download |
+| **USGS Elevation Point Query** | County elevation | Stands in for season length and cooler nights |
 | **US Census Bureau** | County boundaries | Used for maps and for defining which counties neighbour which |
 
 **Three data decisions worth knowing about:**
@@ -80,8 +84,9 @@ with tab_data:
 with tab_model:
     st.subheader("What the model actually does")
     st.markdown("""
-For each county-year the model sees ten numbers — the year, eight weather summaries, and
-the irrigation share — and predicts yield in bushels per acre.
+For each county-year the model sees a dozen numbers — the year, eight weather summaries,
+the irrigation share, and two county characteristics (soil water capacity and elevation) —
+and predicts yield in bushels per acre.
 
 **Two models working together.** Corn yields rise about **2.2 bu/acre per year** from better
 genetics and management. A linear model captures that trend and can extend it into future
@@ -111,6 +116,31 @@ is good at.
 | Mean July high | Heat stress during pollination |
 | Days above 32°C and 35°C | Extreme heat damage, which averages hide |
 | Longest dry spell | *When* the rain failed, not just how much fell |
+
+**The spring features, and why they were added later:**
+
+| Feature | Why |
+|---|---|
+| March rainfall | Snowmelt and saturation before anything is planted — Nebraska's 2019 flood |
+| April–May rainfall | Rain during the planting window itself |
+| Workable planting days | Days a field could be worked: little rain that day, little in the two days before |
+| Last spring frost | Season length at the front end |
+| May growing degree days | Heat for emergence and stand establishment |
+
+The model's two biggest unexplained misses — Nebraska 2019 and Iowa 2013 — were both spring
+problems, invisible to a weather window that starts in April. **Workable days** is the
+interesting one: total rainfall can't tell 50 mm in one storm from 50 mm spread over three
+weeks, but a planter can. Counting the days soil was dry enough to carry machinery turns a
+rainfall column into a planting-delay column, and it picks Iowa 2013 as the worst planting
+spring in the 26-year record without being told to.
+
+**The county characteristics, and why each is there:**
+
+| Feature | Why |
+|---|---|
+| Irrigation share | Irrigated fields shrug off the drought signal the model relies on |
+| Soil water capacity | Sandy soil holds ~10 cm of water, deep loess 30+; it decides how long a crop lasts between rains |
+| Elevation | A proxy for season length and cooler nights — the panhandle sits 1,200 m above the southeast corner |
 
 **A known limitation:** weather is sampled at one point per county, which ignores where the
 corn actually grows — a real issue in large western counties that mix cropland and

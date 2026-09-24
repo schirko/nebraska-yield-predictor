@@ -31,8 +31,8 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import GroupKFold, cross_val_predict
 
-from yieldpred.dataset import (available_extras, build_modeling_table, feature_matrix,
-                               output_path)
+from yieldpred.dataset import (available_extras, available_spring,
+                               build_modeling_table, feature_matrix, output_path)
 from yieldpred.trend import DetrendedRegressor
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -69,9 +69,13 @@ def main() -> None:
             raise SystemExit(f"Missing data for {state.upper()}: {exc}\n"
                              f"Run the fetch scripts with --state {state.upper()} first.")
 
-    # Only features both states actually have.
-    shared = [f for f in available_extras(tables[train_state])
-              if f in available_extras(tables[test_state])]
+    # Only features both states actually have. Irrigation share drops out here
+    # whenever the test state doesn't irrigate, which is the point: the transfer
+    # has to manage without the training state's most valuable column.
+    def optional(state: str) -> list[str]:
+        return available_extras(tables[state]) + available_spring(tables[state])
+
+    shared = [f for f in optional(train_state) if f in optional(test_state)]
     print(f"Training on {train_state.upper()} ({len(tables[train_state]):,} county-years), "
           f"testing on {test_state.upper()} ({len(tables[test_state]):,})")
     print(f"Shared features beyond weather: {', '.join(shared) or 'none'}\n")

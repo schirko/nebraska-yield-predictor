@@ -29,7 +29,14 @@ FEATURE_LABELS = {
     "heat_days_32": "Days above 32°C",
     "heat_days_35": "Days above 35°C",
     "dry_spell_max": "Longest dry spell",
+    "precip_mar_mm": "March rainfall",
+    "precip_apr_may_mm": "April–May rainfall",
+    "workable_days": "Workable planting days",
+    "last_frost_doy": "Last spring frost",
+    "gdd_may": "May growing degree days",
     "irrigation_share": "Irrigation share",
+    "nccpi_corn": "Soil rating (NCCPI)",
+    "elevation_m": "Elevation",
 }
 
 
@@ -139,7 +146,8 @@ def irrigation_gap(yields: pd.DataFrame) -> pd.DataFrame:
 def county_history(model_table: pd.DataFrame, fips: str) -> pd.DataFrame:
     """One county's full record, most recent first."""
     cols = ["year", "yield_bu_acre", "gdd", "precip_mm", "precip_jul_mm",
-            "heat_days_32", "dry_spell_max", "irrigation_share"]
+            "heat_days_32", "dry_spell_max", "precip_mar_mm", "precip_apr_may_mm",
+            "workable_days", "last_frost_doy", "gdd_may", "irrigation_share"]
     present = [c for c in cols if c in model_table.columns]
     return (model_table[model_table["fips"] == fips][present]
             .sort_values("year", ascending=False).reset_index(drop=True))

@@ -12,6 +12,14 @@ PROCESSED = ROOT / "data" / "processed"
 WEATHER_FEATURES = ["gdd", "precip_mm", "precip_jul_mm", "precip_aug_mm",
                     "tmax_jul_c", "heat_days_32", "heat_days_35", "dry_spell_max"]
 
+# Spring and planting-window features, deliberately kept OUT of WEATHER_FEATURES.
+# Two reasons: the feature study can then add them as one group and measure what
+# they are worth, and every number already published for the weather-only model
+# stays comparable. They exist only in weather files rebuilt after
+# `weather.spring_features` was added.
+SPRING_FEATURES = ["precip_mar_mm", "precip_apr_may_mm", "workable_days",
+                   "last_frost_doy", "gdd_may"]
+
 
 def load_yields(state: str = "ne", practice: str = "all") -> pd.DataFrame:
     df = pd.read_parquet(PROCESSED / f"{state}_corn_yield_county.parquet")
@@ -85,8 +93,34 @@ def available_extras(df: pd.DataFrame) -> list[str]:
             if c in df.columns]
 
 
+def available_spring(df: pd.DataFrame) -> list[str]:
+    """Spring/planting features present in this table, if the weather was rebuilt."""
+    return [c for c in SPRING_FEATURES if c in df.columns]
+
+
+def feature_groups(df: pd.DataFrame) -> list[tuple[str, list[str]]]:
+    """The optional features, as named groups, in the order the study adds them.
+
+    A group can be one column or several. Spring weather is five columns that
+    belong to a single idea - what happened before planting - so adding them one
+    at a time would make the ladder five rows longer without answering five
+    separate questions.
+    """
+    groups = [(name, [name]) for name in available_extras(df)]
+    spring = available_spring(df)
+    if spring:
+        groups.append((f"spring weather ({len(spring)})", spring))
+    return groups
+
+
 def feature_matrix(df: pd.DataFrame, extra: list[str] | None = None):
-    """Split the table into X, y and the district codes used for spatial CV."""
+    """Split the table into X, y and the district codes used for spatial CV.
+
+    Rows missing any chosen feature are dropped, so the row set depends on which
+    features are asked for. That is why the feature study builds one matrix with
+    everything present and then drops columns from it, rather than calling this
+    once per rung: otherwise each rung would be scored on a different set of rows.
+    """
     features = ["year"] + WEATHER_FEATURES + (extra or [])
     usable = df.dropna(subset=features + ["yield_bu_acre"])
     return usable[features], usable["yield_bu_acre"], usable["asd_code"], usable

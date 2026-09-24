@@ -121,9 +121,11 @@ Honest limitations, in the order they'd matter:
 
 1. **One weather point per county.** Large western counties mix cropland and rangeland; the
    fix is weighting weather by the USDA Cropland Data Layer.
-2. **No spring.** The weather window starts in April, so a March flood (Nebraska 2019) or a
-   record-wet planting season (Iowa 2013) is invisible.
-3. **No wind.** The 2020 derecho is the clearest single failure in the project.
+2. **No wind.** The 2020 derecho is the clearest single failure in the project, and the one
+   remaining case where the information was never in the feature set at all.
+3. **Spring is newly added, not yet proven.** `workable_days` and its companions correctly
+   identify Iowa 2013 and Nebraska 2019 from raw weather; whether they improve the model is a
+   separate question the feature ladder answers.
 4. **Coverage is not missing at random.** NASS reported 91 Nebraska counties in 2000 and 46
    in 2025, and the counties that stop reporting are the ones that grow little corn.
 
@@ -201,9 +203,10 @@ Run the tests with `pytest` — they use synthetic fixtures, so no network or AP
 - [x] Second state (Iowa) end to end
 - [x] Cross-state transfer test
 - [ ] Deploy to Streamlit Community Cloud
+- [x] Spring / planting-window features, including a workable-fieldwork-days measure
 - [ ] Cropland-weighted weather (Cropland Data Layer)
-- [ ] Spring / planting-window features
 - [ ] Wind and storm damage
+- [ ] A third state, to turn one transfer result into a pattern
 
 ## Author
 

@@ -23,7 +23,7 @@ from sklearn.model_selection import GroupKFold, KFold, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from yieldpred.dataset import (PROCESSED, available_extras, build_modeling_table,
+from yieldpred.dataset import (PROCESSED, build_modeling_table, feature_groups,
                                feature_matrix, load_irrigation_observed, output_path)
 from yieldpred.irrigation import build_share_series
 from yieldpred.trend import DetrendedRegressor
@@ -105,10 +105,13 @@ def main() -> None:
         print(f"\n{label}")
         print(results[cols].rename(columns=lambda c: c.split("_", 1)[1]).round(2).to_string())
 
-    # What does each added feature buy? Build them up one at a time, same model,
-    # same folds, same rows - so every difference is attributable to one column.
-    extras = available_extras(df)
-    if extras:
+    # What does each added feature buy? Build them up one group at a time, same
+    # model, same folds, same rows - so every difference is attributable to one
+    # thing. A "group" is usually one column; spring weather is five columns that
+    # answer a single question, so they go in and come out together.
+    study = feature_groups(df)
+    extras = [column for _, columns in study for column in columns]
+    if study:
         print("\n" + "=" * 78)
         print("WHAT EACH FEATURE ADDS (detrended boosting, cumulative)")
         print("=" * 78)
@@ -129,12 +132,20 @@ def main() -> None:
                     **{f"spatial_{k}": v for k, v in scores(yc, spatial).items()},
                     **{f"future_{k}": v for k, v in scores(yc[test], future).items()}}
 
-        ladder = [evaluate(X_all.drop(columns=extras), y_all, groups_all, used_all,
+        def without(*columns):
+            """The full matrix minus these columns - never rebuilt, so rows match."""
+            drop = [c for c in columns if c in X_all.columns]
+            return X_all.drop(columns=drop)
+
+        ladder = [evaluate(without(*extras), y_all, groups_all, used_all,
                            "weather only")]
-        for k, name in enumerate(extras, start=1):
-            keep = extras[:k]
-            ladder.append(evaluate(X_all.drop(columns=[c for c in extras if c not in keep]),
-                                   y_all, groups_all, used_all, f"+ {name}"))
+        kept: list[str] = []
+        for label, columns in study:
+            kept += columns
+            ladder.append(evaluate(without(*[c for c in extras if c not in kept]),
+                                   y_all, groups_all, used_all, f"+ {label}"))
+
+        full_row = ladder[-1]
 
         # Control: rebuild irrigation share from pre-2019 observations only, so the
         # temporal test cannot borrow information from the 2022 Census.
@@ -150,38 +161,37 @@ def main() -> None:
             ladder.append(evaluate(*feature_matrix(df_past, extra=extras),
                                    "all features (no look-ahead)"))
 
-        # Ablation: drop one feature from the full set. The ladder says what a feature
+        # Ablation: drop one group from the full set. The ladder says what a feature
         # ADDS to what came before; ablation says what is LOST when nothing else can
         # substitute for it. Two correlated features can each look big in the ladder
         # (when first) and small in ablation (because the other covers for it).
         ablation = [{"removed": "nothing (all features)",
-                     **{k: v for k, v in ladder[-1 if observed is None else -2].items()
-                        if k != "features"}}]
-        for name in extras:
+                     **{k: v for k, v in full_row.items() if k != "features"}}]
+        for label, columns in study:
             ablation.append({
-                "removed": name,
+                "removed": label,
                 **{k: v for k, v in
-                   evaluate(X_all.drop(columns=[name]), y_all, groups_all, used_all,
-                            name).items() if k != "features"}})
+                   evaluate(without(*columns), y_all, groups_all, used_all,
+                            label).items() if k != "features"}})
 
         comparison_df = pd.DataFrame(ladder)
         comparison_df.to_parquet(output_path("irrigation_comparison", state), index=False)
-        print("\n" + comparison_df.set_index("features").round(2).to_string())
-        print("\nEach row adds one feature to the row above. Same model, same folds, "
-              "same rows.")
+        print("\n" + comparison_df.set_index("features").round(3).to_string())
+        print("\nEach row adds one feature (or one group) to the row above. Same "
+              "model, same folds, same rows.")
 
         ablation_df = pd.DataFrame(ablation)
         ablation_df.to_parquet(output_path("feature_ablation", state), index=False)
         print("\n" + "=" * 78)
         print("WHAT EACH FEATURE IS WORTH ON ITS OWN (remove one, keep the rest)")
         print("=" * 78)
-        print(ablation_df.set_index("removed").round(2).to_string())
+        print(ablation_df.set_index("removed").round(3).to_string())
         print("\nA feature that barely changes the score when removed is REDUNDANT - "
               "\nanother feature covers for it - not necessarily unimportant.")
 
     # Where does the best model miss? Save errors for mapping later.
-    # Use the best available feature set, which includes irrigation share when present.
-    X, y, groups, used = feature_matrix(df, extra=available_extras(df) or None)
+    # Use every feature available, which is the model the app and the maps report on.
+    X, y, groups, used = feature_matrix(df, extra=extras or None)
     best = DetrendedRegressor(boosting())
     pred = cross_val_predict(best, X, y, cv=GroupKFold(5), groups=groups)
     errors = used[["fips", "county_name", "year", "asd_desc", "yield_bu_acre"]].copy()

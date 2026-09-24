@@ -25,6 +25,9 @@ PROCESSED = ROOT / "data" / "processed"
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--state", default="NE",
+                        help="Two-letter code, used only in messages; the FIPS "
+                             "is what selects the counties")
     parser.add_argument("--state-fips", default="31", help="State FIPS (31 = Nebraska)")
     parser.add_argument("--start", type=int, default=2000)
     parser.add_argument("--end", type=int, default=2025)
@@ -35,9 +38,11 @@ def main() -> None:
     RAW.mkdir(parents=True, exist_ok=True)
     PROCESSED.mkdir(parents=True, exist_ok=True)
 
-    print("Looking up county centre points...")
+    print(f"Looking up county centre points for {args.state.upper()}...")
     points = county_points(args.state_fips)
     print(f"{len(points)} counties\n")
+    print("Raw daily files are cached as whole calendar years, so re-running this "
+          "after a feature change recomputes from disk without touching NASA.\n")
 
     frames, failures = [], []
     for i, row in points.iterrows():
@@ -77,10 +82,18 @@ def main() -> None:
         print("Re-run the script to retry them (finished counties are cached).")
 
     print("\nStatewide averages by year (last 8):")
-    summary = (weather.groupby("year")[["gdd", "precip_mm", "precip_jul_mm",
-                                        "heat_days_32", "dry_spell_max"]]
-               .mean().round(1).tail(8))
-    print(summary.to_string())
+    columns = [c for c in ("gdd", "precip_mm", "precip_jul_mm", "heat_days_32",
+                           "dry_spell_max", "precip_mar_mm", "workable_days")
+               if c in weather.columns]
+    print(weather.groupby("year")[columns].mean().round(1).tail(8).to_string())
+
+    if "workable_days" in weather.columns:
+        # A quick sanity check on the new spring features: the springs everyone
+        # remembers should be the ones with the fewest days fit to plant.
+        worst = (weather.groupby("year")["workable_days"].mean()
+                 .sort_values().head(5).round(1))
+        print("\nFewest workable planting days (statewide mean):")
+        print(worst.to_string())
 
 
 if __name__ == "__main__":

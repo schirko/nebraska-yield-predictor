@@ -3,16 +3,22 @@
 Run from the project root:  python scripts/explore_coverage.py
 """
 
+import argparse
 from pathlib import Path
 
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA = ROOT / "data" / "processed" / "ne_corn_yield_county.parquet"
+
+parser = argparse.ArgumentParser(description="Report on yield-data coverage")
+parser.add_argument("--state", default="NE")
+args = parser.parse_args()
 
 pd.set_option("display.width", 120)
 
+DATA = ROOT / "data" / "processed" / f"{args.state.lower()}_corn_yield_county.parquet"
 df = pd.read_parquet(DATA)
+print(f"{args.state}: {len(df):,} rows\n")
 
 print("=" * 64)
 print("COUNTIES REPORTING, BY YEAR AND PRACTICE")

@@ -76,6 +76,7 @@ trusted. Three questions get separate answers:
 1. Can it fill in gaps for counties it has seen? *(random cross-validation)*
 2. Can it predict a county it has **never** seen? *(hold out whole districts)*
 3. Can it predict a year that hasn't happened? *(train through 2018, test after)*
+4. Can it predict **a different state entirely?** *(train on Nebraska, test on Iowa)*
 
 Those answers differ a lot, and the gap between them is the most useful thing here.
 """)
@@ -88,7 +89,11 @@ Those answers differ a lot, and the gap between them is the most useful thing he
   at −0.50; accumulated growing degree days only −0.11.
 - **The model's errors form a map.** They cluster in all 26 years, overpredicting in
   the sandy, high-elevation west and underpredicting in the loess-soil northeast —
-  pointing at soil quality as the next thing to add.
+  which is what pointed at soil quality and elevation as the features to add next.
+- **It transfers to Iowa.** Trained on Nebraska and applied to Iowa counties it had
+  never seen — without irrigation, which Iowa doesn't do — it scored R² **0.50**
+  against a floor of −0.26 and an Iowa-native ceiling of 0.65, and closed 70% of the
+  14 bu/acre gap between the two states from its inputs alone.
 """)
 
 with sidebar:
@@ -103,6 +108,7 @@ with sidebar:
     st.page_link("pages/2_County_explorer.py", label="County explorer", icon="🔎")
     st.page_link("pages/3_Model_and_validation.py", label="Model & validation", icon="📊")
     st.page_link("pages/4_How_it_works.py", label="How it works", icon="🛠️")
+    st.page_link("pages/5_Does_it_transfer.py", label="Does it transfer?", icon="🔁")
 
 st.divider()
 st.caption("Data: USDA NASS Quick Stats · NASA POWER · US Census Bureau. "

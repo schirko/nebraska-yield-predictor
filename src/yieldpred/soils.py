@@ -26,20 +26,28 @@ import requests
 
 SDA_URL = "https://SDMDataAccess.sc.egov.usda.gov/Tabular/post.rest"
 
-# Acre-weighted mean of the corn NCCPI for every map unit in each survey area.
-# muacres is the map unit's acreage, so this weights productive-but-tiny units
-# appropriately rather than treating every polygon as equal.
+# NCCPI lives in the `valu1` table of the *gridded* soil database, which the tabular
+# endpoint does not expose ("Invalid object name 'valu1'"). It is also derivable from
+# `cointerp`, the soil-interpretation table, where the corn submodel is stored per
+# component as a 0-1 fuzzy rating in `interphr`.
+#
+# Two weights are needed here: `comppct_r` (what share of the map unit this soil
+# component is) and `muacres` (how big the map unit is). A component rating applies
+# to its share of its map unit, and map units differ enormously in size.
 NCCPI_QUERY = """
 SELECT l.areasymbol, l.areaname,
-       SUM(v.nccpi3corn * mu.muacres) / NULLIF(SUM(CASE WHEN v.nccpi3corn IS NULL
-                                                        THEN 0 ELSE mu.muacres END), 0)
-           AS nccpi_corn,
-       SUM(CASE WHEN v.nccpi3corn IS NULL THEN 0 ELSE mu.muacres END) AS rated_acres,
+       SUM(ci.interphr * c.comppct_r * mu.muacres)
+           / NULLIF(SUM(CASE WHEN ci.interphr IS NULL THEN 0
+                             ELSE c.comppct_r * mu.muacres END), 0) AS nccpi_corn,
+       SUM(CASE WHEN ci.interphr IS NULL THEN 0 ELSE mu.muacres END) AS rated_acres,
        SUM(mu.muacres) AS total_acres
 FROM legend l
 JOIN mapunit mu ON mu.lkey = l.lkey
-LEFT JOIN valu1 v ON v.mukey = mu.mukey
+JOIN component c ON c.mukey = mu.mukey
+JOIN cointerp ci ON ci.cokey = c.cokey
 WHERE l.areasymbol LIKE '{state}%'
+  AND ci.mrulename LIKE '%NCCPI%'
+  AND ci.rulename LIKE '%Corn%'
 GROUP BY l.areasymbol, l.areaname
 """
 
@@ -75,15 +83,16 @@ def query_sda(sql: str, timeout: int = 300) -> pd.DataFrame:
     return pd.DataFrame(table[1:], columns=table[0])
 
 
-# Fallback when the NCCPI table is unavailable: available water storage in the top
-# 150 cm, from the map unit aggregated attribute table. It measures how much water
-# the soil can hold for the crop - the property that matters most for dryland corn,
-# and the main reason sandy western soils yield less than eastern loess.
+# Fallback if the NCCPI interpretation is unavailable: available water storage in the
+# top 150 cm, in CENTIMETRES of water, from the map unit aggregated attribute table.
+# It measures how much water the soil can hold for the crop - the property that matters
+# most for dryland corn, and the main reason sandy western soils yield less than
+# eastern loess. Typical values run from about 5 cm (sand) to 30 cm (deep silt loam).
 AWS_QUERY = """
 SELECT l.areasymbol, l.areaname,
        SUM(m.aws0150wta * mu.muacres) / NULLIF(SUM(CASE WHEN m.aws0150wta IS NULL
                                                         THEN 0 ELSE mu.muacres END), 0)
-           AS soil_water_mm,
+           AS soil_water_cm,
        SUM(CASE WHEN m.aws0150wta IS NULL THEN 0 ELSE mu.muacres END) AS rated_acres,
        SUM(mu.muacres) AS total_acres
 FROM legend l
@@ -98,8 +107,10 @@ PROBES = [
     ("state filter", "SELECT TOP 1 areasymbol FROM legend WHERE areasymbol LIKE 'NE%'"),
     ("mapunit join", "SELECT TOP 1 mu.mukey, mu.muacres FROM mapunit mu "
                      "JOIN legend l ON mu.lkey = l.lkey WHERE l.areasymbol LIKE 'NE%'"),
-    ("valu1 (NCCPI)", "SELECT TOP 1 mukey, nccpi3corn FROM valu1"),
+    ("cointerp NCCPI rules", "SELECT DISTINCT TOP 5 mrulename, rulename FROM cointerp "
+                             "WHERE mrulename LIKE '%NCCPI%'"),
     ("muaggatt (water)", "SELECT TOP 1 mukey, aws0150wta FROM muaggatt"),
+    ("valu1 (not expected)", "SELECT TOP 1 mukey, nccpi3corn FROM valu1"),
 ]
 
 
@@ -128,9 +139,9 @@ def fetch_soil_rating(state_alpha: str = "NE") -> tuple[pd.DataFrame, str]:
         value_col = "nccpi_corn"
     except SoilDataError as exc:
         print(f"  NCCPI query failed ({exc})")
-        print("  Falling back to available water storage (muaggatt.aws0150wta)...")
+        print("  Falling back to available water storage (muaggatt.aws0150wta, cm)...")
         df = query_sda(AWS_QUERY.format(state=state_alpha))
-        value_col = "soil_water_mm"
+        value_col = "soil_water_cm"
 
     for col in (value_col, "rated_acres", "total_acres"):
         df[col] = pd.to_numeric(df[col], errors="coerce")

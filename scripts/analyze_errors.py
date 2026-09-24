@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from yieldpred.dataset import output_path
 from yieldpred.geo import (county_boundaries, load_boundaries, neighbor_report,
                            save_boundaries)
 from yieldpred.spatial import (align_to_geometry, island_count, morans_i,
@@ -32,15 +33,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--rebuild-boundaries", action="store_true",
                         help="Re-download and rebuild the county geometry")
+    parser.add_argument("--state", default="NE")
+    parser.add_argument("--state-fips", default="31")
     args = parser.parse_args()
+    state, fips = args.state.lower(), args.state_fips
 
-    errors = pd.read_parquet(PROCESSED / "model_errors.parquet")
+    errors = pd.read_parquet(output_path("model_errors", state))
 
-    counties = None if args.rebuild_boundaries else load_boundaries()
+    counties = None if args.rebuild_boundaries else load_boundaries(fips)
     if counties is None:
         print("Building county boundaries...")
-        counties = county_boundaries()
-        print(f"Saved to {save_boundaries(counties).relative_to(ROOT)}")
+        counties = county_boundaries(fips)
+        print(f"Saved to {save_boundaries(counties, fips).relative_to(ROOT)}")
     print(f"{len(counties)} county polygons, {len(errors):,} county-year predictions")
 
     # Geometry check: Nebraska counties tile the state, so every county must have
@@ -90,11 +94,11 @@ def main() -> None:
                      "mean_error": round(group["error"].mean(), 1),
                      "verdict": year_result.verdict})
     by_year = pd.DataFrame(rows).set_index("year")
-    by_year.reset_index().to_parquet(PROCESSED / "morans_by_year.parquet", index=False)
+    by_year.reset_index().to_parquet(output_path("morans_by_year", state), index=False)
     pd.DataFrame([{"scope": "pooled", "morans_i": result.i, "expected": result.expected,
                    "p_value": result.p_value, "counties": result.n,
                    "mean_neighbors": report["mean_neighbors"]}]
-                 ).to_parquet(PROCESSED / "morans_pooled.parquet", index=False)
+                 ).to_parquet(output_path("morans_pooled", state), index=False)
     print(by_year.to_string())
 
     clustered = by_year[by_year["p_value"] < 0.05]
@@ -110,12 +114,12 @@ def main() -> None:
                "Average prediction error by county, 2000-2025. "
                "Blue = model predicts too low, orange = too high.",
                SOURCE, diverging=True, legend_label="bu/acre (predicted - actual)",
-               out_path=FIGURES / "error_map.png")
+               out_path=FIGURES / f"error_map_{state}.png")
 
     choropleth(merged, "actual",
                "Average corn yield by county",
                "Nebraska, 2000-2025", SOURCE,
-               legend_label="bu/acre", out_path=FIGURES / "yield_map.png")
+               legend_label="bu/acre", out_path=FIGURES / f"yield_map_{state}.png")
 
     for year in (2012, 2019):
         year_rows = errors[errors["year"] == year]
@@ -127,9 +131,9 @@ def main() -> None:
                    f"Prediction error in {year}",
                    {2012: "The drought year", 2019: "The flood year"}.get(year, ""),
                    SOURCE, diverging=True, legend_label="bu/acre (predicted - actual)",
-                   out_path=FIGURES / f"error_map_{year}.png")
+                   out_path=FIGURES / f"error_map_{state}_{year}.png")
 
-    share_path = PROCESSED / "irrigation_share_ne.parquet"
+    share_path = PROCESSED / f"irrigation_share_{state}.parquet"
     if share_path.exists():
         share = pd.read_parquet(share_path)
         latest = share[share["year"] == share["year"].max()][["fips", "irrigation_share"]]
@@ -138,7 +142,7 @@ def main() -> None:
                    "Share of corn acres irrigated",
                    f"{share['year'].max()}, interpolated from NASS survey and census data",
                    SOURCE, legend_label="share of harvested acres",
-                   out_path=FIGURES / "irrigation_map.png")
+                   out_path=FIGURES / f"irrigation_map_{state}.png")
 
     for path in sorted(FIGURES.glob("*.png")):
         print(f"  {path.relative_to(ROOT)}")

@@ -12,8 +12,9 @@ if str(_SRC) not in sys.path:
 
 import streamlit as st
 
-from yieldpred.appdata import (feature_correlations, load_irrigation_comparison,
-                               load_model_table, load_morans_by_year, load_morans_pooled,
+from yieldpred.appdata import (feature_correlations, load_ablation,
+                               load_irrigation_comparison, load_model_table,
+                               load_morans_by_year, load_morans_pooled,
                                load_errors, load_scores, missing_data_message,
                                scores_by_scheme, worst_years)
 
@@ -23,10 +24,11 @@ st.set_page_config(page_title="Model & validation", page_icon="📊", layout="wi
 @st.cache_data
 def data():
     return (load_scores(), load_model_table(), load_errors(),
-            load_irrigation_comparison(), load_morans_by_year(), load_morans_pooled())
+            load_irrigation_comparison(), load_ablation(),
+            load_morans_by_year(), load_morans_pooled())
 
 
-scores, model_table, errors, comparison, morans_year, morans_pooled = data()
+scores, model_table, errors, comparison, ablation, morans_year, morans_pooled = data()
 
 st.title("Model & validation")
 
@@ -65,6 +67,41 @@ st.caption("RMSE and MAE are in bu/acre — lower is better. R² is the share of
            "explained: 1.0 is perfect, 0 means no better than always guessing the average, "
            "and negative means worse than that guess.")
 
+with st.expander("Is this any good? Four yardsticks"):
+    st.markdown("""
+"Is R² 0.64 good?" has no answer in the abstract. It has four in context.
+
+**1. Against the baseline.** A dummy that always predicts the average scores −0.06 here, and
+weather alone got 0.31. The score is only meaningful as a distance from the floor.
+
+**2. In the units of the problem.** Spatial RMSE of about 19 bu/acre against yields averaging
+161 means typical misses near **12%** — for a county the model has never seen, knowing only
+its weather, irrigation share, soil rating and elevation.
+
+**3. Under which test.** These come from holding out whole agricultural districts, and from
+predicting years after the training cutoff. Published crop-yield studies often report similar
+or higher numbers using random splits — which aren't comparable, since this project's own
+random-split score is higher too. Comparing an honest number to an optimistic one is a
+category error.
+
+**4. How the errors behave.** They're mixed in sign rather than all overpredictions, so there
+is little systematic bias left. And every gain came with a mechanism — irrigation buffers
+drought, soil holds water, elevation shortens the season — which is more trustworthy than a
+gain from tuning.
+
+#### Where "good" stops
+
+- **Not good enough to act on commercially.** A 20 bu/acre miss at roughly $4.50/bushel is
+  about $90 an acre. No grain merchandiser or crop insurer would trade on it.
+- **The errors still cluster geographically**, so something spatial is still missing.
+- **It does do worse outside Nebraska.** Applied cold to Iowa it scores 0.50 against an
+  Iowa-native 0.65 — see the *Does it transfer?* page. Good evidence it learned agronomy, and
+  equally good evidence that a one-state model is not a Corn Belt model.
+
+The defensible claim is *good for a project built from public data, honestly validated, with
+its limits stated* — not *good enough to deploy*.
+""")
+
 with st.expander("Why does the same model score so differently?"):
     st.markdown("""
 **Gradient boosting scores 0.57, 0.40 and −0.42** across the three schemes.
@@ -85,16 +122,44 @@ irrigation share was added.
 
 # --------------------------------------------------------- irrigation effect
 if comparison is not None:
-    st.subheader("What irrigation share was worth")
-    st.dataframe(comparison.set_index("features").round(2), width="stretch")
+    st.subheader("What each feature was worth")
+    st.dataframe(comparison.set_index("features").round(3), width="stretch")
     st.markdown("""
-Same model, same folds, one feature added. The spatial score nearly doubled, from
-**0.31 to 0.58** — a bigger gain than any amount of model tuning produced, and it came
-from knowing something about Nebraska rather than about machine learning.
+Each row adds one feature to the row above — same model, same folds, same rows, so every
+difference is attributable to the one column that changed.
 
-The third row rebuilds the feature using only observations from 2018 and earlier, testing
-whether interpolating across the gap let future information leak backwards. It didn't:
-the score held up.
+**Irrigation share nearly doubled the spatial score, from 0.31 to 0.58.** That is a bigger
+gain than any amount of model tuning produced, and it came from knowing something about
+Nebraska rather than about machine learning.
+
+**The soil rating (NCCPI) is second, and its effect is lopsided:** about +0.02 spatially but
+**+0.18** on future years. A county's soil rating never changes, so once the model has seen a
+county in training it can use that value to carry the county's level forward — useful, and
+legitimate, but closer to identity than to agronomy.
+
+**Elevation adds nothing measurable** once the others are present. That's evidence it's
+*redundant* here, not that it's meaningless.
+
+The last row rebuilds irrigation share using only observations from 2018 and earlier, testing
+whether interpolating across the gap let future information leak backwards. It didn't — the
+score held up, and if anything improved, because a share that stops updating is steadier and
+centre-pivot acreage barely moves year to year.
+""")
+
+if ablation is not None:
+    with st.expander("A ladder isn't enough: what each feature is worth on its own"):
+        st.dataframe(ablation.set_index("removed").round(3), width="stretch")
+        st.markdown("""
+The table above builds features **up** one at a time; this one takes each feature **out** of
+the full set and leaves the rest.
+
+The two answer different questions, and with correlated features they disagree. A feature
+added first can look enormous in the ladder and tiny in the ablation — because by then
+another feature has learned to stand in for it. The ladder measures what a feature *adds to
+what came before*; ablation measures what is *lost when nothing else can substitute*.
+
+A feature that barely changes the score when removed is **redundant**, which is not the same
+as unimportant. Reporting only one of these tables is how features get over- or under-sold.
 """)
 
 # ------------------------------------------------------------------ features
@@ -131,8 +196,12 @@ if morans_pooled is not None and morans_year is not None:
     st.markdown("""
 Clustered errors are a **diagnostic, not a verdict**. They mean some spatially-varying
 driver is missing from the features — if the model had captured everything geographic, the
-leftovers would look like random static. Soil productivity and elevation are the leading
-candidates, and adding them is the next step.
+leftovers would look like random static.
+
+The east–west gradient in the error map is what prompted adding soil productivity and
+elevation. Both helped, and the errors still cluster, so something spatial remains: the
+leading suspects now are where the corn actually grows within each county (cropland-weighted
+weather) and the spring planting window.
 """)
 
 # ------------------------------------------------------------- worst years

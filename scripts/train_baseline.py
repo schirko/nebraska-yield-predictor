@@ -10,6 +10,7 @@ whole agricultural districts, or whole years, is the honest test.
 
 from __future__ import annotations
 
+import argparse
 from pathlib import Path
 
 import numpy as np
@@ -23,7 +24,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from yieldpred.dataset import (PROCESSED, available_extras, build_modeling_table,
-                               feature_matrix, load_irrigation_observed)
+                               feature_matrix, load_irrigation_observed, output_path)
 from yieldpred.irrigation import build_share_series
 from yieldpred.trend import DetrendedRegressor
 
@@ -39,8 +40,14 @@ def scores(y_true, y_pred) -> dict:
 
 
 def main() -> None:
-    df = build_modeling_table()
-    out = PROCESSED / "model_table.parquet"
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--state", default="NE", help="Two-letter state code")
+    parser.add_argument("--state-fips", default="31")
+    args = parser.parse_args()
+    state = args.state.lower()
+
+    df = build_modeling_table(state=state, state_fips=args.state_fips)
+    out = output_path("model_table", state)
     df.to_parquet(out, index=False)
     print(f"Modeling table: {len(df):,} county-years, "
           f"{df['fips'].nunique()} counties, {df['year'].min()}-{df['year'].max()}")
@@ -90,7 +97,7 @@ def main() -> None:
         })
 
     results = pd.DataFrame(rows).set_index("model")
-    results.reset_index().to_parquet(PROCESSED / "model_scores.parquet", index=False)
+    results.reset_index().to_parquet(output_path("model_scores", state), index=False)
     for scheme, label in [("random", "Random 5-fold (optimistic)"),
                           ("spatial", "Leave-district-out (spatial)"),
                           ("future", "Train <=2018, test >=2019 (temporal)")]:
@@ -131,7 +138,7 @@ def main() -> None:
 
         # Control: rebuild irrigation share from pre-2019 observations only, so the
         # temporal test cannot borrow information from the 2022 Census.
-        observed = load_irrigation_observed()
+        observed = load_irrigation_observed(state)
         if observed is not None and "irrigation_share" in extras:
             past_only = build_share_series(
                 observed[observed["year"] <= 2018],
@@ -143,11 +150,34 @@ def main() -> None:
             ladder.append(evaluate(*feature_matrix(df_past, extra=extras),
                                    "all features (no look-ahead)"))
 
+        # Ablation: drop one feature from the full set. The ladder says what a feature
+        # ADDS to what came before; ablation says what is LOST when nothing else can
+        # substitute for it. Two correlated features can each look big in the ladder
+        # (when first) and small in ablation (because the other covers for it).
+        ablation = [{"removed": "nothing (all features)",
+                     **{k: v for k, v in ladder[-1 if observed is None else -2].items()
+                        if k != "features"}}]
+        for name in extras:
+            ablation.append({
+                "removed": name,
+                **{k: v for k, v in
+                   evaluate(X_all.drop(columns=[name]), y_all, groups_all, used_all,
+                            name).items() if k != "features"}})
+
         comparison_df = pd.DataFrame(ladder)
-        comparison_df.to_parquet(PROCESSED / "irrigation_comparison.parquet", index=False)
+        comparison_df.to_parquet(output_path("irrigation_comparison", state), index=False)
         print("\n" + comparison_df.set_index("features").round(2).to_string())
         print("\nEach row adds one feature to the row above. Same model, same folds, "
               "same rows.")
+
+        ablation_df = pd.DataFrame(ablation)
+        ablation_df.to_parquet(output_path("feature_ablation", state), index=False)
+        print("\n" + "=" * 78)
+        print("WHAT EACH FEATURE IS WORTH ON ITS OWN (remove one, keep the rest)")
+        print("=" * 78)
+        print(ablation_df.set_index("removed").round(2).to_string())
+        print("\nA feature that barely changes the score when removed is REDUNDANT - "
+              "\nanother feature covers for it - not necessarily unimportant.")
 
     # Where does the best model miss? Save errors for mapping later.
     # Use the best available feature set, which includes irrigation share when present.
@@ -157,14 +187,15 @@ def main() -> None:
     errors = used[["fips", "county_name", "year", "asd_desc", "yield_bu_acre"]].copy()
     errors["predicted"] = pred.round(1)
     errors["error"] = (errors["predicted"] - errors["yield_bu_acre"]).round(1)
-    errors.to_parquet(PROCESSED / "model_errors.parquet", index=False)
+    errors.to_parquet(output_path("model_errors", state), index=False)
 
     print("\n" + "=" * 70)
     print("WORST YEARS FOR THE MODEL (mean error, bu/acre)")
     print("=" * 70)
     by_year = errors.groupby("year")["error"].mean().round(1)
     print(by_year.reindex(by_year.abs().sort_values(ascending=False).index).head(6).to_string())
-    print("\nSaved county-level errors to data/processed/model_errors.parquet")
+    print(f"\nSaved county-level errors to "
+          f"{output_path('model_errors', state).relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

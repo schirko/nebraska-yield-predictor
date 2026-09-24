@@ -38,6 +38,17 @@ def load_irrigation_observed(state: str = "ne") -> pd.DataFrame | None:
     return pd.read_parquet(path) if path.exists() else None
 
 
+def output_path(name: str, state: str = "ne") -> Path:
+    """Where a derived file lives for a given state.
+
+    Nebraska keeps the original unsuffixed names so existing files and the app
+    keep working; other states get a suffix. Slightly ugly, deliberately chosen
+    over renaming files the app already reads.
+    """
+    stem = name if state == "ne" else f"{name}_{state}"
+    return PROCESSED / f"{stem}.parquet"
+
+
 def load_static(state: str = "ne") -> pd.DataFrame | None:
     """County characteristics that don't vary by year: soil rating, elevation."""
     path = PROCESSED / f"county_static_{state}.parquet"

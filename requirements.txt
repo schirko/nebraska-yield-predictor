@@ -13,5 +13,13 @@ geopandas
 matplotlib
 streamlit
 
-# This project's own code (src/yieldpred), installed in editable mode
--e .
+# NOTE: this project's own code (src/yieldpred) is deliberately NOT installed here.
+#
+# It used to be, as `-e .`. That made the deployment depend on pip building this
+# repo as a package on a machine we don't control, and when that failed the app
+# died at `from yieldpred.appdata import ...` with nothing to suggest the real
+# cause. Every page already puts src/ on sys.path itself (see the shim at the top
+# of each one), so the editable install was buying nothing on the hosted side and
+# adding one more thing that could break.
+#
+# Local development still installs the package - see requirements-dev.txt.

@@ -29,6 +29,30 @@ def test_page_runs_without_exception(page):
     assert not app.exception, f"{page.name}: {[e.value for e in app.exception]}"
 
 
+def test_every_page_can_find_src_without_an_installed_package():
+    """The app must not depend on `pip install -e .` having worked.
+
+    On Streamlit Community Cloud the package build happens on a machine we don't
+    control, and when it fails the app dies at its first `from yieldpred...` import
+    with a traceback that points at the import line rather than at the cause. So
+    every page puts src/ on sys.path itself, and this test checks that the shim is
+    actually there and actually resolves - which a normal test run can't tell you,
+    because locally the package IS installed and the shim never gets used.
+    """
+    for page in PAGES:
+        text = page.read_text(encoding="utf-8")
+        assert "sys.path.insert" in text, f"{page.name} has no src/ shim"
+
+        # Recompute the path exactly as the page does: parents[1] for the home
+        # page, parents[2] for anything under pages/.
+        depth = 1 if page.parent.name == "app" else 2
+        src = page.resolve().parents[depth] / "src"
+        assert (src / "yieldpred" / "__init__.py").exists(), \
+            f"{page.name}'s shim points at {src}, which has no yieldpred package"
+        assert f"parents[{depth}]" in text, \
+            f"{page.name} uses the wrong parents[] depth for its location"
+
+
 def test_every_page_says_something():
     """A page that renders nothing at all is broken even if it doesn't raise."""
     for page in PAGES:

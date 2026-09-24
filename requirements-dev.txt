@@ -3,6 +3,11 @@
 
 -r requirements.txt
 
+# This project's own code (src/yieldpred), installed in editable mode so that
+# `import yieldpred` works from anywhere - scripts, notebooks, pytest. The app
+# deliberately does not rely on this; see the note in requirements.txt.
+-e .
+
 # Data download
 requests
 python-dotenv

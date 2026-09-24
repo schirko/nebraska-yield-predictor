@@ -86,11 +86,27 @@ def morans_i(values, w, permutations: int = 999, seed: int = 0) -> MoranResult:
 
 
 def align_to_geometry(gdf: gpd.GeoDataFrame, values: "object",
-                      key: str = "fips", value_col: str = "error"):
-    """Join a values table to geometry, keeping only counties present in both.
+                      key: str = "fips", value_col: str = "error",
+                      how: str = "inner"):
+    """Join a values table to geometry, keeping the row order of the two in step.
 
     Spatial weights and value vectors must be in the same order; building them from
     a single joined frame is the safe way to guarantee that.
+
+    `how` exists because statistics and maps want different things, and the
+    difference is easy to get wrong:
+
+    * **"inner" (default) for statistics.** Moran's I needs a value for every unit
+      in the weights matrix - a contiguity-weighted average of its neighbours
+      cannot be computed where a neighbour is missing. Counties without data must
+      be dropped from the graph, not carried as NaN.
+    * **"left" for maps.** Dropping a county from a map doesn't leave a gap the
+      viewer can interpret, it leaves *nothing* - the polygon simply isn't drawn
+      and the page shows through. Nebraska's Grant and Hooker counties are in the
+      Sandhills, grow almost no corn, and are never reported by NASS; with an
+      inner join they silently vanished from every figure in this project until
+      somebody looked closely at a rendered map. A left join keeps them and lets
+      the renderer mark them as "no data", which is a statement rather than a hole.
     """
-    merged = gdf.merge(values, on=key, how="inner")
+    merged = gdf.merge(values, on=key, how=how)
     return merged, merged[value_col].to_numpy()

@@ -22,16 +22,20 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")  # render to file; no desktop window needed
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
 
-DIVERGING = LinearSegmentedColormap.from_list(
-    "blue_grey_orange", ["#2166AC", "#7FA8CE", "#E8E8E8", "#E8A85C", "#B35806"])
-SEQUENTIAL = LinearSegmentedColormap.from_list(
-    "greens", ["#F2F7F2", "#C6E0C2", "#8CC084", "#4E9A51", "#1E6B33"])
+from yieldpred.theme import LIGHT, altair_range, colormap
 
-INK = "#1A1A1A"
-MUTED = "#6B6B6B"
-BOUNDARY = "#FFFFFF"
+# Colour comes from yieldpred.theme so the PNGs in the README and the interactive
+# charts in the app speak one visual language. That module explains why the
+# palette is validated rather than chosen.
+DIVERGING = colormap("diverging")
+SEQUENTIAL = colormap("sequential")
+
+INK = LIGHT["ink"]
+MUTED = LIGHT["muted"]
+BOUNDARY = LIGHT["boundary"]
+NO_DATA = LIGHT["no_data"]
+SURFACE = LIGHT["surface"]
 
 
 def _style(ax, title: str, subtitle: str | None, source: str | None):
@@ -63,9 +67,10 @@ def interactive_choropleth(gdf, column: str, legend_label: str, tooltips: list,
 
     if diverging:
         limit = float(gdf[column].abs().max())
-        scale = alt.Scale(scheme="blueorange", domain=[-limit, limit], domainMid=0)
+        scale = alt.Scale(range=altair_range("diverging"),
+                          domain=[-limit, limit], domainMid=0)
     else:
-        scale = alt.Scale(scheme="greens")
+        scale = alt.Scale(range=altair_range("sequential"))
 
     # Hand Altair GeoJSON features rather than a GeoDataFrame: a geometry column
     # can't be converted to a table, and passing one makes Streamlit try. Going
@@ -105,7 +110,8 @@ def choropleth(gdf, column: str, title: str, subtitle: str | None = None,
         kwargs.update(cmap=SEQUENTIAL)
 
     gdf.plot(column=column, ax=ax, linewidth=0.4, edgecolor=BOUNDARY,
-             legend=True, missing_kwds={"color": "#F0F0F0", "edgecolor": BOUNDARY,
+             legend=True, missing_kwds={"color": NO_DATA, "edgecolor": BOUNDARY,
+                                        "hatch": "////",
                                         "label": "no data"},
              legend_kwds={"shrink": 0.7, "label": legend_label or column,
                           "orientation": "vertical"},
@@ -116,6 +122,6 @@ def choropleth(gdf, column: str, title: str, subtitle: str | None = None,
 
     if out_path:
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        fig.savefig(out_path, bbox_inches="tight", facecolor="white")
+        fig.savefig(out_path, bbox_inches="tight", facecolor=SURFACE)
         plt.close(fig)
     return fig

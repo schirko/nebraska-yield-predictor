@@ -4,8 +4,10 @@ County-level corn yield prediction from weather, soils and irrigation, built to 
 question most yield models skip: **does the model generalize, or has it memorized one state?**
 
 A Nebraska-trained model, applied cold to Iowa counties it had never seen, reached
-**R² 0.503** against a floor of −0.26 and an Iowa-native ceiling of 0.654 — and closed 70% of
-the 14 bu/acre level gap between the two states from its inputs alone.
+**R² 0.51** against a floor of −0.26 and an Iowa-native ceiling of 0.70 — and closed 70% of the
+14 bu/acre level gap between the two states from its inputs alone. Along the way the temporal
+holdout caught something better than a good score: a set of relationships that were true in
+Iowa until 2018 and **stopped being true afterwards**.
 
 Built as a portfolio project during my M.S. in Data Science. Python · scikit-learn ·
 GeoPandas · PySAL · Altair · Streamlit.
@@ -52,7 +54,8 @@ Each row adds one feature to the row above — same model, same folds, same rows
 | + irrigation share | 20.69 | **0.582** | 0.317 |
 | + NCCPI soil rating | 20.22 | 0.601 | **0.499** |
 | + elevation | 20.23 | 0.601 | 0.500 |
-| All features, no look-ahead control | 19.33 | **0.635** | **0.533** |
+| + spring / planting-window weather | 19.61 | 0.625 | 0.517 |
+| All features, no look-ahead control | 18.92 | **0.651** | **0.561** |
 
 Irrigation share — reconstructed from NASS harvested-acre ratios, since it isn't published as
 a feature — lifted the spatial score by **+0.27 R²**, more than any amount of hyperparameter
@@ -62,15 +65,27 @@ The last row is a leakage control: the irrigation series is rebuilt using only o
 from 2018 or earlier, so the temporal test can't borrow from the 2022 Census. The score
 didn't fall, so the leak wasn't doing any work.
 
+Ablation tells a different story from the ladder, which is why both are reported. Removing
+irrigation share costs **0.41** of spatial R² — far more than the 0.27 it appeared to add when
+it entered first. Removing the soil rating *improves* the spatial score (0.625 → 0.635): once
+spring and elevation are present, NCCPI is not merely redundant in Nebraska but mildly harmful.
+A ladder measures what a feature adds to what came before; ablation measures what is lost when
+nothing can substitute for it.
+
 ### 3. The Errors Are A Map, Not Noise
 
 ![Average prediction error by county](figures/error_map_ne.png)
 
-Moran's I on the pooled county errors is **+0.598 (p = 0.001)** — strongly clustered, and
-significantly clustered in all 26 years individually. Random error looks like static; this
-looks like a map of something real: overprediction in the sandy, high-elevation west,
-underprediction in the loess-soil northeast. That map is what motivated adding soil
+Moran's I on the pooled county errors is **+0.599 (p = 0.001)** — strongly clustered, and
+significantly clustered in all 26 years individually, in both states. Random error looks like
+static; this looks like a map of something real: overprediction in the sandy, high-elevation
+west, underprediction in the loess-soil northeast. That map is what motivated adding soil
 productivity and elevation.
+
+Worth stating plainly: **no feature added so far has fixed it.** Moran's I went 0.615 → 0.599
+when spring weather went in, while R² moved a long way. Those measure different things — R²
+asks how big the errors are, Moran's I asks whether they're arranged in a pattern — and the
+remaining pattern is what cropland-weighted weather is meant to address.
 
 ![Share of corn acres irrigated](figures/irrigation_map_ne.png)
 
@@ -86,34 +101,65 @@ without irrigation share, because Iowa doesn't irrigate.
 
 | | RMSE | MAE | R² | bias |
 |---|---|---|---|---|
-| Iowa's own model (leave-district-out) — *the ceiling* | 16.37 | 12.57 | **0.654** | −0.62 |
-| Nebraska's average yield applied to Iowa — *the floor* | 31.22 | 25.62 | **−0.258** | −14.14 |
-| Trained on Nebraska, applied cold | 19.61 | 15.49 | **0.503** | −4.11 |
-| …same predictions, average offset removed | 19.18 | 14.61 | 0.525 | 0.00 |
+| Iowa's own model (leave-district-out) — *the ceiling* | 15.28 | 11.65 | **0.70** | −0.41 |
+| Nebraska's average yield applied to Iowa — *the floor* | 31.22 | 25.62 | **−0.26** | −14.14 |
+| Trained on Nebraska, applied cold | 19.43 | 15.44 | **0.51** | −4.35 |
+| …same predictions, average offset removed | 18.94 | 14.51 | 0.54 | 0.00 |
 
-- The transfer lands **77% of the way from floor to ceiling** on a state it has never seen.
-- **Bias fell from −14.1 to −4.1**: the model recovered ~70% of the level difference between
+- The transfer lands **80% of the way from floor to ceiling** on a state it has never seen,
+  and retains **80% of Iowa's own within-year county-ranking skill**.
+- **Bias fell from −14.1 to −4.4**: the model recovered ~70% of the level difference between
   the states from its inputs, rather than memorizing Nebraska's average.
 - **Cold and offset-corrected scores are nearly identical**, which says the residual error is
   *pattern* error, not a calibration offset — the harder kind, and the honest one to report.
 
 Where it breaks is as informative as where it works. Scoring the transfer by how well it ranks
-counties *within* each year, two years fail outright: **2013** (Iowa's record-wet, late-planted
-spring) and **2020** (the August 10 derecho). The model has no planting-window features and no
-wind variable, so both events are invisible to it. Missing features, not a broken model — and
-the same diagnosis Nebraska's 2019 flood year produced, found independently in another state.
+counties *within* each year, two years failed outright — and adding the spring features split
+them apart:
 
-### 5. The Same Feature Can Mean Opposite Things
+| Year | Before | After | Cause |
+|---|---|---|---|
+| **2013** | −0.315 | **−0.141** | Record-wet, late-planted spring |
+| **2020** | −0.062 | −0.116 | The August 10 derecho |
+
+2013 improved by more than half, because the model can now see the spring. 2020 got slightly
+worse, because there is still **no wind variable** and extra features only give a model more
+ways to be confidently wrong about a cause it cannot see. A change that fixes the case you
+predicted and leaves the case you didn't is better evidence than one that improves everything.
+
+### 5. A Relationship That Expired
+
+The temporal holdout caught something a spatial split never could. Spring features improved
+Nebraska on every test, but in Iowa they *repaired* the spatial score and *wrecked* the temporal
+one. Correlating each feature with yield anomaly on either side of the training cutoff:
+
+| Iowa feature | ≤2018 | ≥2019 |
+|---|---|---|
+| `precip_apr_may_mm` | −0.189 | +0.031 |
+| `gdd_may` | −0.262 | −0.002 |
+| `last_frost_doy` | +0.200 | −0.145 |
+
+Every spring relationship weakened, vanished or flipped sign. Iowa's three worst planting
+springs tell the story: 2013 yielded **17 bu/acre below trend**, while 2019 and 2024 — the next
+two worst — came in **above** it. The model learned 2013's lesson and misapplies it.
+
+This is **non-stationarity**, and it is the kind of thing that breaks deployed models silently.
+The decision taken here was to keep the features and report the drift rather than quietly drop
+them to protect a number.
+
+### 6. The Same Feature Can Mean Opposite Things
 
 | Feature | Nebraska | Iowa |
 |---|---|---|
 | `precip_mm` | **+0.313** | **+0.036** |
 | `dry_spell_max` | **−0.108** | **+0.195** |
+| `workable_days` (vs yield anomaly) | **−0.10** | **+0.12** |
 
-In Nebraska a long dry spell is a drought. In Iowa, where rain is rarely the binding
-constraint, it means sunshine, fewer leaf-disease days, and fields that aren't waterlogged.
-Same column, same units, same code, opposite sign. A model fitted on pooled Corn Belt data
-would average these into nothing.
+In Nebraska a long dry spell is a drought, and a dry workable spring leaves an empty soil
+profile heading into July. In Iowa, where rain is rarely the binding constraint, a dry spell
+means sunshine and fields that aren't waterlogged, and a dry spring just means the planter kept
+moving. Same columns, same units, same code, opposite signs. A model fitted on pooled Corn Belt
+data would average these into nothing.
 
 ## What I'd Fix Next
 
@@ -123,9 +169,11 @@ Honest limitations, in the order they'd matter:
    fix is weighting weather by the USDA Cropland Data Layer.
 2. **No wind.** The 2020 derecho is the clearest single failure in the project, and the one
    remaining case where the information was never in the feature set at all.
-3. **Spring is newly added, not yet proven.** `workable_days` and its companions correctly
-   identify Iowa 2013 and Nebraska 2019 from raw weather; whether they improve the model is a
-   separate question the feature ladder answers.
+3. **Iowa's spring relationships have drifted.** They hold through 2018 and not afterwards, so
+   an Iowa model should be refit on recent years or weight them more heavily.
+4. **Nebraska 2019 is still the second-largest miss.** That disaster was ice, not water — rain
+   on frozen ground, ice jams, failed levees — and a precipitation column cannot see any of
+   that.
 4. **Coverage is not missing at random.** NASS reported 91 Nebraska counties in 2000 and 46
    in 2025, and the counties that stop reporting are the ones that grow little corn.
 
@@ -202,8 +250,9 @@ Run the tests with `pytest` — they use synthetic fixtures, so no network or AP
 - [x] Interactive Streamlit app
 - [x] Second state (Iowa) end to end
 - [x] Cross-state transfer test
-- [ ] Deploy to Streamlit Community Cloud
 - [x] Spring / planting-window features, including a workable-fieldwork-days measure
+- [x] Deployed to Streamlit Community Cloud
+- [ ] Planted vs. harvested acres, to test the prevented-planting selection effect
 - [ ] Cropland-weighted weather (Cropland Data Layer)
 - [ ] Wind and storm damage
 - [ ] A third state, to turn one transfer result into a pattern

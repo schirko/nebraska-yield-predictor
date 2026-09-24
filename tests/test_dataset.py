@@ -2,8 +2,9 @@
 
 import pandas as pd
 
-from yieldpred.dataset import (SPRING_FEATURES, WEATHER_FEATURES, available_extras,
-                               available_spring, feature_groups, feature_matrix)
+from yieldpred.dataset import (SPRING_CALENDAR, SPRING_FEATURES, SPRING_RAIN,
+                               WEATHER_FEATURES, available_extras, available_spring,
+                               feature_groups, feature_matrix)
 
 
 def make_table(n: int = 4) -> pd.DataFrame:
@@ -49,19 +50,46 @@ def test_available_spring_finds_only_what_is_there():
     assert available_spring(df) == ["workable_days", "gdd_may"]
 
 
+def spring_table() -> pd.DataFrame:
+    return make_table().assign(irrigation_share=0.5, elevation_m=400.0,
+                               **{feat: 1.0 for feat in SPRING_FEATURES})
+
+
 def test_feature_groups_bundles_spring_and_keeps_the_rest_singular():
-    df = make_table().assign(irrigation_share=0.5, elevation_m=400.0,
-                             **{feat: 1.0 for feat in SPRING_FEATURES})
-    groups = feature_groups(df)
+    groups = feature_groups(spring_table())
 
     labels = [label for label, _ in groups]
     assert labels[:2] == ["irrigation_share", "elevation_m"]
     assert labels[-1].startswith("spring weather")
 
     columns = [column for _, cols in groups for column in cols]
-    assert columns == available_extras(df) + SPRING_FEATURES
+    assert columns == available_extras(spring_table()) + SPRING_FEATURES
     assert groups[-1][1] == SPRING_FEATURES
 
 
 def test_feature_groups_is_empty_without_optional_columns():
     assert feature_groups(make_table()) == []
+
+
+def test_split_spring_separates_rain_from_calendar():
+    groups = feature_groups(spring_table(), split_spring=True)
+
+    labels = [label for label, _ in groups]
+    assert labels[-2].startswith("spring rain")
+    assert labels[-1].startswith("spring calendar")
+    assert groups[-2][1] == SPRING_RAIN
+    assert groups[-1][1] == SPRING_CALENDAR
+
+
+def test_splitting_does_not_change_which_columns_are_used():
+    """The experiment must differ only in grouping, or its comparison means nothing."""
+    df = spring_table()
+    combined = [c for _, cols in feature_groups(df) for c in cols]
+    split = [c for _, cols in feature_groups(df, split_spring=True) for c in cols]
+    assert combined == split
+
+
+def test_split_spring_skips_halves_that_are_absent():
+    df = make_table().assign(**{feat: 1.0 for feat in SPRING_RAIN})
+    labels = [label for label, _ in feature_groups(df, split_spring=True)]
+    assert labels == ["spring rain (3)"]

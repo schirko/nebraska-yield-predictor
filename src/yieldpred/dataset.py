@@ -17,8 +17,16 @@ WEATHER_FEATURES = ["gdd", "precip_mm", "precip_jul_mm", "precip_aug_mm",
 # they are worth, and every number already published for the weather-only model
 # stays comparable. They exist only in weather files rebuilt after
 # `weather.spring_features` was added.
-SPRING_FEATURES = ["precip_mar_mm", "precip_apr_may_mm", "workable_days",
-                   "last_frost_doy", "gdd_may"]
+#
+# The two halves are named separately because they behave differently, and the
+# difference is testable. SPRING_RAIN varies from year to year and county to
+# county - genuine weather. SPRING_CALENDAR barely moves within a county, so it
+# can act as a county fingerprint: useful when every county is in training (the
+# temporal test) and useless when counties are held out (the spatial test).
+# `feature_groups(df, split_spring=True)` scores them separately to find out.
+SPRING_RAIN = ["precip_mar_mm", "precip_apr_may_mm", "workable_days"]
+SPRING_CALENDAR = ["last_frost_doy", "gdd_may"]
+SPRING_FEATURES = SPRING_RAIN + SPRING_CALENDAR
 
 
 def load_yields(state: str = "ne", practice: str = "all") -> pd.DataFrame:
@@ -98,18 +106,33 @@ def available_spring(df: pd.DataFrame) -> list[str]:
     return [c for c in SPRING_FEATURES if c in df.columns]
 
 
-def feature_groups(df: pd.DataFrame) -> list[tuple[str, list[str]]]:
+def feature_groups(df: pd.DataFrame,
+                   split_spring: bool = False) -> list[tuple[str, list[str]]]:
     """The optional features, as named groups, in the order the study adds them.
 
     A group can be one column or several. Spring weather is five columns that
     belong to a single idea - what happened before planting - so adding them one
     at a time would make the ladder five rows longer without answering five
     separate questions.
+
+    `split_spring=True` splits that group into rain and calendar halves. It is a
+    deliberate opt-in rather than the default: the combined group is the honest
+    unit for reporting "what did spring buy", and the split exists to test one
+    specific hypothesis about *why* the two states responded differently.
     """
     groups = [(name, [name]) for name in available_extras(df)]
-    spring = available_spring(df)
-    if spring:
-        groups.append((f"spring weather ({len(spring)})", spring))
+
+    if not split_spring:
+        spring = available_spring(df)
+        if spring:
+            groups.append((f"spring weather ({len(spring)})", spring))
+        return groups
+
+    for label, columns in (("spring rain", SPRING_RAIN),
+                           ("spring calendar", SPRING_CALENDAR)):
+        present = [c for c in columns if c in df.columns]
+        if present:
+            groups.append((f"{label} ({len(present)})", present))
     return groups
 
 

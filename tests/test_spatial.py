@@ -2,6 +2,7 @@
 
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 import pytest
 from shapely.geometry import box
 
@@ -99,3 +100,33 @@ def test_coverage_simplification_preserves_neighbours():
     assert after["mean_neighbors"] == before["mean_neighbors"]
     assert (simplified.geometry.count_coordinates().sum()
             <= wobbly.geometry.count_coordinates().sum())
+
+
+# ----------------------------------------------- joins: statistics vs maps
+
+def three_counties():
+    gdf = gpd.GeoDataFrame({"fips": ["31001", "31003", "31075"]},
+                           geometry=[box(i, 0, i + 1, 1) for i in range(3)],
+                           crs="EPSG:4326")
+    values = pd.DataFrame({"fips": ["31001", "31003"], "error": [1.0, -1.0]})
+    return gdf, values
+
+
+def test_inner_join_drops_counties_without_values():
+    """Moran's I needs a value for every unit in the weights graph."""
+    merged, array = align_to_geometry(*three_counties(), value_col="error")
+    assert len(merged) == 2 and len(array) == 2
+    assert "31075" not in set(merged["fips"])
+
+
+def test_left_join_keeps_every_polygon_for_maps():
+    """A county dropped from a map leaves nothing, not a readable gap.
+
+    Grant and Hooker really did vanish from every figure in this project until
+    a rendered map was looked at closely.
+    """
+    merged, array = align_to_geometry(*three_counties(), value_col="error",
+                                      how="left")
+    assert len(merged) == 3
+    assert merged.loc[merged["fips"] == "31075", "error"].isna().all()
+    assert np.isnan(array).sum() == 1

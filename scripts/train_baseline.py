@@ -43,6 +43,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--state", default="NE", help="Two-letter state code")
     parser.add_argument("--state-fips", default="31")
+    parser.add_argument("--split-spring", action="store_true",
+                        help="Score spring rain and spring calendar as separate "
+                             "groups, to test whether the calendar features are "
+                             "acting as county fingerprints rather than weather")
     args = parser.parse_args()
     state = args.state.lower()
 
@@ -109,7 +113,7 @@ def main() -> None:
     # model, same folds, same rows - so every difference is attributable to one
     # thing. A "group" is usually one column; spring weather is five columns that
     # answer a single question, so they go in and come out together.
-    study = feature_groups(df)
+    study = feature_groups(df, split_spring=args.split_spring)
     extras = [column for _, columns in study for column in columns]
     if study:
         print("\n" + "=" * 78)
@@ -174,14 +178,21 @@ def main() -> None:
                    evaluate(without(*columns), y_all, groups_all, used_all,
                             label).items() if k != "features"}})
 
+        # The split run is an experiment, not the reported result, so it writes to
+        # its own files. Otherwise it would quietly replace the tables the app and
+        # the documentation read, and the two would disagree without anyone noticing.
+        suffix = "_split" if args.split_spring else ""
+
         comparison_df = pd.DataFrame(ladder)
-        comparison_df.to_parquet(output_path("irrigation_comparison", state), index=False)
+        comparison_df.to_parquet(output_path(f"irrigation_comparison{suffix}", state),
+                                 index=False)
         print("\n" + comparison_df.set_index("features").round(3).to_string())
         print("\nEach row adds one feature (or one group) to the row above. Same "
               "model, same folds, same rows.")
 
         ablation_df = pd.DataFrame(ablation)
-        ablation_df.to_parquet(output_path("feature_ablation", state), index=False)
+        ablation_df.to_parquet(output_path(f"feature_ablation{suffix}", state),
+                               index=False)
         print("\n" + "=" * 78)
         print("WHAT EACH FEATURE IS WORTH ON ITS OWN (remove one, keep the rest)")
         print("=" * 78)

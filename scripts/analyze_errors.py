@@ -109,14 +109,21 @@ def main() -> None:
     print("MAPS")
     print("=" * 70)
 
-    choropleth(merged, "error",
+    # Maps keep every polygon (see align_to_geometry): a county with no data must
+    # be drawn and marked, not dropped, or the map has an unexplained hole.
+    mapped, _ = align_to_geometry(counties, county_mean, value_col="error", how="left")
+    missing = len(mapped) - len(merged)
+    if missing:
+        print(f"{missing} counties have no model data and are drawn as 'no data'")
+
+    choropleth(mapped, "error",
                "Where the model misses",
                "Average prediction error by county, 2000-2025. "
                "Blue = model predicts too low, orange = too high.",
                SOURCE, diverging=True, legend_label="bu/acre (predicted - actual)",
                out_path=FIGURES / f"error_map_{state}.png")
 
-    choropleth(merged, "actual",
+    choropleth(mapped, "actual",
                "Average corn yield by county",
                "Nebraska, 2000-2025", SOURCE,
                legend_label="bu/acre", out_path=FIGURES / f"yield_map_{state}.png")
@@ -126,7 +133,7 @@ def main() -> None:
         if year_rows.empty:
             continue
         year_merged, _ = align_to_geometry(counties, year_rows[["fips", "error"]],
-                                           value_col="error")
+                                           value_col="error", how="left")
         choropleth(year_merged, "error",
                    f"Prediction error in {year}",
                    {2012: "The drought year", 2019: "The flood year"}.get(year, ""),
@@ -137,7 +144,8 @@ def main() -> None:
     if share_path.exists():
         share = pd.read_parquet(share_path)
         latest = share[share["year"] == share["year"].max()][["fips", "irrigation_share"]]
-        share_merged, _ = align_to_geometry(counties, latest, value_col="irrigation_share")
+        share_merged, _ = align_to_geometry(counties, latest,
+                                            value_col="irrigation_share", how="left")
         choropleth(share_merged, "irrigation_share",
                    "Share of corn acres irrigated",
                    f"{share['year'].max()}, interpolated from NASS survey and census data",

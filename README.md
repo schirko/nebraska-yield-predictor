@@ -50,12 +50,14 @@ Each row adds one feature to the row above — same model, same folds, same rows
 
 | Feature set | Spatial RMSE | Spatial R² | Temporal R² |
 |---|---|---|---|
-| Weather only | 26.53 | 0.313 | −0.052 |
-| + irrigation share | 20.69 | **0.582** | 0.317 |
-| + NCCPI soil rating | 20.22 | 0.601 | **0.499** |
-| + elevation | 20.23 | 0.601 | 0.500 |
-| + spring / planting-window weather | 19.61 | 0.625 | 0.517 |
-| All features, no look-ahead control | 18.92 | **0.651** | **0.561** |
+| Weather only (all 2,069 rows — control) | 26.53 | 0.313 | −0.052 |
+| Weather only (2,002 study rows) | 24.51 | 0.395 | −0.019 |
+| + irrigation share | 19.90 | **0.601** | 0.294 |
+| + NCCPI soil rating | 19.35 | 0.623 | 0.471 |
+| + elevation | 19.06 | 0.634 | 0.497 |
+| + corn-soybean rotation | 18.91 | 0.640 | 0.490 |
+| + spring / planting-window weather | 18.52 | 0.655 | 0.473 |
+| All features, no look-ahead control | 17.83 | **0.680** | **0.542** |
 
 Irrigation share — reconstructed from NASS harvested-acre ratios, since it isn't published as
 a feature — lifted the spatial score by **+0.27 R²**, more than any amount of hyperparameter
@@ -65,14 +67,48 @@ The last row is a leakage control: the irrigation series is rebuilt using only o
 from 2018 or earlier, so the temporal test can't borrow from the 2022 Census. The score
 didn't fall, so the leak wasn't doing any work.
 
-Ablation tells a different story from the ladder, which is why both are reported. Removing
-irrigation share costs **0.41** of spatial R² — far more than the 0.27 it appeared to add when
-it entered first. Removing the soil rating *improves* the spatial score (0.625 → 0.635): once
-spring and elevation are present, NCCPI is not merely redundant in Nebraska but mildly harmful.
-A ladder measures what a feature adds to what came before; ablation measures what is lost when
-nothing can substitute for it.
+**The first two rows are the same features on different rows.** Sixty-seven county-years drop
+out for want of an optional feature, and that alone moves spatial R² by **+0.082** — larger than
+most features in this project. The row set is a variable, so the ladder reports it and scores
+the baseline twice.
 
-### 3. The Errors Are A Map, Not Noise
+Ablation tells a different story from the ladder, which is why both are reported. Removing
+irrigation share costs **0.32** of spatial R². Removing the soil rating *improves* both scores
+(spatial 0.655 → 0.675, temporal 0.473 → 0.508): in Nebraska NCCPI is not merely redundant but
+harmful, across four independent runs. A ladder measures what a feature adds to what came
+before; ablation measures what is lost when nothing can substitute for it — and only the second
+one can tell you to delete something.
+
+### 3. The Two States Need Different Models
+
+Iowa's best spatial score is **0.781** — the highest in the project — and the feature that
+got it there is one Nebraska barely notices.
+
+| Iowa, cumulative | rows | spatial R² | temporal R² |
+|---|---|---|---|
+| Weather only (control / study rows) | 2,470 / 2,444 | 0.701 / 0.694 | 0.147 / 0.161 |
+| + NCCPI soil rating | 2,444 | 0.677 | 0.336 |
+| + elevation | 2,444 | 0.654 | 0.357 |
+| **+ corn-soybean rotation** | 2,444 | **0.769** | **0.480** |
+| + spring / planting-window weather | 2,444 | **0.781** | 0.342 |
+
+Corn following soybeans out-yields corn following corn by roughly 10–15%, and a county's
+acreage split says how much of its corn is rotated. Reconstructed from NASS planted acres —
+not published as a feature — it's worth **+0.115 spatial** in Iowa and **+0.006** in Nebraska.
+
+The asymmetry has a cause: in Nebraska `corn_share` correlates +0.64 with irrigation share
+and −0.81 with soil rating, so it restates columns already in the model. Iowa's continuous
+corn is a genuinely separate fact about a county.
+
+Ablation turns that into two different recommendations, each with a table behind it:
+
+- **Nebraska: drop NCCPI.** Removing it improves spatial 0.655 → 0.675 *and* temporal 0.473 → 0.508.
+- **Iowa: the spring features are a trade.** With them, 0.781 spatial and 0.342 temporal;
+  without, 0.769 and **0.480**. Keep them to rank unseen counties, drop them to forecast.
+
+One model per region, chosen by evidence rather than by preference.
+
+### 4. The Errors Are A Map, Not Noise
 
 ![Average prediction error by county](figures/error_map_ne.png)
 
@@ -94,7 +130,7 @@ agricultural geography: heavy irrigation up the central Platte Valley and west, 
 the wetter southeast. A feature that reproduces a geography you already know is probably
 measuring what you think it is.
 
-### 4. Does It Transfer? Iowa Says Mostly Yes
+### 5. Does It Transfer? Iowa Says Mostly Yes
 
 `scripts/cross_state.py --train NE --test IA` trains on Nebraska only and predicts Iowa cold —
 without irrigation share, because Iowa doesn't irrigate.
@@ -127,7 +163,7 @@ worse, because there is still **no wind variable** and extra features only give 
 ways to be confidently wrong about a cause it cannot see. A change that fixes the case you
 predicted and leaves the case you didn't is better evidence than one that improves everything.
 
-### 5. A Relationship That Expired
+### 6. A Relationship That Expired
 
 The temporal holdout caught something a spatial split never could. Spring features improved
 Nebraska on every test, but in Iowa they *repaired* the spatial score and *wrecked* the temporal
@@ -147,7 +183,7 @@ This is **non-stationarity**, and it is the kind of thing that breaks deployed m
 The decision taken here was to keep the features and report the drift rather than quietly drop
 them to protect a number.
 
-### 6. The Same Feature Can Mean Opposite Things
+### 7. The Same Feature Can Mean Opposite Things
 
 | Feature | Nebraska | Iowa |
 |---|---|---|
@@ -258,6 +294,21 @@ Run the tests with `pytest` — they use synthetic fixtures, so no network or AP
 - [ ] Cropland-weighted weather (Cropland Data Layer)
 - [ ] Wind and storm damage
 - [ ] A third state, to turn one transfer result into a pattern
+
+## Disclaimer
+
+Educational and portfolio project. **Not agronomic, financial or insurance advice.**
+
+Predictions are county averages with a typical error of roughly 14 bu/acre (Nebraska)
+and 10 bu/acre (Iowa) on unseen counties, and the errors cluster geographically in
+every year of the record. The model is retrospective and has never been validated for
+in-season use. See the Limitations panel in the app, or `notes/METHODS.md`, for the
+full accuracy picture.
+
+This product uses the USDA NASS Quick Stats API but is not endorsed or certified by
+USDA NASS. It likewise uses USDA NRCS Soil Data Access, NASA POWER, USGS and US Census
+Bureau data without endorsement by those agencies. All source data is public; any error
+in the analysis is mine.
 
 ## Author
 

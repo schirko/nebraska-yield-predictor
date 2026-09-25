@@ -18,6 +18,7 @@ from yieldpred.appdata import (feature_correlations, load_ablation,
                                load_errors, load_scores, missing_data_message,
                                scores_by_scheme, worst_years)
 
+from yieldpred.disclaimer import FOOTER
 st.set_page_config(page_title="Model & Validation", page_icon="📊", layout="wide")
 
 
@@ -213,3 +214,7 @@ if errors is not None:
     st.caption("Positive means the model predicted too high. 2019 was Nebraska's March "
                "flood year — planting was delayed or prevented, which no April–September "
                "weather feature can see.")
+
+# ------------------------------------------------------------------ disclaimer
+st.divider()
+st.caption(FOOTER)

@@ -59,3 +59,37 @@ def test_every_page_says_something():
         app = AppTest.from_file(str(page), default_timeout=120).run()
         rendered = len(app.markdown) + len(app.warning) + len(app.title)
         assert rendered, f"{page.name} rendered no text"
+
+
+def test_every_page_carries_the_disclaimer():
+    """A new page must not ship without the legal footer.
+
+    Checked statically rather than by rendering, because a page that stops early
+    for missing data never reaches its footer - and the notice still has to be in
+    the source. The text itself lives in one module so five pages can't drift.
+    """
+    for page in PAGES:
+        text = page.read_text(encoding="utf-8")
+        assert "from yieldpred.disclaimer import" in text, \
+            f"{page.name} does not import the disclaimer"
+        assert "st.caption(FOOTER)" in text, \
+            f"{page.name} does not render the disclaimer footer"
+
+
+def test_the_disclaimer_says_the_three_things_it_has_to():
+    """Not advice, no endorsement, and accuracy in numbers."""
+    from yieldpred.disclaimer import DATA_SOURCES, FOOTER, LIMITATIONS, README_BLOCK
+
+    # Case-insensitive: the phrase starts a sentence in some of these.
+    assert "advice" in FOOTER.lower()
+    assert "not endorsed or certified" in FOOTER.lower()
+    assert "bu/acre" in FOOTER                      # a number, not just a warning
+
+    for agency in ("NASS", "NASA POWER", "USGS", "Census"):
+        assert agency in DATA_SOURCES, f"{agency} missing from the source notice"
+    assert "not endorsed or certified" in DATA_SOURCES.lower()
+
+    for claim in ("bu/acre", "Moran", "retrospective", "2007", "2018"):
+        assert claim in LIMITATIONS, f"limitations should mention {claim}"
+
+    assert "not endorsed or certified" in README_BLOCK.lower()

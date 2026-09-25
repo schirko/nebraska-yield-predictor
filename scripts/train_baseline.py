@@ -27,6 +27,7 @@ from yieldpred.dataset import (PROCESSED, available_rotation, build_modeling_tab
                                feature_groups, feature_matrix,
                                load_irrigation_observed, output_path)
 from yieldpred.irrigation import build_share_series
+from yieldpred.leak import LeakFreeGroupKFold, leak_report, power_cells
 from yieldpred.trend import DetrendedRegressor
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -288,9 +289,80 @@ def main() -> None:
         print("\nA feature that barely changes the score when removed is REDUNDANT - "
               "\nanother feature covers for it - not necessarily unimportant.")
 
+    # ---- Is leave-district-out leaking weather? ------------------------------
+    # Counties smaller than a NASA POWER grid cell can be served by the same cell,
+    # in which case their weather rows are identical. If two such counties sit in
+    # different districts, holding one out leaves its exact weather vector in the
+    # training data. Rerun the spatial CV with those training rows removed - test
+    # folds untouched, so the two scores are measured on identical rows.
+    X, y, groups, used = feature_matrix(df, extra=extras or None)
+    weather = pd.read_parquet(PROCESSED / f"weather_county_{args.state_fips}.parquet")
+    cells_by_county = power_cells(weather)
+    report = leak_report(cells_by_county.reindex(used["fips"].unique()),
+                         used.drop_duplicates("fips").set_index("fips")["asd_desc"])
+
+    print("\n" + "=" * 78)
+    print("DOES THE SPATIAL HOLDOUT LEAK WEATHER?")
+    print("=" * 78)
+    print(f"{report['counties']} modelled counties served by {report['cells']} "
+          f"distinct POWER cells")
+    print(f"cells spanning more than one district: {report['cells_crossing_districts']}")
+    print(f"counties whose exact weather sits in another district: "
+          f"{report['counties_leaking']} ({report['share_leaking']:.0%})")
+
+    leak_rows = None
+    if report["counties_leaking"]:
+        cells_by_row = used["fips"].map(cells_by_county).to_numpy()
+        control = DetrendedRegressor(boosting())
+        standard = cross_val_predict(control, X, y, cv=GroupKFold(5), groups=groups)
+        splitter = LeakFreeGroupKFold(5, cells_by_row)
+        leakfree = cross_val_predict(DetrendedRegressor(boosting()), X, y,
+                                     cv=splitter, groups=groups)
+        cost = splitter.training_cost()
+
+        # The control that makes the comparison mean something. Removing rows
+        # lowers a score on its own, so drop the SAME number at random and see
+        # what that costs. Several seeds, because one draw is not a control.
+        thinned = []
+        for seed in range(5):
+            pred = cross_val_predict(DetrendedRegressor(boosting()), X, y,
+                                     cv=splitter.matched_control(seed=seed),
+                                     groups=groups)
+            thinned.append(scores(y, pred))
+        thin_s = {k: float(np.mean([t[k] for t in thinned])) for k in thinned[0]}
+
+        std_s, lf_s = scores(y, standard), scores(y, leakfree)
+        leak_rows = pd.DataFrame([
+            {"spatial CV": "standard (leaky)", **std_s},
+            {"spatial CV": "same rows dropped, chosen at random (control)", **thin_s},
+            {"spatial CV": "leaking counties dropped from training", **lf_s},
+        ]).set_index("spatial CV")
+        print("\n" + leak_rows.round(3).to_string())
+        print(f"\nThe filter cost {cost['share_of_training_lost']:.0%} of the training "
+              f"rows ({cost['rows_dropped_total']:,} of "
+              f"{cost['rows_dropped_total'] + sum(splitter.trained_):,}), "
+              f"per fold {cost['rows_dropped_per_fold']}. The control row above "
+              f"loses the same count at random, averaged over 5 seeds.")
+
+        raw = std_s["R2"] - lf_s["R2"]
+        from_size = std_s["R2"] - thin_s["R2"]
+        attributable = raw - from_size
+        print(f"\nTotal drop when the leak is removed:      {raw:+.3f} R2")
+        print(f"Drop explained by the smaller training set: {from_size:+.3f} R2")
+        print(f"-> attributable to the leak:               {attributable:+.3f} R2")
+        if attributable <= 0.005:
+            print("\nThe leaking rows were worth no more than any other rows. The")
+            print("spatial score is not meaningfully inflated by shared weather.")
+        else:
+            print(f"\nThe spatial score is inflated by roughly {attributable:.3f} R2.")
+            print("Report the corrected figure, or report both.")
+        leak_rows.reset_index().to_parquet(
+            output_path("leak_control", state), index=False)
+    else:
+        print("\nNothing to correct: no cell spans a district boundary here.")
+
     # Where does the best model miss? Save errors for mapping later.
     # Use every feature available, which is the model the app and the maps report on.
-    X, y, groups, used = feature_matrix(df, extra=extras or None)
     best = DetrendedRegressor(boosting())
     pred = cross_val_predict(best, X, y, cv=GroupKFold(5), groups=groups)
     errors = used[["fips", "county_name", "year", "asd_desc", "yield_bu_acre"]].copy()

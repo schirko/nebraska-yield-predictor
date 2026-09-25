@@ -18,7 +18,7 @@ from yieldpred.appdata import (feature_correlations, load_ablation,
                                load_errors, load_scores, missing_data_message,
                                scores_by_scheme, worst_years)
 
-st.set_page_config(page_title="Model & validation", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Model & Validation", page_icon="📊", layout="wide")
 
 
 @st.cache_data
@@ -30,7 +30,7 @@ def data():
 
 scores, model_table, errors, comparison, ablation, morans_year, morans_pooled = data()
 
-st.title("Model & validation")
+st.title("Model & Validation")
 
 message = missing_data_message({"model": scores is not None})
 if message:
@@ -95,7 +95,7 @@ gain from tuning.
   about $90 an acre. No grain merchandiser or crop insurer would trade on it.
 - **The errors still cluster geographically**, so something spatial is still missing.
 - **It does do worse outside Nebraska.** Applied cold to Iowa it scores 0.50 against an
-  Iowa-native 0.65 — see the *Does it transfer?* page. Good evidence it learned agronomy, and
+  Iowa-native 0.65 — see the *Does It Transfer?* page. Good evidence it learned agronomy, and
   equally good evidence that a one-state model is not a Corn Belt model.
 
 The defensible claim is *good for a project built from public data, honestly validated, with

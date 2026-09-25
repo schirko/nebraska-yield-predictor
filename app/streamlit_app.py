@@ -105,10 +105,10 @@ with sidebar:
 
     st.subheader("Explore")
     st.page_link("pages/1_Maps.py", label="Maps", icon="🗺️")
-    st.page_link("pages/2_County_explorer.py", label="County explorer", icon="🔎")
-    st.page_link("pages/3_Model_and_validation.py", label="Model & validation", icon="📊")
-    st.page_link("pages/4_How_it_works.py", label="How it works", icon="🛠️")
-    st.page_link("pages/5_Does_it_transfer.py", label="Does it transfer?", icon="🔁")
+    st.page_link("pages/2_County_Explorer.py", label="County Explorer", icon="🔎")
+    st.page_link("pages/3_Model_and_Validation.py", label="Model & Validation", icon="📊")
+    st.page_link("pages/4_How_It_Works.py", label="How It Works", icon="🛠️")
+    st.page_link("pages/5_Does_It_Transfer.py", label="Does It Transfer?", icon="🔁")
 
 st.divider()
 st.caption("Data: USDA NASS Quick Stats · NASA POWER · US Census Bureau. "

@@ -16,7 +16,7 @@ import streamlit as st
 from yieldpred.appdata import (county_choices, county_history, load_errors,
                                load_model_table, load_yields, missing_data_message)
 
-st.set_page_config(page_title="County explorer", page_icon="🔎", layout="wide")
+st.set_page_config(page_title="County Explorer", page_icon="🔎", layout="wide")
 
 
 @st.cache_data
@@ -26,7 +26,7 @@ def data():
 
 model_table, errors, yields = data()
 
-st.title("County explorer")
+st.title("County Explorer")
 
 message = missing_data_message({"model": model_table is not None,
                                 "yields": yields is not None})

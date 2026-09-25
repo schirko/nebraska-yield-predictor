@@ -12,9 +12,9 @@ if str(_SRC) not in sys.path:
 
 import streamlit as st
 
-st.set_page_config(page_title="How it works", page_icon="🛠️", layout="wide")
+st.set_page_config(page_title="How It Works", page_icon="🛠️", layout="wide")
 
-st.title("How it works")
+st.title("How It Works")
 st.caption("The architecture, the data, and the ideas — for anyone who wants to know "
            "what's under the hood")
 

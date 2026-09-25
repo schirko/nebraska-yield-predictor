@@ -21,7 +21,7 @@ from yieldpred.geo import display_geometry
 from yieldpred.spatial import align_to_geometry
 from yieldpred.viz import interactive_choropleth
 
-st.set_page_config(page_title="Does it transfer?", page_icon="🔁", layout="wide")
+st.set_page_config(page_title="Does It Transfer?", page_icon="🔁", layout="wide")
 
 
 @st.cache_data
@@ -39,7 +39,7 @@ def data():
 (predictions, scores, iowa_shapes, ne_table, ia_table,
  ne_errors, ia_errors, ia_ladder) = data()
 
-st.title("Does it transfer?")
+st.title("Does It Transfer?")
 st.markdown("""
 Every other page answers one question: *how well does this model do on Nebraska?* This page
 answers a harder one: **did it learn agronomy, or did it learn Nebraska?**

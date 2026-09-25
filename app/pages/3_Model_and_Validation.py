@@ -13,7 +13,8 @@ if str(_SRC) not in sys.path:
 import streamlit as st
 
 from yieldpred.appdata import (feature_correlations, load_ablation,
-                               load_irrigation_comparison, load_model_table,
+                               load_irrigation_comparison, load_leak_control,
+                               load_model_table,
                                load_morans_by_year, load_morans_pooled,
                                load_errors, load_scores, missing_data_message,
                                scores_by_scheme, worst_years)
@@ -26,10 +27,10 @@ st.set_page_config(page_title="Model & Validation", page_icon="📊", layout="wi
 def data():
     return (load_scores(), load_model_table(), load_errors(),
             load_irrigation_comparison(), load_ablation(),
-            load_morans_by_year(), load_morans_pooled())
+            load_morans_by_year(), load_morans_pooled(), load_leak_control())
 
 
-scores, model_table, errors, comparison, ablation, morans_year, morans_pooled = data()
+scores, model_table, errors, comparison, ablation, morans_year, morans_pooled, leak = data()
 
 st.title("Model & Validation")
 
@@ -200,9 +201,60 @@ driver is missing from the features — if the model had captured everything geo
 leftovers would look like random static.
 
 The east–west gradient in the error map is what prompted adding soil productivity and
-elevation. Both helped, and the errors still cluster, so something spatial remains: the
-leading suspects now are where the corn actually grows within each county (cropland-weighted
-weather) and the spring planting window.
+elevation. Both helped, and the errors still cluster, so something spatial remains.
+
+The obvious suspect was *where* the weather is measured — one NASA POWER point per county,
+on a grid whose cells are about 55 km across. That was tested and **ruled out**: counties
+with barely a quarter of their area inside the cell that gets queried are predicted no worse
+than counties sitting wholly inside one. The limit is the 55 km grid itself rather than the
+choice of point within it, which points at a finer weather product rather than at weighting
+this one more cleverly.
+""")
+
+# ------------------------------------------------------------------- the leak
+st.subheader("Is the unseen-county test honest?")
+st.markdown("""
+Holding out whole districts is supposed to guarantee the model has never seen the county it
+is predicting. Checking that guarantee turned up a hole in it.
+
+NASA POWER serves weather on a grid of cells about **55 km** across, and most counties here
+are smaller than that — so two counties can be served by the *same cell*, and when they are,
+their weather rows are not merely similar but **identical to the last decimal**. If those two
+counties sit in different districts, holding one out leaves its exact weather vector in the
+training data. The county is unseen. Its weather is not.
+""")
+
+if leak is not None:
+    table = leak.set_index("spatial CV").round(3)
+    st.dataframe(table, width="stretch")
+    st.caption("The middle row is the control that makes this readable: removing rows lowers "
+               "a score by itself, so the same number of training rows is dropped at random "
+               "(five seeds) to separate the leak from the missing data.")
+    rows = table["R2"]
+    total = rows.iloc[0] - rows.iloc[-1]
+    size = rows.iloc[0] - rows.iloc[1]
+    st.markdown(
+        f"Total drop **{total:+.3f}**, of which the smaller training set explains "
+        f"**{size:+.3f}** — so **{total - size:+.3f}** is the leak.")
+else:
+    st.info("No cell here spans a district boundary, so there is nothing to correct. "
+            "That is a result, not missing data.")
+
+st.markdown("""
+**The two states differ sharply, and the reason is geometry.** In Nebraska only 2 of 88
+modelled counties leak, and the correction is indistinguishable from zero. In Iowa it is
+**43 of 98 — 44%** — because Iowa's nine districts are small and regular, so grid cells
+straddle their boundaries constantly. Iowa's best spatial score, 0.781, is inflated by about
+**0.023**; leak-free it is roughly 0.758.
+
+Two things worth taking from that. First, it **cannot be fixed by regrouping**: requiring
+that no cell ever be split across folds chains all nine Iowa districts into a single group,
+leaving nothing to hold out. It can only be measured. Second, a 44% leak rate buying only
+0.023 is worth understanding rather than explaining away — **sharing a weather vector is not
+sharing an answer.** The paired counties still differ in soil, elevation, rotation and yield,
+so the model gets a strong hint about one input, not about the target.
+
+Reproduce it yourself with `python scripts/probe_weather_grid.py`.
 """)
 
 # ------------------------------------------------------------- worst years

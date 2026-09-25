@@ -92,4 +92,10 @@ def test_the_disclaimer_says_the_three_things_it_has_to():
     for claim in ("bu/acre", "Moran", "retrospective", "2007", "2018"):
         assert claim in LIMITATIONS, f"limitations should mention {claim}"
 
+    # The spatial-holdout leak is a known optimism in a headline number, so the
+    # limitations panel has to carry it. Both figures, not just the caveat: a
+    # reader who sees 0.781 quoted elsewhere needs the corrected one here.
+    assert "0.023" in LIMITATIONS and "0.758" in LIMITATIONS, \
+        "limitations must state the Iowa leak correction in numbers"
+
     assert "not endorsed or certified" in README_BLOCK.lower()

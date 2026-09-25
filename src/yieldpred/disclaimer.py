@@ -62,6 +62,12 @@ states (Moran's I +0.60 Nebraska, +0.56 Iowa). Some places are wrong in the same
 direction year after year, which means a specific county's error is likely to be
 worse, or better, than the average above.
 
+**Iowa's unseen-county score is optimistic by about 0.023.** Two counties served by the
+same NASA POWER weather cell have identical weather rows, and 44% of Iowa's modelled counties
+share theirs with a county in a different agricultural district - so the leave-district-out
+test is not quite as clean as it looks there. Measured rather than assumed: 0.781 as reported,
+about 0.758 with the leaking rows removed from training. Nebraska is unaffected (2%).
+
 **It is retrospective, not a forecast.** The model explains seasons that have already
 happened. It has never been built or validated to predict a crop in progress.
 

@@ -160,7 +160,7 @@ with tab_words:
 | **Hyperparameter** | A setting chosen before training, such as how many trees to build |
 | **Residual** | Actual minus predicted — what's left over |
 | **Cross-validation** | Repeatedly hold out part of the data, train on the rest, score the held-out part |
-| **Leakage** | Information about the test data reaching the model during training |
+| **Leakage** | Information about the test data reaching the model during training — see Model & Validation for a real one found in this project |
 | **R²** | Share of variation explained: 1 perfect, 0 no better than the average, negative worse |
 | **RMSE** | Typical error size in bu/acre, with large misses penalized extra |
 | **Spatial autocorrelation** | Nearby places resemble each other, so their data isn't independent |

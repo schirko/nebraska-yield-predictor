@@ -74,6 +74,15 @@ def load_ablation(state: str = "ne") -> pd.DataFrame | None:
     return _read(_stem("feature_ablation", state))
 
 
+def load_leak_control(state: str = "ne") -> pd.DataFrame | None:
+    """The three-row leak comparison written by train_baseline.
+
+    Absent when a state has no cell spanning a district boundary, which is a
+    real answer rather than missing data - the page says so instead of warning.
+    """
+    return _read(_stem("leak_control", state))
+
+
 def load_morans_by_year(state: str = "ne") -> pd.DataFrame | None:
     return _read(_stem("morans_by_year", state))
 

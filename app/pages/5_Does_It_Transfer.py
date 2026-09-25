@@ -17,6 +17,7 @@ from yieldpred.appdata import (county_skill, load_counties, load_cross_state,
                                load_cross_state_scores, load_errors,
                                load_irrigation_comparison, load_model_table,
                                transfer_by_year, variance_decomposition)
+from yieldpred.disclaimer import FOOTER
 from yieldpred.geo import display_geometry
 from yieldpred.spatial import align_to_geometry
 from yieldpred.viz import interactive_choropleth
@@ -253,3 +254,7 @@ Each rung removes a different kind of memorization. A model that survives the fo
 learned relationships rather than a lookup table — and the honest way to report it is with the
 floor and the ceiling beside it.
 """)
+
+# ------------------------------------------------------------------ disclaimer
+st.divider()
+st.caption(FOOTER)

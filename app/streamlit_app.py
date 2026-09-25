@@ -21,6 +21,7 @@ import streamlit as st
 from yieldpred.appdata import (irrigation_gap, load_morans_pooled, load_scores,
                                load_yields, missing_data_message, state_yield_history)
 
+from yieldpred.disclaimer import FOOTER
 st.set_page_config(page_title="Nebraska Corn Yield Predictor", page_icon="🌽",
                    layout="wide")
 
@@ -113,3 +114,7 @@ with sidebar:
 st.divider()
 st.caption("Data: USDA NASS Quick Stats · NASA POWER · US Census Bureau. "
            "Built with Python, scikit-learn, GeoPandas and Streamlit.")
+
+# ------------------------------------------------------------------ disclaimer
+st.divider()
+st.caption(FOOTER)

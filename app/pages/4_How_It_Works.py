@@ -12,6 +12,8 @@ if str(_SRC) not in sys.path:
 
 import streamlit as st
 
+from yieldpred.disclaimer import DATA_SOURCES, FOOTER, LIMITATIONS
+
 st.set_page_config(page_title="How It Works", page_icon="🛠️", layout="wide")
 
 st.title("How It Works")
@@ -168,3 +170,11 @@ with tab_words:
 | **FIPS code** | The federal ID for a county — 31109 is Lancaster County, Nebraska |
 | **CRS** | Coordinate reference system: how points on a round Earth become a flat map |
 """)
+
+# ------------------------------------------------------------------ disclaimer
+st.divider()
+st.subheader("Limitations & Disclaimer")
+st.markdown(LIMITATIONS)
+with st.expander("Data sources and endorsement"):
+    st.markdown(DATA_SOURCES)
+st.caption(FOOTER)

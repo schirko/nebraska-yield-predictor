@@ -14,6 +14,7 @@ import streamlit as st
 
 from yieldpred.appdata import (county_values, load_counties, load_errors,
                                load_model_table, map_frame, missing_data_message)
+from yieldpred.disclaimer import FOOTER
 from yieldpred.geo import display_geometry
 from yieldpred.viz import choropleth, interactive_choropleth
 
@@ -144,3 +145,7 @@ with st.expander("Static version (for reports and the README)"):
                      "USGS, US Census Bureau",
                      diverging=diverging, legend_label=label, figsize=(10, 5.6))
     st.pyplot(fig, width="stretch")
+
+# ------------------------------------------------------------------ disclaimer
+st.divider()
+st.caption(FOOTER)

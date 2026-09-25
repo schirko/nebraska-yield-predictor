@@ -23,8 +23,9 @@ from sklearn.model_selection import GroupKFold, KFold, cross_val_predict
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
-from yieldpred.dataset import (PROCESSED, build_modeling_table, feature_groups,
-                               feature_matrix, load_irrigation_observed, output_path)
+from yieldpred.dataset import (PROCESSED, available_rotation, build_modeling_table,
+                               feature_groups, feature_matrix,
+                               load_irrigation_observed, output_path)
 from yieldpred.irrigation import build_share_series
 from yieldpred.trend import DetrendedRegressor
 
@@ -212,6 +213,70 @@ def main() -> None:
               f"by {sample_effect:+.3f}.")
         if abs(sample_effect) > 0.02:
             print("Read every gain below against the second row, never the first.")
+
+        # ---------------------------------------------- is a carried feature real?
+        #
+        # Suppressed rotation years are carried forward from the county's last
+        # measured value, which keeps the rows in the model but makes part of the
+        # feature stale. In Nebraska only ~72% of rotation values are measured
+        # (Iowa ~94%), so the question is whether the feature is doing work or
+        # whether the carried values are diluting it into nothing.
+        #
+        # Comparing "with rotation" to "without rotation" ON THE SAME MEASURED
+        # ROWS is the test. Comparing the measured subset to the full set would
+        # confound the feature with the sample, which is the trap the control row
+        # at the top of the ladder exists to expose.
+        rotation_cols = available_rotation(df)
+        if rotation_cols and "rotation_observed" in used_all.columns:
+            measured = used_all["rotation_observed"].fillna(False).to_numpy(dtype=bool)
+            share = measured.mean()
+            print("\n" + "=" * 78)
+            print("IS THE CARRIED ROTATION FEATURE DOING ANYTHING? (measured rows only)")
+            print("=" * 78)
+            print(f"{measured.sum():,} of {len(measured):,} rows ({share:.0%}) have a "
+                  f"measured rotation; the rest were carried forward.")
+
+            # `dropped` rather than `without`: assigning to the name would shadow
+            # the without() helper and blow up on the call two lines above.
+            def delta(rows, label):
+                kept = evaluate(X_all[rows], y_all[rows], groups_all[rows],
+                                used_all[rows], label)
+                dropped = evaluate(without(*rotation_cols)[rows], y_all[rows],
+                                   groups_all[rows], used_all[rows], label)
+                return kept, dropped
+
+            rows_all = slice(None)
+            full_with, full_without = delta(rows_all, "all rows")
+            obs_with, obs_without = delta(measured, "measured rows")
+
+            comparison = pd.DataFrame([
+                {"rows scored": f"all ({len(measured):,})",
+                 "with rotation": full_with["spatial_R2"],
+                 "without": full_without["spatial_R2"],
+                 "rotation is worth": full_with["spatial_R2"] - full_without["spatial_R2"]},
+                {"rows scored": f"measured only ({measured.sum():,})",
+                 "with rotation": obs_with["spatial_R2"],
+                 "without": obs_without["spatial_R2"],
+                 "rotation is worth": obs_with["spatial_R2"] - obs_without["spatial_R2"]},
+            ]).set_index("rows scored")
+            print("\n" + comparison.round(3).to_string())
+            comparison.reset_index().to_parquet(
+                output_path(f"rotation_carried_control{suffix}", state), index=False)
+
+            gain_all = full_with["spatial_R2"] - full_without["spatial_R2"]
+            gain_obs = obs_with["spatial_R2"] - obs_without["spatial_R2"]
+            print("\nIf the second number is much larger, the carried values are")
+            print("diluting a real feature. If they are close, carrying is harmless.")
+            if gain_obs > gain_all + 0.02:
+                print(f"-> DILUTED: rotation is worth {gain_obs:+.3f} where it is "
+                      f"measured, {gain_all:+.3f} once carried rows are mixed in.")
+            elif abs(gain_obs - gain_all) <= 0.02:
+                print(f"-> HARMLESS: {gain_obs:+.3f} measured vs {gain_all:+.3f} "
+                      f"overall - carrying costs nothing.")
+            else:
+                print(f"-> ODD: rotation looks BETTER with carried rows "
+                      f"({gain_all:+.3f}) than without ({gain_obs:+.3f}); the "
+                      f"measured subset is probably just harder.")
 
         ablation_df = pd.DataFrame(ablation)
         ablation_df.to_parquet(output_path(f"feature_ablation{suffix}", state),

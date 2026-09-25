@@ -101,7 +101,13 @@ def build_modeling_table(state: str = "ne", state_fips: str = "31",
 
     rotation = load_rotation(state)
     if rotation is not None:
-        df = df.merge(rotation[["fips", "year"] + ROTATION_FEATURES],
+        # `rotation_observed` travels with the features but is NOT one of them.
+        # It records whether a county-year's rotation was measured or carried
+        # forward from an earlier year, which is what lets a control re-score on
+        # measured rows only. Same role as `share_observed` on irrigation.
+        carried = [c for c in ROTATION_FEATURES + ["rotation_observed"]
+                   if c in rotation.columns]
+        df = df.merge(rotation[["fips", "year"] + carried],
                       on=["fips", "year"], how="left", validate="one_to_one")
 
     static = load_static(state)

@@ -132,7 +132,7 @@ def main() -> None:
             train, test = uc["year"] <= 2018, uc["year"] >= 2019
             model.fit(Xc[train], yc[train])
             future = model.predict(Xc[test])
-            return {"features": label,
+            return {"features": label, "rows": len(Xc),
                     **{f"spatial_{k}": v for k, v in scores(yc, spatial).items()},
                     **{f"future_{k}": v for k, v in scores(yc[test], future).items()}}
 
@@ -141,8 +141,23 @@ def main() -> None:
             drop = [c for c in columns if c in X_all.columns]
             return X_all.drop(columns=drop)
 
-        ladder = [evaluate(without(*extras), y_all, groups_all, used_all,
-                           "weather only")]
+        # CONTROL ROW, AND IT BELONGS FIRST.
+        #
+        # Optional features are not available for every county-year, so the study
+        # runs on the subset where all of them exist. That subset is not a random
+        # sample - NASS suppresses small, marginal counties, which are the hardest
+        # ones to predict - so simply having fewer rows RAISES the score. On
+        # Nebraska the weather-only spatial R2 moved 0.316 -> 0.451 on nothing but
+        # the row change, which is larger than most features in this project.
+        #
+        # Reporting weather-only twice, on both row sets, makes that visible. Any
+        # gain in the rows below has to be read against this line, not against the
+        # published all-rows number.
+        X_full, y_full, g_full, u_full = feature_matrix(df)
+        ladder = [evaluate(X_full, y_full, g_full, u_full,
+                           "weather only, ALL rows (control)")]
+        ladder.append(evaluate(without(*extras), y_all, groups_all, used_all,
+                               "weather only, study rows"))
         kept: list[str] = []
         for label, columns in study:
             kept += columns
@@ -187,8 +202,16 @@ def main() -> None:
         comparison_df.to_parquet(output_path(f"irrigation_comparison{suffix}", state),
                                  index=False)
         print("\n" + comparison_df.set_index("features").round(3).to_string())
-        print("\nEach row adds one feature (or one group) to the row above. Same "
-              "model, same folds, same rows.")
+        print("\nEach row adds one feature (or one group) to the row above.")
+        sample_effect = (comparison_df.iloc[1]["spatial_R2"]
+                         - comparison_df.iloc[0]["spatial_R2"])
+        lost = comparison_df.iloc[0]["rows"] - comparison_df.iloc[1]["rows"]
+        print(f"The first two rows are the SAME features on different rows: "
+              f"{lost:,.0f} county-years drop out")
+        print(f"for want of an optional feature, and that alone moves spatial R2 "
+              f"by {sample_effect:+.3f}.")
+        if abs(sample_effect) > 0.02:
+            print("Read every gain below against the second row, never the first.")
 
         ablation_df = pd.DataFrame(ablation)
         ablation_df.to_parquet(output_path(f"feature_ablation{suffix}", state),

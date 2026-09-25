@@ -181,7 +181,7 @@ Honest limitations, in the order they'd matter:
 
 | Source | Used for |
 |---|---|
-| [USDA NASS Quick Stats](https://quickstats.nass.usda.gov/) | County yields, harvested acres by practice |
+| [USDA NASS Quick Stats](https://quickstats.nass.usda.gov/) | County yields, acres by practice, corn/soybean planted acres |
 | [NASA POWER](https://power.larc.nasa.gov/) | Daily growing-season weather |
 | [USDA Soil Data Access](https://sdmdataaccess.sc.egov.usda.gov/) | NCCPI soil productivity, available water capacity |
 | [USGS EPQS](https://apps.nationalmap.gov/epqs/) | County elevation |
@@ -196,6 +196,7 @@ src/yieldpred/        Core logic
   nass.py             USDA NASS Quick Stats client and cleaning
   weather.py          NASA POWER download and growing-season features
   irrigation.py       Irrigated share of corn acres from NASS acreage
+  rotation.py         Corn-soybean rotation intensity from NASS planted acres
   soils.py            NCCPI and available water from USDA Soil Data Access
   terrain.py          County elevation from USGS
   dataset.py          Joins everything into the county-year modeling table
@@ -203,6 +204,7 @@ src/yieldpred/        Core logic
   spatial.py          Contiguity weights and Moran's I
   geo.py              County boundaries, topology-safe simplification
   viz.py              Static and interactive choropleths
+  theme.py            Sky & Soil - the one place colour is defined
   appdata.py          Streamlit-free data access for the app
 scripts/              Runnable steps, all --state aware
   fetch_*.py          Downloads
@@ -252,7 +254,7 @@ Run the tests with `pytest` — they use synthetic fixtures, so no network or AP
 - [x] Cross-state transfer test
 - [x] Spring / planting-window features, including a workable-fieldwork-days measure
 - [x] Deployed to Streamlit Community Cloud
-- [ ] Planted vs. harvested acres, to test the prevented-planting selection effect
+- [ ] Corn-soybean rotation features and the prevented-planting test
 - [ ] Cropland-weighted weather (Cropland Data Layer)
 - [ ] Wind and storm damage
 - [ ] A third state, to turn one transfer result into a pattern

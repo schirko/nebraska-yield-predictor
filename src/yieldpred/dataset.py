@@ -24,6 +24,11 @@ WEATHER_FEATURES = ["gdd", "precip_mm", "precip_jul_mm", "precip_aug_mm",
 # can act as a county fingerprint: useful when every county is in training (the
 # temporal test) and useless when counties are held out (the spatial test).
 # `feature_groups(df, split_spring=True)` scores them separately to find out.
+# Corn-soybean rotation, from NASS planted acres. Planted acres are known by late
+# June, so these are legitimate inputs; the harvested/planted ratio is NOT here,
+# because abandonment is an outcome of the season (see rotation.py).
+ROTATION_FEATURES = ["corn_share", "soy_share_prev"]
+
 SPRING_RAIN = ["precip_mar_mm", "precip_apr_may_mm", "workable_days"]
 SPRING_CALENDAR = ["last_frost_doy", "gdd_may"]
 SPRING_FEATURES = SPRING_RAIN + SPRING_CALENDAR
@@ -65,6 +70,12 @@ def output_path(name: str, state: str = "ne") -> Path:
     return PROCESSED / f"{stem}.parquet"
 
 
+def load_rotation(state: str = "ne") -> pd.DataFrame | None:
+    """Corn-soybean rotation features, if scripts/fetch_rotation.py has been run."""
+    path = PROCESSED / f"rotation_{state}.parquet"
+    return pd.read_parquet(path) if path.exists() else None
+
+
 def load_static(state: str = "ne") -> pd.DataFrame | None:
     """County characteristics that don't vary by year: soil rating, elevation."""
     path = PROCESSED / f"county_static_{state}.parquet"
@@ -88,6 +99,11 @@ def build_modeling_table(state: str = "ne", state_fips: str = "31",
     if irrigation is not None:
         df = df.merge(irrigation, on=["fips", "year"], how="left", validate="one_to_one")
 
+    rotation = load_rotation(state)
+    if rotation is not None:
+        df = df.merge(rotation[["fips", "year"] + ROTATION_FEATURES],
+                      on=["fips", "year"], how="left", validate="one_to_one")
+
     static = load_static(state)
     if static is not None:
         df = df.merge(static, on="fips", how="left", validate="many_to_one")
@@ -99,6 +115,11 @@ def available_extras(df: pd.DataFrame) -> list[str]:
     """Optional feature columns present in this table, in the order they were added."""
     return [c for c in ("irrigation_share", "nccpi_corn", "soil_water_cm", "elevation_m")
             if c in df.columns]
+
+
+def available_rotation(df: pd.DataFrame) -> list[str]:
+    """Rotation features present in this table, if the acreage was fetched."""
+    return [c for c in ROTATION_FEATURES if c in df.columns]
 
 
 def available_spring(df: pd.DataFrame) -> list[str]:
@@ -121,6 +142,10 @@ def feature_groups(df: pd.DataFrame,
     specific hypothesis about *why* the two states responded differently.
     """
     groups = [(name, [name]) for name in available_extras(df)]
+
+    rotation = available_rotation(df)
+    if rotation:
+        groups.append((f"rotation ({len(rotation)})", rotation))
 
     if not split_spring:
         spring = available_spring(df)

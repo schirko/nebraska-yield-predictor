@@ -1,0 +1,15 @@
+# Sky & Soil - the app's chrome, matching src/yieldpred/theme.py.
+#
+# Streamlit themes only the frame (buttons, sidebar, headings, widgets); the
+# charts and maps get their colour from yieldpred.theme. Both are kept on the
+# same hex values on purpose, so the page and the plots don't disagree.
+#
+# Copy this file into the other apps in the suite. Consistent chrome is most of
+# what makes separate apps read as one family.
+
+[theme]
+primaryColor = "#1A5B96"              # plains blue - buttons, sliders, focus rings
+backgroundColor = "#FBFAF8"           # warm paper, not clinical white
+secondaryBackgroundColor = "#F4F2EE"  # sidebar and code blocks
+textColor = "#1C2024"
+font = "sans serif"

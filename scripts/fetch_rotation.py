@@ -159,10 +159,20 @@ def main() -> None:
         print("=" * 74)
         print("A wet spring that stops planting should show up as a LOW ratio.")
         if ratio["silage_corrected"].any():
+            covered = ratio[ratio["silage_corrected"]]
+            years = sorted(covered["year"].unique())
+            share = ratio["silage_corrected"].mean()
             print("Silage acres are removed from the denominator, so this measures")
             print("acres MEANT for grain that failed - not corn chopped for feed.")
-            print(f"Mean silage share: {ratio['silage_share'].mean():.1%} of planted "
-                  f"acres.\n")
+            print(f"Silage data covers {years[0]}-{years[-1]} "
+                  f"({share:.0%} of county-years); mean silage share there is "
+                  f"{covered['silage_share'].mean():.1%} of planted acres.")
+            if share < 0.95:
+                print("READ WITH CARE: the years WITHOUT silage data are uncorrected,")
+                print("so their ratios are still understated - and understated most")
+                print("in droughts, when stressed corn gets chopped for feed.\n")
+            else:
+                print("")
         else:
             print("WARNING: no silage data - the ratio is understated by the")
             print("silage share, and falls in drought years for reasons that")

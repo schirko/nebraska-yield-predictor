@@ -239,8 +239,14 @@ def harvested_ratio(planted: pd.DataFrame, harvested: pd.DataFrame,
     if silage is not None and not silage.empty:
         df = df.merge(silage.rename(columns={"acres": "acres_silage"}),
                       on=["fips", "year"], how="left")
+        # PER ROW, not per run. NASS stopped publishing county corn silage for
+        # Nebraska after 2007, so most county-years have no silage figure and
+        # fall back to zero - which leaves them biased exactly as before. A flag
+        # set once for the whole frame would claim those rows were corrected when
+        # they were not, which is worse than no flag: it hides the gap instead of
+        # marking it.
+        df["silage_corrected"] = df["acres_silage"].notna()
         df["acres_silage"] = df["acres_silage"].fillna(0.0)
-        df["silage_corrected"] = True
     else:
         df["acres_silage"] = 0.0
         df["silage_corrected"] = False

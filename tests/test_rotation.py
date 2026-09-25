@@ -211,3 +211,20 @@ def test_filling_an_already_complete_series_changes_nothing():
     out = fill_gaps(frame, range(2000, 2002))
     assert out["rotation_observed"].all()
     assert out["corn_share"].tolist() == [0.6, 0.65]
+
+
+def test_the_correction_flag_is_per_row_not_per_run():
+    """NASS stopped county silage reporting for Nebraska after 2007.
+
+    A flag set once for the whole frame would claim the uncovered years were
+    corrected when they were not - hiding the gap instead of marking it.
+    """
+    planted = acres("31109", [2005, 2015], [100_000, 100_000])
+    grain = acres("31109", [2005, 2015], [92_000, 92_000])
+    silage = acres("31109", [2005], [6_000])          # 2015 not published
+
+    out = harvested_ratio(planted, grain, silage).set_index("year")
+    assert out.loc[2005, "silage_corrected"]
+    assert not out.loc[2015, "silage_corrected"]
+    assert out.loc[2005, "harvested_ratio"] == pytest.approx(92 / 94)
+    assert out.loc[2015, "harvested_ratio"] == pytest.approx(0.92)

@@ -278,3 +278,53 @@ def test_no_page_still_carries_the_old_app_name():
         text = page.read_text(encoding="utf-8")
         assert "Nebraska Corn Yield Predictor" not in text, \
             f"{page.name} still uses the old app name"
+
+
+def test_the_footer_rules_come_from_the_shared_suite_css():
+    """This app inlines the suite's footer rules; it cannot link them.
+
+    Streamlit's `st.html` sanitizer strips a stylesheet link element, so unlike
+    the other two apps and the website this one can't load suite.css. It reads
+    the marked section instead, which keeps one source of truth. If the markers
+    are ever dropped from suite.css - say by copying an older master over it -
+    the footer silently loses its layout, so this checks them.
+    """
+    from yieldpred.brand import (FOOTER_MARK_END, FOOTER_MARK_START, SUITE_CSS,
+                                 SUITE_CSS_FILE, shared_footer_css)
+
+    text = SUITE_CSS_FILE.read_text(encoding="utf-8")
+    assert FOOTER_MARK_START in text and FOOTER_MARK_END in text, \
+        "suite.css lost the markers that delimit the shared footer rules"
+
+    section = shared_footer_css()
+
+    # The slice has to be valid CSS standing alone. The markers were once the
+    # opening line of a long comment, so the extract began mid-comment and
+    # carried an orphaned close; the browser read that as a broken selector and
+    # its error recovery ate the next rule - the one setting the background. The
+    # footer rendered with no green while everything after it applied normally.
+    assert section.count("/*") == section.count("*/"), \
+        "the extracted footer section begins or ends inside a comment"
+    assert section.lstrip().startswith("."), \
+        "the extracted footer section should start at a selector"
+    for rule in (".footer-inner", ".footer-brand", ".footer-col", ".footer-bottom"):
+        assert rule in section, f"the shared footer section has no {rule} rule"
+    assert section in SUITE_CSS, "the shared rules were not inlined into the page CSS"
+
+    # The section is injected through st.html, whose sanitizer discards a whole
+    # style block over a single angle bracket. suite.css is edited by people
+    # working on three other codebases, so this is checked here too.
+    assert "<" not in section and ">" not in section, \
+        "an angle bracket in suite.css's footer section would blank this app's styling"
+
+    # Every var() needs a fallback. The other apps inject suite.css whole, so
+    # :root is always there for them; this app injects the marked section alone,
+    # and a bare var(--suite-deep-green) resolved to nothing - the footer lost
+    # its green and rendered white text on paper.
+    import re
+
+    # Comments are stripped first: the section's own comment explains the rule
+    # by quoting a bare var(), and a check that reads comments as code flags it.
+    rules = re.sub(r"/\*.*?\*/", "", "/*" + section, flags=re.S)
+    bare = [v for v in re.findall(r"var\(--[a-z-]+[^)]*\)", rules) if "," not in v]
+    assert not bare, f"var() without a fallback in the shared footer section: {bare}"

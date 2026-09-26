@@ -54,6 +54,7 @@ from pathlib import Path
 ASSETS = Path(__file__).resolve().parents[2] / "app" / "assets"
 LOGO = ASSETS / "logo.png"
 PAGE_ICON = str(LOGO)
+SUITE_CSS_FILE = ASSETS / "suite.css"    # copy of herd-planner/brand/suite.css
 APPS_FILE = ASSETS / "suite-apps.json"   # copy of herd-planner/brand/suite-apps.json
 APP_ID = "corn-yield-predictor"          # this app's id in that list - an internal
                                          # key, deliberately not renamed with the
@@ -151,9 +152,38 @@ QUESTIONS = {
 # The reading order the menu numbers. Home is the cover, not a step.
 STEPS = {label: i for i, (_p, label, _ic, _u) in enumerate(NAV) if label != "Home"}
 
+def shared_footer_css() -> str:
+    """The deep footer's rules, read out of the shared suite.css.
+
+    Every other app links suite.css with a style tag. Streamlit cannot: its
+    `st.html` sanitizer strips a link element outright - measured by serving a
+    stylesheet and watching the tag never reach the DOM - so this app would
+    otherwise have to keep its own copy of the footer rules and let them drift
+    from the other three, which is exactly the problem this was meant to fix.
+
+    So it reads the shared file and inlines the marked section instead. The app
+    uses the same rules as everyone else; only the delivery differs. The markers
+    are in suite.css, and a test fails if they go missing or the section turns up
+    empty.
+    """
+    text = SUITE_CSS_FILE.read_text(encoding="utf-8")
+    try:
+        after = text.split(FOOTER_MARK_START, 1)[1]
+        return after.split(FOOTER_MARK_END, 1)[0]
+    except IndexError as err:                        # pragma: no cover - guarded by a test
+        raise ValueError(
+            f"{SUITE_CSS_FILE.name} has no {FOOTER_MARK_START} / {FOOTER_MARK_END} "
+            "markers; the shared footer rules cannot be found") from err
+
+
+FOOTER_MARK_START = "/* == suite-footer:start == */"
+FOOTER_MARK_END = "/* == suite-footer:end == */"
+
 # The pieces of the suite look (app/assets/suite.css) that .streamlit/config.toml
 # can't set. Streamlit's own element names (data-testid) can change between
 # versions; if the header turns white again after an upgrade, check them here.
+SHARED_FOOTER_CSS = shared_footer_css()
+
 SUITE_CSS = f"""
 <style>
 /* ---- the header bar -------------------------------------------------- */
@@ -303,19 +333,14 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
   .suite-state {{ margin-left: 0; }}
 }}
 
-/* ---- the footer band --------------------------------------------------
-   Full-bleed: the main block container is centred and padded, so the band
-   is pulled back out to the window edges with the standard 50vw trick and
-   its own padding puts the text back in line with the body text. */
-.suite-footer {{
-  background: {DEEP_GREEN}; color: rgba(255, 255, 255, .82);
-  margin: 2.5rem calc(50% - 50vw) 0;
-  padding: 1.5rem calc(50vw - 50%) 1.75rem;
-  font-size: .85rem; line-height: 1.55;
-}}
-.suite-footer strong {{ color: #fff; font-weight: 700; }}
-.suite-footer a {{ color: rgba(255, 255, 255, .82); }}
-.suite-footer a:hover {{ color: #fff; }}
+/* ---- the footer -------------------------------------------------------
+   The rules themselves come from the shared suite.css, inlined above by
+   shared_footer_css(). Only the two lines Streamlit needs live here: the
+   other apps put the footer at the end of an ordinary page, while this one
+   sits inside a centred block container, so the band is pulled back out to
+   the window edges with the 50vw trick. */
+{SHARED_FOOTER_CSS}
+.site-footer {{ margin: 2.5rem calc(50% - 50vw) 0; }}
 
 /* ---- widgets ----------------------------------------------------------
    Gold buttons take deep-green text: white on gold is too faint to read
@@ -506,24 +531,113 @@ def _suite_menu_html() -> str:
     return " · ".join(parts)
 
 
-def page_footer() -> None:
-    """The deep-green band that closes every page, matching Herd Planner's.
+# What this app is, in one line, for the footer's left column. The one piece
+# of the footer that is deliberately product-specific, alongside the Tools
+# column - Farm Equipment Planner's reads "Is that machine worth it for your
+# farm? ..." in the same slot.
+FOOTER_DESCRIPTION = ("County corn yields from weather, soils and irrigation — "
+                      "and an honest account of how far each number can be trusted.")
 
-    The legal notice itself stays a `st.caption(FOOTER)` call in each page, on
-    paper above this band, because it has to be plainly readable and because
-    tests/test_app_smoke.py checks for that exact call in every page's source.
-    This band carries the identity, the suite's other apps and the sources.
+# The sources behind every number, as the footer's third column. Farm Equipment
+# Planner uses that slot for Data partners; this app has no partners, it has
+# public agencies, so the slot says where the data came from instead.
+DATA_SOURCES_LINKS = [
+    ("USDA NASS Quick Stats", "https://quickstats.nass.usda.gov/"),
+    ("NASA POWER", "https://power.larc.nasa.gov/"),
+    ("USDA Soil Data Access", "https://sdmdataaccess.sc.egov.usda.gov/"),
+    ("USGS Elevation", "https://apps.nationalmap.gov/epqs/"),
+    ("US Census Bureau", "https://www.census.gov/geographies.html"),
+]
+
+
+def _logo_data_uri() -> str:
+    """The corn logo as a data URI.
+
+    Streamlit serves `st.logo`'s image from a URL it makes up at runtime, and
+    there is no supported way to ask it for that URL - so the footer embeds its
+    own copy rather than guessing. Read once per process; it is 22 KB.
+    """
+    import base64
+    from functools import lru_cache
+
+    @lru_cache(maxsize=1)
+    def encode() -> str:
+        return base64.b64encode(LOGO.read_bytes()).decode("ascii")
+
+    return f"data:image/png;base64,{encode()}"
+
+
+def page_footer(state: str = DEFAULT_STATE) -> None:
+    """The deep footer, matching Farm Equipment Planner's column for column.
+
+    The shape is shared across the suite on purpose: brand and description on
+    the left, then Tools / Farm apps / Data sources / About, a rule, then the
+    disclaimer line and the copyright. What differs between apps is only what
+    the product actually has.
+
+    Two differences from Farm Equipment Planner, both deliberate:
+
+    * Its second column is "Your account". This app has no accounts, so that
+      slot carries the suite's other apps instead - the cross-app links that
+      used to sit in the sidebar.
+    * Its About column links Terms of Use and Privacy Policy. Those pages do
+      not exist for this app, and a footer link that 404s is worse than a
+      shorter column, so they are left out until the company site hosts one
+      set of them for all three apps to point at.
+
+    The legal notice itself stays a `st.caption(FOOTER)` call on paper above
+    this band - it carries the typical-error figure, and tests/test_app_smoke.py
+    checks every page renders it.
     """
     import streamlit as st
 
+    tools = "".join(
+        f'<a href="{url or "./"}'
+        f'{"" if state == DEFAULT_STATE or not url else f"?state={state}"}">{label}</a>'
+        for _p, label, _i, url in NAV if label != "Home")
+
+    apps = "".join(
+        f'<a href="{app["url"]}" target="_blank" rel="noopener">{app["name"]}</a>'
+        if app["url"] and app["id"] != APP_ID
+        else f'<a href="./">{app["name"]}</a>' if app["id"] == APP_ID
+        else f'<a class="soon" aria-disabled="true">{app["name"]} (coming soon)</a>'
+        for app in load_suite_apps())
+
+    sources = "".join(
+        f'<a href="{url}" target="_blank" rel="noopener">{label}</a>'
+        for label, url in DATA_SOURCES_LINKS)
+
     st.html(f"""
-    <div class="suite-footer">
-      <strong>{APP_NAME}</strong> — part of the First Light Ag farm app suite<br>
-      Our farm apps: {_suite_menu_html()}<br>
-      Data: USDA NASS Quick Stats · NASA POWER · USDA Soil Data Access ·
-      USGS · US Census Bureau.
-      Built with Python, scikit-learn, GeoPandas and Streamlit.
-    </div>
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <a class="brand" href="./"><img src="{_logo_data_uri()}" alt="" class="logo">{APP_NAME}</a>
+          <p>{FOOTER_DESCRIPTION}</p>
+        </div>
+        <nav class="footer-col" aria-label="Tools">
+          <h2>Tools</h2>
+          {tools}
+        </nav>
+        <nav class="footer-col" aria-label="Farm apps">
+          <h2>Farm apps</h2>
+          {apps}
+        </nav>
+        <nav class="footer-col" aria-label="Data sources">
+          <h2>Data sources</h2>
+          {sources}
+        </nav>
+        <nav class="footer-col" aria-label="About">
+          <h2>About</h2>
+          <a href="How_It_Works">Disclaimer</a>
+          <a href="How_It_Works">How it works</a>
+        </nav>
+      </div>
+      <div class="footer-bottom">
+        <p>Estimates for planning only, not agronomic, financial or insurance advice.
+           <a href="How_It_Works">Read the disclaimer</a>.</p>
+        <p>&copy; 2026 {APP_NAME} &middot; a data science learning project</p>
+      </div>
+    </footer>
     """)
 
 

@@ -1,4 +1,4 @@
-"""The hardest test in the project: train on Nebraska, predict Iowa."""
+"""The hardest test in the app: train on Nebraska, predict Iowa."""
 
 import sys
 from pathlib import Path

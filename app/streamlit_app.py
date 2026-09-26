@@ -90,7 +90,7 @@ with story:
     # Two states, two stories. The Nebraska text was being shown under an "Iowa"
     # heading the moment the state switch existed, which made half of it false -
     # Iowa barely irrigates and has no east-west moisture gradient to speak of.
-    st.subheader("What This Project Does")
+    st.subheader("What This App Does")
     if state == "ne":
         st.markdown("""
 Nebraska is a natural experiment. It is a top corn state, it is heavily irrigated,
@@ -106,7 +106,7 @@ the yield on its own.
 """)
 
     st.markdown("""
-This project predicts **county corn yields** from growing-season weather, soils and
+This app predicts **county corn yields** from growing-season weather, soils and
 the long-run yield trend, then asks how much of that prediction can be trusted.
 Four questions get separate answers:
 

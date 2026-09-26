@@ -280,6 +280,10 @@ streamlit run app/streamlit_app.py
 Any script runs for another state by passing `--state IA --state-fips 19`. The transfer test
 is `python scripts/cross_state.py --train NE --test IA`.
 
+The suite's home page (farm-account) shows each county's trend corn yield and its 1-in-10 low.
+`python scripts/export_suite_card.py` writes them to `data/processed/suite_card.json` (method in
+`src/yieldpred/suite_card.py`); run it after new yields are fetched, then refresh farm-account.
+
 Run the tests with `pytest` — they use synthetic fixtures, so no network or API key is needed.
 
 ## Roadmap

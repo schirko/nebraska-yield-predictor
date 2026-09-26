@@ -84,7 +84,7 @@ its weather, irrigation share, soil rating and elevation.
 
 **3. Under which test.** These come from holding out whole agricultural districts, and from
 predicting years after the training cutoff. Published crop-yield studies often report similar
-or higher numbers using random splits — which aren't comparable, since this project's own
+or higher numbers using random splits — which aren't comparable, since this app's own
 random-split score is higher too. Comparing an honest number to an optimistic one is a
 category error.
 
@@ -102,7 +102,7 @@ gain from tuning.
   Iowa-native 0.65 — see the *Does It Transfer?* page. Good evidence it learned agronomy, and
   equally good evidence that a one-state model is not a Corn Belt model.
 
-The defensible claim is *good for a project built from public data, honestly validated, with
+The defensible claim is *good for a model built from public data, honestly validated, with
 its limits stated* — not *good enough to deploy*.
 """)
 

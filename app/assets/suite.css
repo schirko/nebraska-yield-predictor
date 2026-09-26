@@ -1,5 +1,5 @@
-/* Farm app suite: the shared look of Herd Planner, Corn Yield Predictor and
-   Farm Equipment Planner. Suite version 2.
+/* Farm app suite: the shared look of Herd Planner, Yield Predictor and
+   Farm Equipment Planner. Suite version 3.
 
    THE SAME FILE lives in all three apps. The master copy is
    herd-planner/brand/suite.css: change it there, then copy it into the other
@@ -25,6 +25,7 @@
   --suite-link: #2a78d6;        /* links in body text */
 
   /* Shape and type */
+  --suite-measure: 1180px;      /* how wide the footer's content runs */
   --suite-radius: 10px;
   --suite-button-radius: 8px;
   --suite-font: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
@@ -63,10 +64,90 @@ a { color: var(--suite-link); }
 .suite-bar .btn.secondary, .suite-bar .button.secondary { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .6); }
 .suite-bar .btn.secondary:hover:not(:disabled), .suite-bar .button.secondary:hover:not(:disabled) { background: rgba(255, 255, 255, .12); }
 
-/* The footer band: the same deep green as the header. */
-.site-footer { background: var(--suite-deep-green); color: rgba(255, 255, 255, .82); }
-.site-footer a { color: rgba(255, 255, 255, .82); }
-.site-footer a:hover, .site-footer a:focus-visible { color: #fff; }
+/*
+   THE DEEP FOOTER, shared by all three apps and the site.
+
+   Until suite version 3 this block was four lines - just the colours - and
+   every app invented its own layout on top of them: Farm Equipment Planner
+   .footer-inner at 960px with h2 headings, Herd Planner .footer-cols at
+   1180px with h4, the site .footer-grid. Three footers that looked alike by
+   coincidence, with nothing testing that they stayed that way. The layout
+   lives here now, so the drift tests cover it like everything else.
+
+   The markup each consumer writes:
+
+     footer.site-footer
+       div.footer-inner
+         div.footer-brand      the app's name, logo and one-line description
+         nav.footer-col        h2 heading, then anchors - one per column
+       div.footer-bottom       a rule, then the fine print and the copyright
+
+   Everything between these markers is also injected verbatim by Yield
+   Predictor, which is Streamlit and cannot load a stylesheet at all (its
+   sanitizer strips a link tag - measured, not assumed). It reads this file
+   and inlines this section, so it shares the rules rather than copying them.
+   Keep the markers, and keep this section free of anything Streamlit-hostile.
+
+   THE MARKERS BELOW ARE CLOSED COMMENTS ON PURPOSE. They used to be this
+   comment's own opening line, which meant Yield Predictor's slice began in
+   the middle of a comment and carried an orphaned close. The browser read
+   that prose as a broken selector and its error recovery swallowed the rule
+   that followed - the one setting the background - so the footer rendered
+   with no green at all while every later rule applied normally. Keep each
+   marker a complete comment, and the slice stays valid CSS on its own. */
+
+/* == suite-footer:start == */
+.site-footer {
+  background: var(--suite-deep-green, #243b2f); color: rgba(255, 255, 255, .82);
+  font-size: .9rem;
+}
+.site-footer a { color: rgba(255, 255, 255, .82); text-decoration: none; }
+.site-footer a:hover, .site-footer a:focus-visible { color: #fff; text-decoration: underline; }
+
+/* Flex, not grid, and for a reason worth recording. The obvious replacement
+   for Farm Equipment Planner's hardcoded repeat(4, 1fr) - which left the
+   two-column site with empty cells - was
+   "1.4fr repeat(auto-fit, minmax(150px, 1fr))". That is INVALID CSS: the
+   spec forbids combining auto-fit with a flexible (fr) track, so the whole
+   declaration is dropped and the footer silently becomes one column. It was
+   caught by reading gridTemplateColumns back out of a browser, not by
+   reading the rule. Flex wrapping handles two, three or four columns with
+   no such trap.
+
+   EVERY var() in this section carries a fallback, and that is a rule, not a
+   style choice. Yield Predictor injects this section on its own, without the
+   :root block above it, so a bare var(--suite-deep-green) resolves to nothing
+   and the footer loses its green entirely - which is exactly what happened
+   the first time. A test in that app fails if a fallback goes missing. */
+.footer-inner {
+  max-width: var(--suite-measure, 1180px); margin: 0 auto; padding: 32px 20px 16px;
+  display: flex; flex-wrap: wrap; gap: 24px 32px; align-items: flex-start;
+}
+.footer-brand { flex: 1 1 260px; max-width: 340px; }
+.footer-col { flex: 1 1 150px; }
+.footer-brand .brand, .footer-brand .footer-name {
+  color: #fff; font-weight: 700; font-size: 1.05rem; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 10px; margin: 0;
+}
+.footer-brand img.logo { width: 40px; height: 40px; }
+.footer-brand p { margin: 8px 0 0; max-width: 280px; }
+.site-footer nav.footer-col { display: block; }
+.footer-col h2 {
+  font-size: .8rem; text-transform: uppercase; letter-spacing: .06em;
+  color: #fff; margin: 0 0 8px; font-weight: 700;
+}
+.footer-col a { display: block; padding: 3px 0; }
+.footer-bottom {
+  max-width: var(--suite-measure, 1180px); margin: 0 auto; padding: 14px 20px 24px;
+  border-top: 1px solid rgba(255, 255, 255, .18); font-size: .85rem;
+}
+.footer-bottom p { margin: 4px 0; }
+.footer-bottom a { color: #fff; }
+@media (max-width: 760px) {
+  .footer-brand { flex: 1 1 100%; max-width: none; }
+  .footer-col { flex: 1 1 40%; }
+}
+/* == suite-footer:end == */
 
 /* Cards */
 .card { background: var(--suite-surface); border: 1px solid var(--suite-line); border-radius: var(--suite-radius); }

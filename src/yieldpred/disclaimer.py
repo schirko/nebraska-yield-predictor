@@ -27,7 +27,7 @@ from __future__ import annotations
 
 # One line, small, on every page.
 FOOTER = (
-    "Educational project — not agronomic, financial or insurance advice. "
+    "Not agronomic, financial or insurance advice. "
     "Predictions are county-level estimates with a typical error of roughly "
     "14 bu/acre. Not endorsed or certified by USDA, NASA, USGS or the Census Bureau."
 )
@@ -38,7 +38,7 @@ This product uses the **USDA NASS Quick Stats API** but is not endorsed or certi
 by USDA NASS. It uses **USDA NRCS Soil Data Access**, **NASA POWER**, the **USGS
 Elevation Point Query Service** and **US Census Bureau** boundary files on the same
 basis: these agencies supply the data and have no involvement in, and no
-responsibility for, what this project does with it.
+responsibility for, what this app does with it.
 
 All source data is public. Any error in the analysis is the author's.
 """
@@ -74,20 +74,20 @@ happened. It has never been built or validated to predict a crop in progress.
 **Two documented data limits.** USDA stopped publishing county corn silage for
 Nebraska after 2007, so the abandonment figures there cannot be interpreted for
 2008 onward. And Iowa's spring-weather relationships measurably changed after 2018 —
-what held through 2018 stopped holding, for reasons this project has not explained.
+what held through 2018 stopped holding, for reasons this app has not explained.
 
 **Coverage shrinks over time.** USDA reported 91 Nebraska counties in 2000 and 46 in
 2025, and the counties that stop reporting are not a random sample — they are the
 ones growing little corn. Results describe corn-growing counties, not whole states.
 
-The project documents its own accuracy in detail rather than claiming more than it
+This app documents its own accuracy in detail rather than claiming more than it
 can support. That is the point of it.
 """
 
 # For the README, where a reviewer reads before running anything.
 README_BLOCK = """## Disclaimer
 
-Educational and portfolio project. **Not agronomic, financial or insurance advice.**
+A data science learning app. **Not agronomic, financial or insurance advice.**
 
 Predictions are county averages with a typical error of roughly 14 bu/acre (Nebraska)
 and 10 bu/acre (Iowa) on unseen counties, and the errors cluster geographically in

@@ -1,0 +1,1842 @@
+{
+ "app": "corn-yield-predictor",
+ "cards": {
+  "19001": {
+   "detail": "Adair County, IA yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 162.",
+   "headline": "185 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 161.8,
+   "unit": "bu/acre",
+   "value": 185.2,
+   "years": 24
+  },
+  "19005": {
+   "detail": "Allamakee County, IA yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 191.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 191.4,
+   "unit": "bu/acre",
+   "value": 210.5,
+   "years": 26
+  },
+  "19007": {
+   "detail": "Appanoose County, IA yields since 2000 rise about 1.4 bu/acre a year. In 1 year in 10 the county falls below 126.",
+   "headline": "162 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 125.8,
+   "unit": "bu/acre",
+   "value": 161.6,
+   "years": 23
+  },
+  "19009": {
+   "detail": "Audubon County, IA yields since 2000 rise about 2.9 bu/acre a year. In 1 year in 10 the county falls below 192.",
+   "headline": "218 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 191.8,
+   "unit": "bu/acre",
+   "value": 217.6,
+   "years": 26
+  },
+  "19011": {
+   "detail": "Benton County, IA yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 187.",
+   "headline": "213 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 187.3,
+   "unit": "bu/acre",
+   "value": 213.2,
+   "years": 25
+  },
+  "19013": {
+   "detail": "Black Hawk County, IA yields since 2000 rise about 1.9 bu/acre a year. In 1 year in 10 the county falls below 186.",
+   "headline": "206 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 186.4,
+   "unit": "bu/acre",
+   "value": 206.2,
+   "years": 25
+  },
+  "19015": {
+   "detail": "Boone County, IA yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 182.",
+   "headline": "208 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 181.8,
+   "unit": "bu/acre",
+   "value": 208.5,
+   "years": 26
+  },
+  "19017": {
+   "detail": "Bremer County, IA yields since 2000 rise about 1.9 bu/acre a year. In 1 year in 10 the county falls below 192.",
+   "headline": "212 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 192.5,
+   "unit": "bu/acre",
+   "value": 212.4,
+   "years": 26
+  },
+  "19019": {
+   "detail": "Buchanan County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 195.",
+   "headline": "215 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 195.1,
+   "unit": "bu/acre",
+   "value": 215.0,
+   "years": 26
+  },
+  "19021": {
+   "detail": "Buena Vista County, IA yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 186.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 186.3,
+   "unit": "bu/acre",
+   "value": 209.8,
+   "years": 25
+  },
+  "19023": {
+   "detail": "Butler County, IA yields since 2000 rise about 2.0 bu/acre a year. In 1 year in 10 the county falls below 189.",
+   "headline": "212 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 188.9,
+   "unit": "bu/acre",
+   "value": 211.7,
+   "years": 26
+  },
+  "19025": {
+   "detail": "Calhoun County, IA yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 183.",
+   "headline": "211 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 182.9,
+   "unit": "bu/acre",
+   "value": 210.8,
+   "years": 26
+  },
+  "19027": {
+   "detail": "Carroll County, IA yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 175.",
+   "headline": "215 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 174.9,
+   "unit": "bu/acre",
+   "value": 215.2,
+   "years": 25
+  },
+  "19029": {
+   "detail": "Cass County, IA yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 185.",
+   "headline": "206 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 185.3,
+   "unit": "bu/acre",
+   "value": 205.8,
+   "years": 25
+  },
+  "19031": {
+   "detail": "Cedar County, IA yields since 2000 rise about 2.0 bu/acre a year. In 1 year in 10 the county falls below 188.",
+   "headline": "216 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 188.3,
+   "unit": "bu/acre",
+   "value": 216.5,
+   "years": 26
+  },
+  "19033": {
+   "detail": "Cerro Gordo County, IA yields since 2000 rise about 2.0 bu/acre a year. In 1 year in 10 the county falls below 191.",
+   "headline": "204 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 191.2,
+   "unit": "bu/acre",
+   "value": 204.2,
+   "years": 25
+  },
+  "19035": {
+   "detail": "Cherokee County, IA yields since 2000 rise about 2.6 bu/acre a year. In 1 year in 10 the county falls below 194.",
+   "headline": "223 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 194.1,
+   "unit": "bu/acre",
+   "value": 222.7,
+   "years": 25
+  },
+  "19037": {
+   "detail": "Chickasaw County, IA yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 198.",
+   "headline": "214 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 197.9,
+   "unit": "bu/acre",
+   "value": 214.1,
+   "years": 26
+  },
+  "19039": {
+   "detail": "Clarke County, IA yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 125.",
+   "headline": "163 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 124.9,
+   "unit": "bu/acre",
+   "value": 163.3,
+   "years": 20
+  },
+  "19041": {
+   "detail": "Clay County, IA yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 178.",
+   "headline": "201 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 178.2,
+   "unit": "bu/acre",
+   "value": 200.5,
+   "years": 26
+  },
+  "19043": {
+   "detail": "Clayton County, IA yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 205.",
+   "headline": "217 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 205.1,
+   "unit": "bu/acre",
+   "value": 217.4,
+   "years": 26
+  },
+  "19045": {
+   "detail": "Clinton County, IA yields since 2000 rise about 2.6 bu/acre a year. In 1 year in 10 the county falls below 199.",
+   "headline": "221 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 198.5,
+   "unit": "bu/acre",
+   "value": 221.2,
+   "years": 26
+  },
+  "19047": {
+   "detail": "Crawford County, IA yields since 2000 rise about 3.0 bu/acre a year. In 1 year in 10 the county falls below 194.",
+   "headline": "226 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 193.6,
+   "unit": "bu/acre",
+   "value": 225.6,
+   "years": 26
+  },
+  "19049": {
+   "detail": "Dallas County, IA yields since 2000 rise about 2.0 bu/acre a year. In 1 year in 10 the county falls below 168.",
+   "headline": "201 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 167.6,
+   "unit": "bu/acre",
+   "value": 201.0,
+   "years": 25
+  },
+  "19051": {
+   "detail": "Davis County, IA yields since 2000 rise about 1.5 bu/acre a year. In 1 year in 10 the county falls below 115.",
+   "headline": "168 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 114.8,
+   "unit": "bu/acre",
+   "value": 168.0,
+   "years": 25
+  },
+  "19053": {
+   "detail": "Decatur County, IA yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 140.",
+   "headline": "173 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 139.8,
+   "unit": "bu/acre",
+   "value": 173.2,
+   "years": 23
+  },
+  "19055": {
+   "detail": "Delaware County, IA yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 203.",
+   "headline": "222 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 203.5,
+   "unit": "bu/acre",
+   "value": 222.0,
+   "years": 26
+  },
+  "19057": {
+   "detail": "Des Moines County, IA yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 184.",
+   "headline": "211 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 184.0,
+   "unit": "bu/acre",
+   "value": 211.2,
+   "years": 25
+  },
+  "19059": {
+   "detail": "Dickinson County, IA yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 174.",
+   "headline": "196 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 173.9,
+   "unit": "bu/acre",
+   "value": 195.7,
+   "years": 26
+  },
+  "19061": {
+   "detail": "Dubuque County, IA yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 207.",
+   "headline": "224 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 207.2,
+   "unit": "bu/acre",
+   "value": 223.5,
+   "years": 26
+  },
+  "19063": {
+   "detail": "Emmet County, IA yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 188.",
+   "headline": "209 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 188.4,
+   "unit": "bu/acre",
+   "value": 209.2,
+   "years": 23
+  },
+  "19065": {
+   "detail": "Fayette County, IA yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 193.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 192.6,
+   "unit": "bu/acre",
+   "value": 210.4,
+   "years": 25
+  },
+  "19067": {
+   "detail": "Floyd County, IA yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 196.",
+   "headline": "209 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 196.2,
+   "unit": "bu/acre",
+   "value": 209.3,
+   "years": 26
+  },
+  "19069": {
+   "detail": "Franklin County, IA yields since 2000 rise about 2.0 bu/acre a year. In 1 year in 10 the county falls below 193.",
+   "headline": "212 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 193.1,
+   "unit": "bu/acre",
+   "value": 212.1,
+   "years": 26
+  },
+  "19071": {
+   "detail": "Fremont County, IA yields since 2000 rise about 3.3 bu/acre a year. In 1 year in 10 the county falls below 199.",
+   "headline": "216 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 199.0,
+   "unit": "bu/acre",
+   "value": 216.2,
+   "years": 25
+  },
+  "19073": {
+   "detail": "Greene County, IA yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 177.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 176.8,
+   "unit": "bu/acre",
+   "value": 210.1,
+   "years": 26
+  },
+  "19075": {
+   "detail": "Grundy County, IA yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 197.",
+   "headline": "218 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 197.5,
+   "unit": "bu/acre",
+   "value": 218.4,
+   "years": 25
+  },
+  "19077": {
+   "detail": "Guthrie County, IA yields since 2000 rise about 2.6 bu/acre a year. In 1 year in 10 the county falls below 166.",
+   "headline": "204 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2022,
+   "low": 166.3,
+   "unit": "bu/acre",
+   "value": 203.8,
+   "years": 23
+  },
+  "19079": {
+   "detail": "Hamilton County, IA yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 179.",
+   "headline": "205 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 178.8,
+   "unit": "bu/acre",
+   "value": 204.7,
+   "years": 25
+  },
+  "19081": {
+   "detail": "Hancock County, IA yields since 2000 rise about 1.9 bu/acre a year. In 1 year in 10 the county falls below 192.",
+   "headline": "208 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 191.7,
+   "unit": "bu/acre",
+   "value": 207.9,
+   "years": 26
+  },
+  "19083": {
+   "detail": "Hardin County, IA yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 185.",
+   "headline": "209 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 185.5,
+   "unit": "bu/acre",
+   "value": 208.9,
+   "years": 25
+  },
+  "19085": {
+   "detail": "Harrison County, IA yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 178.",
+   "headline": "195 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 178.1,
+   "unit": "bu/acre",
+   "value": 194.6,
+   "years": 23
+  },
+  "19087": {
+   "detail": "Henry County, IA yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 163.",
+   "headline": "194 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 163.2,
+   "unit": "bu/acre",
+   "value": 193.9,
+   "years": 26
+  },
+  "19089": {
+   "detail": "Howard County, IA yields since 2000 rise about 2.7 bu/acre a year. In 1 year in 10 the county falls below 190.",
+   "headline": "216 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 190.4,
+   "unit": "bu/acre",
+   "value": 215.8,
+   "years": 26
+  },
+  "19091": {
+   "detail": "Humboldt County, IA yields since 2000 rise about 1.6 bu/acre a year. In 1 year in 10 the county falls below 174.",
+   "headline": "203 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 173.8,
+   "unit": "bu/acre",
+   "value": 203.0,
+   "years": 26
+  },
+  "19093": {
+   "detail": "Ida County, IA yields since 2000 rise about 3.2 bu/acre a year. In 1 year in 10 the county falls below 195.",
+   "headline": "232 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 194.9,
+   "unit": "bu/acre",
+   "value": 231.7,
+   "years": 25
+  },
+  "19095": {
+   "detail": "Iowa County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 191.",
+   "headline": "214 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 190.9,
+   "unit": "bu/acre",
+   "value": 213.7,
+   "years": 25
+  },
+  "19097": {
+   "detail": "Jackson County, IA yields since 2000 rise about 2.7 bu/acre a year. In 1 year in 10 the county falls below 197.",
+   "headline": "214 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 197.3,
+   "unit": "bu/acre",
+   "value": 213.8,
+   "years": 26
+  },
+  "19099": {
+   "detail": "Jasper County, IA yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 188.",
+   "headline": "221 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 187.8,
+   "unit": "bu/acre",
+   "value": 221.0,
+   "years": 23
+  },
+  "19101": {
+   "detail": "Jefferson County, IA yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 153.",
+   "headline": "190 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 153.3,
+   "unit": "bu/acre",
+   "value": 190.2,
+   "years": 26
+  },
+  "19103": {
+   "detail": "Johnson County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 180.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 179.8,
+   "unit": "bu/acre",
+   "value": 209.7,
+   "years": 25
+  },
+  "19105": {
+   "detail": "Jones County, IA yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 195.",
+   "headline": "215 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 195.2,
+   "unit": "bu/acre",
+   "value": 215.3,
+   "years": 25
+  },
+  "19107": {
+   "detail": "Keokuk County, IA yields since 2000 rise about 1.9 bu/acre a year. In 1 year in 10 the county falls below 172.",
+   "headline": "195 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 171.7,
+   "unit": "bu/acre",
+   "value": 194.8,
+   "years": 25
+  },
+  "19109": {
+   "detail": "Kossuth County, IA yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 189.",
+   "headline": "206 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 189.4,
+   "unit": "bu/acre",
+   "value": 206.1,
+   "years": 24
+  },
+  "19111": {
+   "detail": "Lee County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 153.",
+   "headline": "195 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 153.0,
+   "unit": "bu/acre",
+   "value": 194.6,
+   "years": 26
+  },
+  "19113": {
+   "detail": "Linn County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 190.",
+   "headline": "215 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 190.0,
+   "unit": "bu/acre",
+   "value": 214.6,
+   "years": 25
+  },
+  "19115": {
+   "detail": "Louisa County, IA yields since 2000 rise about 2.6 bu/acre a year. In 1 year in 10 the county falls below 184.",
+   "headline": "208 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 184.4,
+   "unit": "bu/acre",
+   "value": 208.4,
+   "years": 24
+  },
+  "19117": {
+   "detail": "Lucas County, IA yields since 2000 rise about 1.6 bu/acre a year. In 1 year in 10 the county falls below 136.",
+   "headline": "162 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 135.6,
+   "unit": "bu/acre",
+   "value": 162.3,
+   "years": 22
+  },
+  "19119": {
+   "detail": "Lyon County, IA yields since 2000 rise about 2.0 bu/acre a year. In 1 year in 10 the county falls below 197.",
+   "headline": "212 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 197.0,
+   "unit": "bu/acre",
+   "value": 212.0,
+   "years": 25
+  },
+  "19121": {
+   "detail": "Madison County, IA yields since 2000 rise about 1.9 bu/acre a year. In 1 year in 10 the county falls below 166.",
+   "headline": "188 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 165.6,
+   "unit": "bu/acre",
+   "value": 187.5,
+   "years": 25
+  },
+  "19123": {
+   "detail": "Mahaska County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 194.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 194.4,
+   "unit": "bu/acre",
+   "value": 210.1,
+   "years": 26
+  },
+  "19125": {
+   "detail": "Marion County, IA yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 184.",
+   "headline": "202 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 184.2,
+   "unit": "bu/acre",
+   "value": 202.1,
+   "years": 25
+  },
+  "19127": {
+   "detail": "Marshall County, IA yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 201.",
+   "headline": "226 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 200.6,
+   "unit": "bu/acre",
+   "value": 226.2,
+   "years": 24
+  },
+  "19129": {
+   "detail": "Mills County, IA yields since 2000 rise about 2.9 bu/acre a year. In 1 year in 10 the county falls below 193.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 193.0,
+   "unit": "bu/acre",
+   "value": 210.3,
+   "years": 24
+  },
+  "19131": {
+   "detail": "Mitchell County, IA yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 191.",
+   "headline": "211 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 191.1,
+   "unit": "bu/acre",
+   "value": 211.1,
+   "years": 26
+  },
+  "19133": {
+   "detail": "Monona County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 174.",
+   "headline": "197 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 174.1,
+   "unit": "bu/acre",
+   "value": 197.1,
+   "years": 26
+  },
+  "19135": {
+   "detail": "Monroe County, IA yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 133.",
+   "headline": "172 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 133.0,
+   "unit": "bu/acre",
+   "value": 172.4,
+   "years": 25
+  },
+  "19137": {
+   "detail": "Montgomery County, IA yields since 2000 rise about 2.8 bu/acre a year. In 1 year in 10 the county falls below 189.",
+   "headline": "209 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 188.6,
+   "unit": "bu/acre",
+   "value": 209.2,
+   "years": 26
+  },
+  "19139": {
+   "detail": "Muscatine County, IA yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 184.",
+   "headline": "211 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 183.8,
+   "unit": "bu/acre",
+   "value": 211.2,
+   "years": 26
+  },
+  "19141": {
+   "detail": "O Brien County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 204.",
+   "headline": "220 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 204.0,
+   "unit": "bu/acre",
+   "value": 219.7,
+   "years": 26
+  },
+  "19143": {
+   "detail": "Osceola County, IA yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 198.",
+   "headline": "216 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 197.9,
+   "unit": "bu/acre",
+   "value": 215.9,
+   "years": 25
+  },
+  "19145": {
+   "detail": "Page County, IA yields since 2000 rise about 3.1 bu/acre a year. In 1 year in 10 the county falls below 179.",
+   "headline": "207 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 179.0,
+   "unit": "bu/acre",
+   "value": 207.5,
+   "years": 25
+  },
+  "19147": {
+   "detail": "Palo Alto County, IA yields since 2000 rise about 1.6 bu/acre a year. In 1 year in 10 the county falls below 183.",
+   "headline": "200 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 183.5,
+   "unit": "bu/acre",
+   "value": 200.5,
+   "years": 26
+  },
+  "19149": {
+   "detail": "Plymouth County, IA yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 179.",
+   "headline": "213 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 179.1,
+   "unit": "bu/acre",
+   "value": 212.8,
+   "years": 24
+  },
+  "19151": {
+   "detail": "Pocahontas County, IA yields since 2000 rise about 2.0 bu/acre a year. In 1 year in 10 the county falls below 192.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 191.8,
+   "unit": "bu/acre",
+   "value": 210.4,
+   "years": 25
+  },
+  "19153": {
+   "detail": "Polk County, IA yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 167.",
+   "headline": "202 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 167.0,
+   "unit": "bu/acre",
+   "value": 202.3,
+   "years": 26
+  },
+  "19155": {
+   "detail": "Pottawattamie County, IA yields since 2000 rise about 2.7 bu/acre a year. In 1 year in 10 the county falls below 192.",
+   "headline": "215 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 192.3,
+   "unit": "bu/acre",
+   "value": 215.0,
+   "years": 23
+  },
+  "19157": {
+   "detail": "Poweshiek County, IA yields since 2000 rise about 1.9 bu/acre a year. In 1 year in 10 the county falls below 179.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 179.3,
+   "unit": "bu/acre",
+   "value": 209.6,
+   "years": 26
+  },
+  "19159": {
+   "detail": "Ringgold County, IA yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 140.",
+   "headline": "166 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2022,
+   "low": 140.0,
+   "unit": "bu/acre",
+   "value": 165.5,
+   "years": 22
+  },
+  "19161": {
+   "detail": "Sac County, IA yields since 2000 rise about 2.8 bu/acre a year. In 1 year in 10 the county falls below 177.",
+   "headline": "222 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 177.2,
+   "unit": "bu/acre",
+   "value": 222.1,
+   "years": 26
+  },
+  "19163": {
+   "detail": "Scott County, IA yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 191.",
+   "headline": "218 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 190.7,
+   "unit": "bu/acre",
+   "value": 217.6,
+   "years": 26
+  },
+  "19165": {
+   "detail": "Shelby County, IA yields since 2000 rise about 2.9 bu/acre a year. In 1 year in 10 the county falls below 195.",
+   "headline": "222 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 195.3,
+   "unit": "bu/acre",
+   "value": 222.0,
+   "years": 23
+  },
+  "19167": {
+   "detail": "Sioux County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 205.",
+   "headline": "221 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 205.1,
+   "unit": "bu/acre",
+   "value": 220.7,
+   "years": 24
+  },
+  "19169": {
+   "detail": "Story County, IA yields since 2000 rise about 1.6 bu/acre a year. In 1 year in 10 the county falls below 182.",
+   "headline": "202 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 181.6,
+   "unit": "bu/acre",
+   "value": 202.2,
+   "years": 26
+  },
+  "19171": {
+   "detail": "Tama County, IA yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 183.",
+   "headline": "207 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 182.6,
+   "unit": "bu/acre",
+   "value": 206.6,
+   "years": 24
+  },
+  "19173": {
+   "detail": "Taylor County, IA yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 165.",
+   "headline": "184 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 165.1,
+   "unit": "bu/acre",
+   "value": 184.5,
+   "years": 25
+  },
+  "19175": {
+   "detail": "Union County, IA yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 151.",
+   "headline": "185 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 151.1,
+   "unit": "bu/acre",
+   "value": 184.5,
+   "years": 24
+  },
+  "19177": {
+   "detail": "Van Buren County, IA yields since 2000 rise about 1.5 bu/acre a year. In 1 year in 10 the county falls below 130.",
+   "headline": "171 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 130.2,
+   "unit": "bu/acre",
+   "value": 171.3,
+   "years": 24
+  },
+  "19179": {
+   "detail": "Wapello County, IA yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 159.",
+   "headline": "188 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 159.3,
+   "unit": "bu/acre",
+   "value": 188.2,
+   "years": 24
+  },
+  "19181": {
+   "detail": "Warren County, IA yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 153.",
+   "headline": "181 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 153.0,
+   "unit": "bu/acre",
+   "value": 181.1,
+   "years": 23
+  },
+  "19183": {
+   "detail": "Washington County, IA yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 184.",
+   "headline": "207 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 183.7,
+   "unit": "bu/acre",
+   "value": 206.6,
+   "years": 24
+  },
+  "19185": {
+   "detail": "Wayne County, IA yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 135.",
+   "headline": "175 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 135.4,
+   "unit": "bu/acre",
+   "value": 174.6,
+   "years": 23
+  },
+  "19187": {
+   "detail": "Webster County, IA yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 188.",
+   "headline": "208 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 187.9,
+   "unit": "bu/acre",
+   "value": 207.8,
+   "years": 26
+  },
+  "19189": {
+   "detail": "Winnebago County, IA yields since 2000 rise about 2.0 bu/acre a year. In 1 year in 10 the county falls below 186.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 186.2,
+   "unit": "bu/acre",
+   "value": 210.1,
+   "years": 26
+  },
+  "19191": {
+   "detail": "Winneshiek County, IA yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 194.",
+   "headline": "213 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 193.8,
+   "unit": "bu/acre",
+   "value": 213.3,
+   "years": 26
+  },
+  "19193": {
+   "detail": "Woodbury County, IA yields since 2000 rise about 3.0 bu/acre a year. In 1 year in 10 the county falls below 180.",
+   "headline": "217 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 180.3,
+   "unit": "bu/acre",
+   "value": 216.9,
+   "years": 26
+  },
+  "19195": {
+   "detail": "Worth County, IA yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 186.",
+   "headline": "209 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 185.6,
+   "unit": "bu/acre",
+   "value": 208.9,
+   "years": 26
+  },
+  "19197": {
+   "detail": "Wright County, IA yields since 2000 rise about 1.6 bu/acre a year. In 1 year in 10 the county falls below 183.",
+   "headline": "203 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 183.5,
+   "unit": "bu/acre",
+   "value": 202.5,
+   "years": 25
+  },
+  "31001": {
+   "detail": "Adams County, NE yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 208.",
+   "headline": "220 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 208.5,
+   "unit": "bu/acre",
+   "value": 220.0,
+   "years": 25
+  },
+  "31011": {
+   "detail": "Boone County, NE yields since 2000 rise about 3.0 bu/acre a year. In 1 year in 10 the county falls below 194.",
+   "headline": "217 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2022,
+   "low": 194.0,
+   "unit": "bu/acre",
+   "value": 217.5,
+   "years": 22
+  },
+  "31013": {
+   "detail": "Box Butte County, NE yields since 2000 rise about 0.2 bu/acre a year. In 1 year in 10 the county falls below 139.",
+   "headline": "153 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 139.5,
+   "unit": "bu/acre",
+   "value": 153.1,
+   "years": 26
+  },
+  "31015": {
+   "detail": "Boyd County, NE yields since 2000 rise about 4.0 bu/acre a year. In 1 year in 10 the county falls below 118.",
+   "headline": "170 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 117.7,
+   "unit": "bu/acre",
+   "value": 170.4,
+   "years": 22
+  },
+  "31017": {
+   "detail": "Brown County, NE yields since 2000 rise about 2.9 bu/acre a year. In 1 year in 10 the county falls below 210.",
+   "headline": "229 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 209.7,
+   "unit": "bu/acre",
+   "value": 228.8,
+   "years": 23
+  },
+  "31019": {
+   "detail": "Buffalo County, NE yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 196.",
+   "headline": "209 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 195.7,
+   "unit": "bu/acre",
+   "value": 209.4,
+   "years": 25
+  },
+  "31021": {
+   "detail": "Burt County, NE yields since 2000 rise about 2.8 bu/acre a year. In 1 year in 10 the county falls below 173.",
+   "headline": "206 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 173.4,
+   "unit": "bu/acre",
+   "value": 205.7,
+   "years": 26
+  },
+  "31023": {
+   "detail": "Butler County, NE yields since 2000 rise about 3.1 bu/acre a year. In 1 year in 10 the county falls below 181.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 181.3,
+   "unit": "bu/acre",
+   "value": 210.2,
+   "years": 26
+  },
+  "31025": {
+   "detail": "Cass County, NE yields since 2000 rise about 3.7 bu/acre a year. In 1 year in 10 the county falls below 152.",
+   "headline": "203 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 151.7,
+   "unit": "bu/acre",
+   "value": 203.2,
+   "years": 25
+  },
+  "31027": {
+   "detail": "Cedar County, NE yields since 2000 rise about 3.5 bu/acre a year. In 1 year in 10 the county falls below 183.",
+   "headline": "213 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 182.9,
+   "unit": "bu/acre",
+   "value": 213.1,
+   "years": 26
+  },
+  "31029": {
+   "detail": "Chase County, NE yields since 2000 fall about 0.3 bu/acre a year. In 1 year in 10 the county falls below 150.",
+   "headline": "167 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 149.8,
+   "unit": "bu/acre",
+   "value": 167.4,
+   "years": 26
+  },
+  "31031": {
+   "detail": "Cherry County, NE yields since 2000 rise about 1.3 bu/acre a year. In 1 year in 10 the county falls below 181.",
+   "headline": "198 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2021,
+   "low": 181.2,
+   "unit": "bu/acre",
+   "value": 198.1,
+   "years": 19
+  },
+  "31033": {
+   "detail": "Cheyenne County, NE yields since 2000 fall about 1.4 bu/acre a year. In 1 year in 10 the county falls below 83.",
+   "headline": "103 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 82.9,
+   "unit": "bu/acre",
+   "value": 102.5,
+   "years": 17
+  },
+  "31035": {
+   "detail": "Clay County, NE yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 185.",
+   "headline": "203 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 185.0,
+   "unit": "bu/acre",
+   "value": 203.3,
+   "years": 25
+  },
+  "31037": {
+   "detail": "Colfax County, NE yields since 2000 rise about 2.9 bu/acre a year. In 1 year in 10 the county falls below 178.",
+   "headline": "211 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 178.5,
+   "unit": "bu/acre",
+   "value": 210.8,
+   "years": 26
+  },
+  "31039": {
+   "detail": "Cuming County, NE yields since 2000 rise about 3.0 bu/acre a year. In 1 year in 10 the county falls below 172.",
+   "headline": "213 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 171.6,
+   "unit": "bu/acre",
+   "value": 212.8,
+   "years": 26
+  },
+  "31041": {
+   "detail": "Custer County, NE yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 199.",
+   "headline": "209 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 199.4,
+   "unit": "bu/acre",
+   "value": 209.0,
+   "years": 23
+  },
+  "31043": {
+   "detail": "Dakota County, NE yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 168.",
+   "headline": "202 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 168.4,
+   "unit": "bu/acre",
+   "value": 201.8,
+   "years": 20
+  },
+  "31047": {
+   "detail": "Dawson County, NE yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 209.",
+   "headline": "225 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 209.0,
+   "unit": "bu/acre",
+   "value": 224.8,
+   "years": 23
+  },
+  "31049": {
+   "detail": "Deuel County, NE yields since 2000 fall about 1.1 bu/acre a year. In 1 year in 10 the county falls below 79.",
+   "headline": "103 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 79.3,
+   "unit": "bu/acre",
+   "value": 103.2,
+   "years": 20
+  },
+  "31051": {
+   "detail": "Dixon County, NE yields since 2000 rise about 3.3 bu/acre a year. In 1 year in 10 the county falls below 184.",
+   "headline": "207 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 184.4,
+   "unit": "bu/acre",
+   "value": 206.9,
+   "years": 22
+  },
+  "31053": {
+   "detail": "Dodge County, NE yields since 2000 rise about 2.9 bu/acre a year. In 1 year in 10 the county falls below 177.",
+   "headline": "212 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 176.9,
+   "unit": "bu/acre",
+   "value": 211.7,
+   "years": 24
+  },
+  "31055": {
+   "detail": "Douglas County, NE yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 171.",
+   "headline": "195 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 171.3,
+   "unit": "bu/acre",
+   "value": 194.8,
+   "years": 24
+  },
+  "31057": {
+   "detail": "Dundy County, NE yields since 2000 fall about 0.2 bu/acre a year. In 1 year in 10 the county falls below 133.",
+   "headline": "153 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 133.4,
+   "unit": "bu/acre",
+   "value": 152.8,
+   "years": 25
+  },
+  "31059": {
+   "detail": "Fillmore County, NE yields since 2000 rise about 2.4 bu/acre a year. In 1 year in 10 the county falls below 197.",
+   "headline": "215 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 197.5,
+   "unit": "bu/acre",
+   "value": 215.0,
+   "years": 24
+  },
+  "31061": {
+   "detail": "Franklin County, NE yields since 2000 rise about 1.4 bu/acre a year. In 1 year in 10 the county falls below 175.",
+   "headline": "194 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 175.4,
+   "unit": "bu/acre",
+   "value": 193.9,
+   "years": 26
+  },
+  "31063": {
+   "detail": "Frontier County, NE yields since 2000 rise about 0.9 bu/acre a year. In 1 year in 10 the county falls below 128.",
+   "headline": "146 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 127.7,
+   "unit": "bu/acre",
+   "value": 146.3,
+   "years": 23
+  },
+  "31065": {
+   "detail": "Furnas County, NE yields since 2000 rise about 1.4 bu/acre a year. In 1 year in 10 the county falls below 107.",
+   "headline": "145 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 106.9,
+   "unit": "bu/acre",
+   "value": 144.9,
+   "years": 26
+  },
+  "31067": {
+   "detail": "Gage County, NE yields since 2000 rise about 2.6 bu/acre a year. In 1 year in 10 the county falls below 138.",
+   "headline": "175 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 138.1,
+   "unit": "bu/acre",
+   "value": 175.2,
+   "years": 25
+  },
+  "31069": {
+   "detail": "Garden County, NE yields since 2000 fall about 1.2 bu/acre a year. In 1 year in 10 the county falls below 88.",
+   "headline": "115 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 87.6,
+   "unit": "bu/acre",
+   "value": 114.5,
+   "years": 18
+  },
+  "31071": {
+   "detail": "Garfield County, NE yields since 2000 rise about 2.7 bu/acre a year. In 1 year in 10 the county falls below 191.",
+   "headline": "207 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 191.1,
+   "unit": "bu/acre",
+   "value": 207.1,
+   "years": 25
+  },
+  "31073": {
+   "detail": "Gosper County, NE yields since 2000 rise about 1.9 bu/acre a year. In 1 year in 10 the county falls below 181.",
+   "headline": "204 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 181.4,
+   "unit": "bu/acre",
+   "value": 204.0,
+   "years": 22
+  },
+  "31077": {
+   "detail": "Greeley County, NE yields since 2000 rise about 3.0 bu/acre a year. In 1 year in 10 the county falls below 197.",
+   "headline": "215 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 197.1,
+   "unit": "bu/acre",
+   "value": 214.9,
+   "years": 24
+  },
+  "31079": {
+   "detail": "Hall County, NE yields since 2000 rise about 1.7 bu/acre a year. In 1 year in 10 the county falls below 196.",
+   "headline": "213 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 196.3,
+   "unit": "bu/acre",
+   "value": 212.7,
+   "years": 25
+  },
+  "31081": {
+   "detail": "Hamilton County, NE yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 227.",
+   "headline": "235 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 227.3,
+   "unit": "bu/acre",
+   "value": 234.6,
+   "years": 25
+  },
+  "31083": {
+   "detail": "Harlan County, NE yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 173.",
+   "headline": "193 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 172.8,
+   "unit": "bu/acre",
+   "value": 192.9,
+   "years": 26
+  },
+  "31085": {
+   "detail": "Hayes County, NE yields since 2000 rise about 0.2 bu/acre a year. In 1 year in 10 the county falls below 121.",
+   "headline": "144 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 121.0,
+   "unit": "bu/acre",
+   "value": 143.8,
+   "years": 26
+  },
+  "31087": {
+   "detail": "Hitchcock County, NE yields since 2000 rise about 0.3 bu/acre a year. In 1 year in 10 the county falls below 93.",
+   "headline": "120 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 92.8,
+   "unit": "bu/acre",
+   "value": 119.6,
+   "years": 22
+  },
+  "31089": {
+   "detail": "Holt County, NE yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 199.",
+   "headline": "223 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 198.5,
+   "unit": "bu/acre",
+   "value": 222.5,
+   "years": 23
+  },
+  "31093": {
+   "detail": "Howard County, NE yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 186.",
+   "headline": "203 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 186.0,
+   "unit": "bu/acre",
+   "value": 202.7,
+   "years": 26
+  },
+  "31095": {
+   "detail": "Jefferson County, NE yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 144.",
+   "headline": "177 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 144.4,
+   "unit": "bu/acre",
+   "value": 177.0,
+   "years": 25
+  },
+  "31097": {
+   "detail": "Johnson County, NE yields since 2000 rise about 2.7 bu/acre a year. In 1 year in 10 the county falls below 138.",
+   "headline": "170 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 137.9,
+   "unit": "bu/acre",
+   "value": 169.8,
+   "years": 25
+  },
+  "31099": {
+   "detail": "Kearney County, NE yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 205.",
+   "headline": "220 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 204.6,
+   "unit": "bu/acre",
+   "value": 219.7,
+   "years": 25
+  },
+  "31101": {
+   "detail": "Keith County, NE yields since 2000 rise about 1.0 bu/acre a year. In 1 year in 10 the county falls below 144.",
+   "headline": "167 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 144.1,
+   "unit": "bu/acre",
+   "value": 167.0,
+   "years": 23
+  },
+  "31103": {
+   "detail": "Keya Paha County, NE yields since 2000 rise about 3.9 bu/acre a year. In 1 year in 10 the county falls below 181.",
+   "headline": "217 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 180.5,
+   "unit": "bu/acre",
+   "value": 216.9,
+   "years": 25
+  },
+  "31105": {
+   "detail": "Kimball County, NE yields since 2000 rise about 0.0 bu/acre a year. In 1 year in 10 the county falls below 83.",
+   "headline": "104 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2022,
+   "low": 82.8,
+   "unit": "bu/acre",
+   "value": 104.4,
+   "years": 17
+  },
+  "31107": {
+   "detail": "Knox County, NE yields since 2000 rise about 3.5 bu/acre a year. In 1 year in 10 the county falls below 169.",
+   "headline": "202 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 169.0,
+   "unit": "bu/acre",
+   "value": 201.7,
+   "years": 26
+  },
+  "31109": {
+   "detail": "Lancaster County, NE yields since 2000 rise about 2.6 bu/acre a year. In 1 year in 10 the county falls below 128.",
+   "headline": "174 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 127.8,
+   "unit": "bu/acre",
+   "value": 174.4,
+   "years": 25
+  },
+  "31111": {
+   "detail": "Lincoln County, NE yields since 2000 rise about 1.3 bu/acre a year. In 1 year in 10 the county falls below 171.",
+   "headline": "188 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 171.4,
+   "unit": "bu/acre",
+   "value": 187.6,
+   "years": 26
+  },
+  "31113": {
+   "detail": "Logan County, NE yields since 2000 rise about 2.9 bu/acre a year. In 1 year in 10 the county falls below 188.",
+   "headline": "204 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 188.3,
+   "unit": "bu/acre",
+   "value": 204.1,
+   "years": 24
+  },
+  "31115": {
+   "detail": "Loup County, NE yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 166.",
+   "headline": "181 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 166.3,
+   "unit": "bu/acre",
+   "value": 181.3,
+   "years": 15
+  },
+  "31119": {
+   "detail": "Madison County, NE yields since 2000 rise about 3.2 bu/acre a year. In 1 year in 10 the county falls below 176.",
+   "headline": "210 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 175.6,
+   "unit": "bu/acre",
+   "value": 209.7,
+   "years": 24
+  },
+  "31121": {
+   "detail": "Merrick County, NE yields since 2000 rise about 1.8 bu/acre a year. In 1 year in 10 the county falls below 183.",
+   "headline": "200 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 182.9,
+   "unit": "bu/acre",
+   "value": 200.4,
+   "years": 22
+  },
+  "31123": {
+   "detail": "Morrill County, NE yields since 2000 rise about 0.6 bu/acre a year. In 1 year in 10 the county falls below 159.",
+   "headline": "172 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 158.7,
+   "unit": "bu/acre",
+   "value": 171.7,
+   "years": 26
+  },
+  "31125": {
+   "detail": "Nance County, NE yields since 2000 rise about 2.8 bu/acre a year. In 1 year in 10 the county falls below 173.",
+   "headline": "202 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 173.0,
+   "unit": "bu/acre",
+   "value": 202.1,
+   "years": 23
+  },
+  "31127": {
+   "detail": "Nemaha County, NE yields since 2000 rise about 3.6 bu/acre a year. In 1 year in 10 the county falls below 157.",
+   "headline": "198 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 157.3,
+   "unit": "bu/acre",
+   "value": 197.6,
+   "years": 25
+  },
+  "31129": {
+   "detail": "Nuckolls County, NE yields since 2000 rise about 2.6 bu/acre a year. In 1 year in 10 the county falls below 173.",
+   "headline": "193 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 172.9,
+   "unit": "bu/acre",
+   "value": 192.8,
+   "years": 23
+  },
+  "31131": {
+   "detail": "Otoe County, NE yields since 2000 rise about 3.4 bu/acre a year. In 1 year in 10 the county falls below 136.",
+   "headline": "185 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 136.4,
+   "unit": "bu/acre",
+   "value": 185.3,
+   "years": 24
+  },
+  "31133": {
+   "detail": "Pawnee County, NE yields since 2000 rise about 2.9 bu/acre a year. In 1 year in 10 the county falls below 131.",
+   "headline": "167 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 131.4,
+   "unit": "bu/acre",
+   "value": 167.3,
+   "years": 26
+  },
+  "31135": {
+   "detail": "Perkins County, NE yields since 2000 fall about 0.5 bu/acre a year. In 1 year in 10 the county falls below 111.",
+   "headline": "128 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2021,
+   "low": 110.9,
+   "unit": "bu/acre",
+   "value": 128.2,
+   "years": 22
+  },
+  "31137": {
+   "detail": "Phelps County, NE yields since 2000 rise about 2.0 bu/acre a year. In 1 year in 10 the county falls below 217.",
+   "headline": "234 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 217.1,
+   "unit": "bu/acre",
+   "value": 233.8,
+   "years": 26
+  },
+  "31139": {
+   "detail": "Pierce County, NE yields since 2000 rise about 3.0 bu/acre a year. In 1 year in 10 the county falls below 183.",
+   "headline": "212 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 182.7,
+   "unit": "bu/acre",
+   "value": 212.0,
+   "years": 24
+  },
+  "31141": {
+   "detail": "Platte County, NE yields since 2000 rise about 2.7 bu/acre a year. In 1 year in 10 the county falls below 188.",
+   "headline": "217 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 187.8,
+   "unit": "bu/acre",
+   "value": 216.5,
+   "years": 25
+  },
+  "31143": {
+   "detail": "Polk County, NE yields since 2000 rise about 2.9 bu/acre a year. In 1 year in 10 the county falls below 197.",
+   "headline": "219 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 196.8,
+   "unit": "bu/acre",
+   "value": 219.3,
+   "years": 23
+  },
+  "31145": {
+   "detail": "Red Willow County, NE yields since 2000 rise about 1.3 bu/acre a year. In 1 year in 10 the county falls below 120.",
+   "headline": "148 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 120.3,
+   "unit": "bu/acre",
+   "value": 148.2,
+   "years": 23
+  },
+  "31147": {
+   "detail": "Richardson County, NE yields since 2000 rise about 3.1 bu/acre a year. In 1 year in 10 the county falls below 154.",
+   "headline": "193 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 154.3,
+   "unit": "bu/acre",
+   "value": 193.5,
+   "years": 25
+  },
+  "31149": {
+   "detail": "Rock County, NE yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 199.",
+   "headline": "213 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 198.7,
+   "unit": "bu/acre",
+   "value": 213.2,
+   "years": 18
+  },
+  "31151": {
+   "detail": "Saline County, NE yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 162.",
+   "headline": "187 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 161.9,
+   "unit": "bu/acre",
+   "value": 187.3,
+   "years": 25
+  },
+  "31153": {
+   "detail": "Sarpy County, NE yields since 2000 rise about 3.9 bu/acre a year. In 1 year in 10 the county falls below 174.",
+   "headline": "213 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 174.1,
+   "unit": "bu/acre",
+   "value": 213.2,
+   "years": 24
+  },
+  "31155": {
+   "detail": "Saunders County, NE yields since 2000 rise about 3.1 bu/acre a year. In 1 year in 10 the county falls below 181.",
+   "headline": "206 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 181.2,
+   "unit": "bu/acre",
+   "value": 205.8,
+   "years": 24
+  },
+  "31157": {
+   "detail": "Scotts Bluff County, NE yields since 2000 rise about 1.4 bu/acre a year. In 1 year in 10 the county falls below 161.",
+   "headline": "178 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 160.6,
+   "unit": "bu/acre",
+   "value": 178.5,
+   "years": 25
+  },
+  "31159": {
+   "detail": "Seward County, NE yields since 2000 rise about 3.0 bu/acre a year. In 1 year in 10 the county falls below 185.",
+   "headline": "209 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2022,
+   "low": 185.1,
+   "unit": "bu/acre",
+   "value": 209.4,
+   "years": 23
+  },
+  "31161": {
+   "detail": "Sheridan County, NE yields since 2000 rise about 0.7 bu/acre a year. In 1 year in 10 the county falls below 137.",
+   "headline": "157 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 137.4,
+   "unit": "bu/acre",
+   "value": 157.2,
+   "years": 23
+  },
+  "31163": {
+   "detail": "Sherman County, NE yields since 2000 rise about 2.1 bu/acre a year. In 1 year in 10 the county falls below 180.",
+   "headline": "200 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 180.0,
+   "unit": "bu/acre",
+   "value": 199.7,
+   "years": 26
+  },
+  "31165": {
+   "detail": "Sioux County, NE yields since 2000 rise about 1.6 bu/acre a year. In 1 year in 10 the county falls below 166.",
+   "headline": "184 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2023,
+   "low": 165.8,
+   "unit": "bu/acre",
+   "value": 184.2,
+   "years": 23
+  },
+  "31167": {
+   "detail": "Stanton County, NE yields since 2000 rise about 2.7 bu/acre a year. In 1 year in 10 the county falls below 153.",
+   "headline": "199 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 153.0,
+   "unit": "bu/acre",
+   "value": 199.3,
+   "years": 25
+  },
+  "31169": {
+   "detail": "Thayer County, NE yields since 2000 rise about 1.9 bu/acre a year. In 1 year in 10 the county falls below 181.",
+   "headline": "199 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 181.5,
+   "unit": "bu/acre",
+   "value": 198.7,
+   "years": 25
+  },
+  "31173": {
+   "detail": "Thurston County, NE yields since 2000 rise about 2.2 bu/acre a year. In 1 year in 10 the county falls below 145.",
+   "headline": "191 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2022,
+   "low": 145.4,
+   "unit": "bu/acre",
+   "value": 191.4,
+   "years": 20
+  },
+  "31175": {
+   "detail": "Valley County, NE yields since 2000 rise about 2.6 bu/acre a year. In 1 year in 10 the county falls below 193.",
+   "headline": "213 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 192.6,
+   "unit": "bu/acre",
+   "value": 212.6,
+   "years": 25
+  },
+  "31177": {
+   "detail": "Washington County, NE yields since 2000 rise about 2.3 bu/acre a year. In 1 year in 10 the county falls below 156.",
+   "headline": "190 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 156.4,
+   "unit": "bu/acre",
+   "value": 190.1,
+   "years": 25
+  },
+  "31179": {
+   "detail": "Wayne County, NE yields since 2000 rise about 2.6 bu/acre a year. In 1 year in 10 the county falls below 142.",
+   "headline": "199 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 142.1,
+   "unit": "bu/acre",
+   "value": 199.0,
+   "years": 25
+  },
+  "31181": {
+   "detail": "Webster County, NE yields since 2000 rise about 1.5 bu/acre a year. In 1 year in 10 the county falls below 150.",
+   "headline": "171 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2025,
+   "low": 149.7,
+   "unit": "bu/acre",
+   "value": 170.7,
+   "years": 23
+  },
+  "31183": {
+   "detail": "Wheeler County, NE yields since 2000 rise about 3.8 bu/acre a year. In 1 year in 10 the county falls below 216.",
+   "headline": "234 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 215.6,
+   "unit": "bu/acre",
+   "value": 234.2,
+   "years": 16
+  },
+  "31185": {
+   "detail": "York County, NE yields since 2000 rise about 2.5 bu/acre a year. In 1 year in 10 the county falls below 216.",
+   "headline": "230 bu/acre",
+   "label": "Trend corn yield, 2026",
+   "last_year": 2024,
+   "low": 215.6,
+   "unit": "bu/acre",
+   "value": 229.6,
+   "years": 23
+  }
+ },
+ "format": 1,
+ "link": "https://nebraska-yield-predictor-izzr8x4rxcppkcfjmqmiej.streamlit.app/",
+ "made": "2026-09-26",
+ "method": "Straight-line trend through the county's yields; the low end is the 10th percentile of each year's yield relative to its trend. County averages, not a forecast of this season.",
+ "not_covered": "Nebraska and Iowa counties with recent USDA yield reports today.",
+ "season": 2026,
+ "skipped": {
+  "19003": "no NASS yield since 2020",
+  "31003": "no NASS yield since 2019",
+  "31005": "only 8 years of yields",
+  "31007": "no NASS yield since 2016",
+  "31009": "no NASS yield since 2016",
+  "31045": "no NASS yield since 2020",
+  "31117": "no NASS yield since 2016",
+  "31171": "only 3 years of yields"
+ },
+ "source": "USDA NASS county corn yields (all practices), 2000 on"
+}

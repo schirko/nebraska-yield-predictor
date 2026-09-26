@@ -45,6 +45,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--state", default="NE", help="Two-letter state code")
     parser.add_argument("--state-fips", default="31")
+    parser.add_argument("--compare-weather", action="store_true",
+                        help="Score POWER against the gridMET variants on one "
+                             "row set, to measure what the 55 km grid costs")
     parser.add_argument("--split-spring", action="store_true",
                         help="Score spring rain and spring calendar as separate "
                              "groups, to test whether the calendar features are "
@@ -288,6 +291,78 @@ def main() -> None:
         print(ablation_df.set_index("removed").round(3).to_string())
         print("\nA feature that barely changes the score when removed is REDUNDANT - "
               "\nanother feature covers for it - not necessarily unimportant.")
+
+    # ---- What is the coarse weather grid costing? ----------------------------
+    # POWER serves ~55 km cells; gridMET serves ~4 km. Swapping one for the other
+    # and reporting the new number would tell us nothing about which choice earned
+    # the change. So score every available source on THE SAME county-years with
+    # THE SAME folds and the same model - only the weather columns differ.
+    if args.compare_weather:
+        print("\n" + "=" * 78)
+        print("WHAT IS THE 55 km WEATHER GRID COSTING? (same rows, same folds)")
+        print("=" * 78)
+
+        sources, tables = {}, {}
+        for source in ("power", "gridmet_point", "gridmet_mean"):
+            try:
+                tables[source] = build_modeling_table(
+                    state=state, state_fips=args.state_fips, weather_source=source)
+            except FileNotFoundError as err:
+                print(f"  {source}: not available ({err})")
+
+        if len(tables) < 2:
+            print("\n  Need at least two sources to compare. "
+                  "Run scripts/fetch_gridmet.py first.")
+        else:
+            # The row sets can differ if one product covers a county-year the other
+            # doesn't. Intersect them, or this repeats the row-set mistake the
+            # feature ladder already has a control for.
+            common = None
+            for frame in tables.values():
+                keys = set(map(tuple, frame[["fips", "year"]].to_numpy()))
+                common = keys if common is None else (common & keys)
+            print(f"\nScoring {len(common):,} county-years present in all "
+                  f"{len(tables)} sources.")
+            for source, frame in tables.items():
+                dropped = len(frame) - len(common)
+                if dropped:
+                    print(f"  ({source} had {dropped:,} rows the others lacked)")
+
+            rows = []
+            for source, frame in tables.items():
+                mask = [tuple(k) in common for k in frame[["fips", "year"]].to_numpy()]
+                shared = frame[mask].sort_values(["fips", "year"]).reset_index(drop=True)
+                Xc, yc, gc, uc = feature_matrix(shared, extra=extras or None)
+                model = DetrendedRegressor(boosting())
+                spatial = cross_val_predict(model, Xc, yc, cv=GroupKFold(5), groups=gc)
+                train, test = uc["year"] <= 2018, uc["year"] >= 2019
+                model.fit(Xc[train], yc[train])
+                future = model.predict(Xc[test])
+                rows.append({
+                    "weather source": source,
+                    "rows": len(Xc),
+                    **{f"spatial_{k}": v for k, v in scores(yc, spatial).items()},
+                    **{f"future_{k}": v for k, v in scores(yc[test], future).items()},
+                })
+
+            table = pd.DataFrame(rows).set_index("weather source")
+            print("\n" + table.round(3).to_string())
+            table.reset_index().to_parquet(
+                output_path("weather_source_comparison", state), index=False)
+
+            if "power" in table.index:
+                base = table.loc["power", "spatial_R2"]
+                print("\nAgainst POWER (55 km):")
+                for source in table.index:
+                    if source == "power":
+                        continue
+                    delta = table.loc[source, "spatial_R2"] - base
+                    print(f"  {source:14s} {delta:+.3f} spatial R2")
+                print("\nRegistered beforehand: the POINT variant was predicted NOT to")
+                print("beat POWER (a 55 km cell is already a spatial average, which is")
+                print("what a county-average target wants), and the MEAN variant was")
+                print("predicted to beat both. If the point variant wins, that")
+                print("prediction was wrong and resolution matters more than averaging.")
 
     # ---- Is leave-district-out leaking weather? ------------------------------
     # Counties smaller than a NASA POWER grid cell can be served by the same cell,

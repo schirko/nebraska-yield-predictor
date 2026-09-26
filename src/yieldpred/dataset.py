@@ -39,8 +39,34 @@ def load_yields(state: str = "ne", practice: str = "all") -> pd.DataFrame:
     return df[df["practice"] == practice] if practice else df
 
 
-def load_weather(state_fips: str = "31") -> pd.DataFrame:
-    return pd.read_parquet(PROCESSED / f"weather_county_{state_fips}.parquet")
+# Where each weather source lives. POWER is the default and the published one;
+# the gridMET variants exist so the choice of product can be measured instead of
+# assumed. See scripts/fetch_gridmet.py.
+WEATHER_SOURCES = {
+    "power": "weather_county_{fips}",       # NASA POWER, one point per county, ~55 km
+    "gridmet_point": "gridmet_point_{state}",   # gridMET, same point, ~4 km
+    "gridmet_mean": "gridmet_mean_{state}",     # gridMET, county polygon mean, ~4 km
+}
+
+
+def load_weather(state_fips: str = "31", source: str = "power",
+                 state: str = "ne") -> pd.DataFrame:
+    """Daily-derived weather features for one state, from one source.
+
+    All sources carry the same column names because they are produced by the
+    same functions in `weather.py` - only the underlying grid differs. That is
+    what makes swapping `source` a controlled comparison rather than a rewrite.
+    """
+    if source not in WEATHER_SOURCES:
+        raise ValueError(f"unknown weather source {source!r}; "
+                         f"choose from {sorted(WEATHER_SOURCES)}")
+    stem = WEATHER_SOURCES[source].format(fips=state_fips, state=state)
+    path = PROCESSED / f"{stem}.parquet"
+    if not path.exists():
+        raise FileNotFoundError(
+            f"{path.name} not found. Run scripts/fetch_gridmet.py"
+            if source.startswith("gridmet") else f"{path.name} not found.")
+    return pd.read_parquet(path)
 
 
 def load_irrigation(state: str = "ne") -> pd.DataFrame | None:
@@ -83,7 +109,8 @@ def load_static(state: str = "ne") -> pd.DataFrame | None:
 
 
 def build_modeling_table(state: str = "ne", state_fips: str = "31",
-                         practice: str = "all") -> pd.DataFrame:
+                         practice: str = "all",
+                         weather_source: str = "power") -> pd.DataFrame:
     """One row per county-year: the yield to predict plus its weather.
 
     `year` is kept as a column so models can use the long-run yield trend
@@ -91,7 +118,9 @@ def build_modeling_table(state: str = "ne", state_fips: str = "31",
     Irrigation share is joined when available.
     """
     yields = load_yields(state, practice)
-    weather = load_weather(state_fips).drop(columns=["county_name"])
+    weather = load_weather(state_fips, weather_source, state)
+    if "county_name" in weather.columns:
+        weather = weather.drop(columns=["county_name"])
 
     df = yields.merge(weather, on=["fips", "year"], how="inner", validate="one_to_one")
 

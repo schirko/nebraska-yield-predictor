@@ -240,13 +240,18 @@ src/yieldpred/        Core logic
   spatial.py          Contiguity weights and Moran's I
   geo.py              County boundaries, topology-safe simplification
   viz.py              Static and interactive choropleths
+  gridmet.py          gridMET at 4 km - the measured alternative to POWER's 55 km
+  leak.py             Leak-free spatial CV, and the control that makes it readable
   theme.py            Sky & Soil - the one place colour is defined
+  disclaimer.py       Legal notices, one source for the app and this README
   appdata.py          Streamlit-free data access for the app
 scripts/              Runnable steps, all --state aware
-  fetch_*.py          Downloads
-  train_baseline.py   Models, validation, feature ladder, ablation
+  fetch_*.py          Downloads (NASS, POWER, gridMET, soils, terrain, rotation)
+  train_baseline.py   Models, validation, feature ladder, ablation, controls
   analyze_errors.py   Moran's I and error maps
   cross_state.py      Train on one state, predict another
+  probe_weather_grid.py  Is one weather point per county good enough? (no downloads)
+  check_network.py    Which of the five data sources can this machine reach?
 notebooks/            Exploration
 data/raw/             Raw downloads and API cache (not committed)
 data/processed/       Small cleaned files used by the app

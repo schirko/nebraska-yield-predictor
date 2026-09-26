@@ -24,3 +24,7 @@ rasterio
 
 # Testing
 pytest
+
+# gridMET (4 km weather), for the weather-source comparison.
+# Optional: only scripts/fetch_gridmet.py imports it, and lazily.
+pygridmet

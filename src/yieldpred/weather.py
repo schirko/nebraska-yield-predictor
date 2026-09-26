@@ -12,6 +12,8 @@ is the planned improvement.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pandas as pd
 import requests
 
@@ -53,15 +55,46 @@ def c_to_f(celsius: pd.Series) -> pd.Series:
     return celsius * 9.0 / 5.0 + 32.0
 
 
-def county_points(state_fips: str = "31") -> pd.DataFrame:
-    """Internal point (lat/lon) for each county in a state, from the Census Gazetteer."""
-    gaz = pd.read_csv(GAZETTEER_URL, sep="\t", dtype={"GEOID": str})
+RAW = Path(__file__).resolve().parents[2] / "data" / "raw"
+
+
+def county_points(state_fips: str = "31", use_cache: bool = True) -> pd.DataFrame:
+    """Internal point (lat/lon) for each county in a state, from the Census Gazetteer.
+
+    Cached to data/raw/ after the first successful download. County internal
+    points do not change between Gazetteer editions in any way that matters here,
+    and caching means a script that only needs gridMET does not also need Census
+    to be reachable. Before the cache existed, a Census DNS failure could stop a
+    gridMET fetch before it made a single gridMET request.
+
+    The *internal point* is not the centroid: it is a point guaranteed to fall
+    inside the polygon, which for a crescent-shaped county is somewhere the
+    centroid is not. This matters because these are the exact coordinates sent to
+    NASA POWER, so the gridMET point comparison has to use them too or it stops
+    being a controlled comparison.
+    """
+    cache = RAW / f"county_points_{state_fips}.csv"
+    if use_cache and cache.exists():
+        return pd.read_csv(cache, dtype={"fips": str})
+
+    try:
+        gaz = pd.read_csv(GAZETTEER_URL, sep="\t", dtype={"GEOID": str})
+    except Exception as err:                        # noqa: BLE001 - re-raised with context
+        raise ConnectionError(
+            f"Could not download the Census Gazetteer ({err}). This is the county "
+            f"lat/lon lookup, not the weather service - check the connection and "
+            f"retry. Once it succeeds it is cached to {cache} and never fetched "
+            f"again.") from err
+
     gaz.columns = [c.strip() for c in gaz.columns]
     gaz = gaz[gaz["GEOID"].str.startswith(state_fips)]
-    return (gaz[["GEOID", "NAME", "INTPTLAT", "INTPTLONG"]]
-            .rename(columns={"GEOID": "fips", "NAME": "county_name",
-                             "INTPTLAT": "lat", "INTPTLONG": "lon"})
-            .reset_index(drop=True))
+    points = (gaz[["GEOID", "NAME", "INTPTLAT", "INTPTLONG"]]
+              .rename(columns={"GEOID": "fips", "NAME": "county_name",
+                               "INTPTLAT": "lat", "INTPTLONG": "lon"})
+              .reset_index(drop=True))
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    points.to_csv(cache, index=False)
+    return points
 
 
 def fetch_power_daily(lat: float, lon: float, start_year: int, end_year: int,

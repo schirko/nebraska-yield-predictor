@@ -11,7 +11,7 @@
 # the colour-vision checks, not by the brand.
 
 [theme]
-primaryColor = "#d9a441"              # wheat gold - buttons, sliders, focus rings
+primaryColor = "#e0ac45"              # wheat gold - buttons, sliders, focus rings
 backgroundColor = "#f7f6f2"           # warm paper (suite --suite-bg)
 secondaryBackgroundColor = "#efece4"  # sidebar and code blocks
 textColor = "#1d1c1a"                 # suite --suite-ink

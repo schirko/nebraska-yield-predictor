@@ -5,9 +5,9 @@
     {"id": "herd-planner", "name": "Herd Planner",
      "what": "Keep-or-sell decisions for cow-calf ranches",
      "url": "https://herd-planner.onrender.com/"},
-    {"id": "corn-yield-predictor", "name": "Corn Yield Predictor",
-     "what": "County corn yields from weather, soils and irrigation",
-     "url": null},
+    {"id": "corn-yield-predictor", "name": "Yield Predictor",
+     "what": "County crop yields from weather, soils and irrigation",
+     "url": "https://nebraska-yield-predictor-izzr8x4rxcppkcfjmqmiej.streamlit.app/"},
     {"id": "farm-equipment-planner", "name": "Farm Equipment Planner",
      "what": "Whether a tractor, combine or implement pays for itself",
      "url": null}

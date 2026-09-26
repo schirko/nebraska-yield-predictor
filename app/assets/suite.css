@@ -18,8 +18,8 @@
 
   /* Brand */
   --suite-deep-green: #243b2f;  /* header bar, footer band, text on gold */
-  --suite-gold: #d9a441;        /* buttons, active tabs, focus rings */
-  --suite-gold-hover: #e6b75a;  /* lighter on hover: deep green on it stays 6.5:1 */
+  --suite-gold: #e0ac45;        /* buttons, active tabs, focus rings */
+  --suite-gold-hover: #e9bf68;  /* lighter on hover: deep green on it is 7.0:1 */
   --suite-gold-line: #b8862b;   /* outline of secondary buttons */
   --suite-gold-tint: #fbf3e2;   /* hover fill of secondary buttons */
   --suite-link: #2a78d6;        /* links in body text */
@@ -42,7 +42,7 @@ a { color: var(--suite-link); }
 /* Keyboard focus: a gold ring on anything focusable, on both light and green backgrounds. */
 :focus-visible { outline: 3px solid var(--suite-gold); outline-offset: 2px; }
 
-/* Buttons. White on gold is too faint (2.2:1), so text on gold is deep green (5.4:1).
+/* Buttons. White on gold is too faint (2.1:1), so text on gold is deep green (5.8:1).
    .btn is Herd Planner's class name and .button is the equipment planner's: both get the same look. */
 .btn, .button {
   display: inline-block; border: 1px solid transparent; border-radius: var(--suite-button-radius);

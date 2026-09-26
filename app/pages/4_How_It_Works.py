@@ -13,13 +13,11 @@ if str(_SRC) not in sys.path:
 import streamlit as st
 
 from yieldpred.disclaimer import DATA_SOURCES, FOOTER, LIMITATIONS
-from yieldpred.brand import page_footer, page_setup
+from yieldpred.brand import page_footer, page_heading, page_setup
 
 page_setup("How It Works")
 
-st.title("How It Works")
-st.caption("The architecture, the data, and the ideas — for anyone who wants to know "
-           "what's under the hood")
+page_heading("How It Works")
 
 tab_flow, tab_data, tab_model, tab_words = st.tabs(
     ["Data flow", "Data sources", "The model", "Vocabulary"])

@@ -20,7 +20,7 @@ from yieldpred.appdata import (feature_correlations, load_ablation,
                                scores_by_scheme, worst_years)
 
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import page_footer, page_setup
+from yieldpred.brand import page_footer, page_heading, page_setup
 page_setup("Model & Validation")
 
 
@@ -33,7 +33,7 @@ def data():
 
 scores, model_table, errors, comparison, ablation, morans_year, morans_pooled, leak = data()
 
-st.title("Model & Validation")
+page_heading("Model & Validation")
 
 message = missing_data_message({"model": scores is not None})
 if message:

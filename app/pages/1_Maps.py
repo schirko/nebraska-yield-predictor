@@ -15,7 +15,7 @@ import streamlit as st
 from yieldpred.appdata import (county_values, load_counties, load_errors,
                                load_model_table, map_frame, missing_data_message)
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import page_footer, page_setup
+from yieldpred.brand import page_footer, page_heading, page_setup
 from yieldpred.geo import display_geometry
 from yieldpred.viz import choropleth, interactive_choropleth
 
@@ -34,7 +34,7 @@ def data():
 
 frame, counties, display = data()
 
-st.title("Maps")
+page_heading("Maps")
 
 message = missing_data_message({"model": frame is not None,
                                 "spatial": counties is not None})
@@ -66,15 +66,17 @@ LAYERS = {
 }
 available = {name: spec for name, spec in LAYERS.items() if spec[0] in frame.columns}
 
-controls, _ = st.columns([3, 1])
-with controls:
+# Side by side rather than stacked: the layer picker and the year slider are
+# one decision, and stacking them pushed the map itself below the fold.
+layer_col, year_col = st.columns([3, 2], gap="large")
+with layer_col:
     choice = st.radio("Layer", list(available), horizontal=True)
 
 column, diverging, by_year, label, explanation, fmt = available[choice]
 
 if by_year:
     years = sorted(frame["year"].unique())
-    with controls:
+    with year_col:
         picked = st.select_slider("Year", options=["All years (average)"] + years,
                                   value="All years (average)")
     year = None if picked == "All years (average)" else picked

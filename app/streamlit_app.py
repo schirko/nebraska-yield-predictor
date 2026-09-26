@@ -1,4 +1,4 @@
-"""Nebraska Corn Yield Predictor - home page.
+"""Yield Predictor - home page.
 
 Run from the project root:  streamlit run app/streamlit_app.py
 
@@ -22,8 +22,8 @@ from yieldpred.appdata import (irrigation_gap, load_morans_pooled, load_scores,
                                load_yields, missing_data_message, state_yield_history)
 
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import page_footer, page_setup
-page_setup("Nebraska Corn Yield Predictor")
+from yieldpred.brand import page_footer, page_heading, page_setup, start_here
+page_setup("Home")
 
 
 @st.cache_data
@@ -33,9 +33,8 @@ def data():
 
 yields, scores, morans = data()
 
-st.title("Nebraska Corn Yield Predictor")
-st.caption("Predicting county corn yields from weather, irrigation and soils — "
-           "and being honest about how well that works")
+page_heading("Home", display="Corn Yields, Nebraska and Iowa")
+start_here()
 
 message = missing_data_message({"yields": yields is not None, "model": scores is not None})
 if message:

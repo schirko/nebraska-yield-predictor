@@ -122,21 +122,44 @@ def test_every_page_wears_the_suite_chrome():
 
 
 def test_the_menu_lists_exactly_the_pages_that_exist():
-    """This is what lets nav_bar() swallow StreamlitPageNotFoundError safely.
-
-    `st.page_link` resolves against the entrypoint file, so under
-    `AppTest.from_file(one_page)` the other five pages aren't registered and the
-    menu has to skip them or take every page test down. Swallowing that error at
-    runtime would normally risk hiding a typo in NAV - it doesn't, because this
-    test pins NAV and app/pages/ to the same set of files. Static check catches
-    the typo; the runtime catch only ever fires for a page that genuinely isn't
-    part of the app being run.
-    """
+    """Every page is reachable from the menu, and every menu item is a page."""
     from yieldpred.brand import NAV
 
-    listed = {(APP / path).resolve() for path, _, _ in NAV}
+    listed = {(APP / path).resolve() for path, _, _, _ in NAV}
     assert listed == {p.resolve() for p in PAGES}, \
         "brand.NAV and app/pages/ disagree about which pages there are"
+
+
+def test_every_menu_url_matches_the_url_streamlit_will_serve():
+    """The pills are plain anchors, so a wrong href is a dead link.
+
+    Streamlit serves a page at its filename with the sort prefix and the
+    extension stripped: `pages/3_Model_and_Validation.py` becomes
+    `Model_and_Validation`. NAV writes those out rather than deriving them,
+    because the highlight and the navigation both depend on them and a wrong
+    one fails silently. This derives them and checks.
+    """
+    import re
+
+    from yieldpred.brand import NAV
+
+    for path, label, _icon, url in NAV:
+        if path == "streamlit_app.py":
+            assert url == "", "the home page is served at the app root"
+            continue
+        expected = re.sub(r"^\d+_", "", Path(path).stem)
+        assert url == expected, f"{label}: NAV says {url!r}, Streamlit serves {expected!r}"
+
+
+def test_the_reading_order_numbers_every_page_but_home():
+    """The pills are numbered as a suggested reading order, not as a wizard."""
+    from yieldpred.brand import NAV, STEPS
+
+    assert "Home" not in STEPS, "Home is the cover, not a step"
+    assert sorted(STEPS.values()) == list(range(1, len(NAV))), \
+        "the step numbers should run 1..n with no gaps or repeats"
+    assert STEPS["How It Works"] == 1, \
+        "the explanation comes first; it used to be buried at position four"
 
 
 def test_the_menu_is_in_the_body_not_a_sidebar():
@@ -173,12 +196,85 @@ def test_the_farm_apps_list_names_every_app_and_marks_this_one():
     sidebar. Both renderings read the same JSON, so both are checked."""
     from yieldpred.brand import _suite_menu_html, suite_menu_markdown
 
+    from yieldpred.brand import APP_NAME
+
     for text in (suite_menu_markdown(), _suite_menu_html()):
-        for name in ("Herd Planner", "Corn Yield Predictor", "Farm Equipment Planner"):
+        for name in ("Herd Planner", APP_NAME, "Farm Equipment Planner"):
             assert name in text
         assert "you're here" in text
 
-    text = suite_menu_markdown()
-    for name in ("Herd Planner", "Corn Yield Predictor", "Farm Equipment Planner"):
-        assert name in text
-    assert "Corn Yield Predictor (you're here)" in text
+    assert f"{APP_NAME} (you're here)" in suite_menu_markdown()
+
+
+# --------------------------------------------------- the suite chrome, in detail
+
+def test_the_stylesheet_has_no_angle_brackets():
+    """A `<` inside SUITE_CSS silently destroys the entire stylesheet.
+
+    `st.html` runs its argument through an HTML sanitizer, and the sanitizer
+    reads the text inside a style element as markup. A CSS comment that
+    mentioned a class name written with the key in angle brackets looked like
+    an opening tag, and the whole style block was dropped - no exception, no
+    warning in the server log, just an app rendered with no styling at all. It
+    took two debugging passes precisely because the CSS itself was valid.
+
+    So: no angle brackets in the stylesheet, not even in a comment. Child
+    combinators would have to be written some other way if one is ever needed.
+    """
+    from yieldpred.brand import SUITE_CSS
+
+    inner = SUITE_CSS.replace("<style>", "").replace("</style>", "")
+    assert "<" not in inner and ">" not in inner, (
+        "an angle bracket inside SUITE_CSS makes st.html's sanitizer discard "
+        "the whole stylesheet; found: "
+        + repr([line for line in inner.splitlines() if "<" in line or ">" in line]))
+
+
+def _relative_luminance(hex_color: str) -> float:
+    """WCAG 2.x relative luminance, so contrast is computed and not eyeballed."""
+    channels = []
+    for offset in (1, 3, 5):
+        value = int(hex_color[offset:offset + 2], 16) / 255
+        channels.append(value / 12.92 if value <= 0.03928
+                        else ((value + 0.055) / 1.055) ** 2.4)
+    red, green, blue = channels
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue
+
+
+def _contrast(one: str, two: str) -> float:
+    a, b = sorted((_relative_luminance(one), _relative_luminance(two)), reverse=True)
+    return (a + 0.05) / (b + 0.05)
+
+
+def test_the_header_and_menu_colours_are_readable():
+    """The menu sits on deep green, so its text has to be checked, not assumed.
+
+    White on the green passes comfortably. The active item is gold, and the
+    thing to protect against is someone "tidying" it to white text: white on
+    this gold is about 2.2:1, which is unreadable, and it is an easy mistake
+    because white text is what every other item in the bar uses.
+    """
+    from yieldpred.brand import DEEP_GREEN, GOLD
+
+    assert _contrast("#ffffff", DEEP_GREEN) >= 7.0, "white on the green bar"
+    assert _contrast(DEEP_GREEN, GOLD) >= 4.5, "active item: deep green on gold"
+    assert _contrast("#ffffff", GOLD) < 3.0, (
+        "if this ever passes, the gold changed - recheck the active item's text")
+
+
+def test_the_header_bar_names_the_app():
+    """The app's name is in the green bar, and it is not the old wrong one."""
+    from yieldpred import brand
+
+    assert brand.APP_NAME == "Yield Predictor"
+    for stale in ("Nebraska Corn Yield Predictor", "Corn Yield Predictor"):
+        assert stale != brand.APP_NAME
+    assert "suite-headerbar" in brand.SUITE_CSS, "no styling for the header name"
+
+
+def test_no_page_still_carries_the_old_app_name():
+    """The rename has to be complete, or the tab and the bar disagree."""
+    for page in PAGES:
+        text = page.read_text(encoding="utf-8")
+        assert "Nebraska Corn Yield Predictor" not in text, \
+            f"{page.name} still uses the old app name"

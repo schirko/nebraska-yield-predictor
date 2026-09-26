@@ -17,7 +17,7 @@ from yieldpred.appdata import (county_choices, county_history, load_errors,
                                load_model_table, load_yields, missing_data_message)
 
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import page_footer, page_setup
+from yieldpred.brand import page_footer, page_heading, page_setup
 page_setup("County Explorer")
 
 
@@ -28,7 +28,7 @@ def data():
 
 model_table, errors, yields = data()
 
-st.title("County Explorer")
+page_heading("County Explorer")
 
 message = missing_data_message({"model": model_table is not None,
                                 "yields": yields is not None})

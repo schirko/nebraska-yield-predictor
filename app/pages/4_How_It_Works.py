@@ -13,10 +13,9 @@ if str(_SRC) not in sys.path:
 import streamlit as st
 
 from yieldpred.disclaimer import DATA_SOURCES, FOOTER, LIMITATIONS
-from yieldpred.brand import PAGE_ICON, show_logo
+from yieldpred.brand import page_footer, page_setup
 
-st.set_page_config(page_title="How It Works", page_icon=PAGE_ICON, layout="wide")
-show_logo()
+page_setup("How It Works")
 
 st.title("How It Works")
 st.caption("The architecture, the data, and the ideas — for anyone who wants to know "
@@ -180,3 +179,4 @@ st.markdown(LIMITATIONS)
 with st.expander("Data sources and endorsement"):
     st.markdown(DATA_SOURCES)
 st.caption(FOOTER)
+page_footer()

@@ -17,9 +17,8 @@ from yieldpred.appdata import (county_choices, county_history, load_errors,
                                load_model_table, load_yields, missing_data_message)
 
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import PAGE_ICON, show_logo
-st.set_page_config(page_title="County Explorer", page_icon=PAGE_ICON, layout="wide")
-show_logo()
+from yieldpred.brand import page_footer, page_setup
+page_setup("County Explorer")
 
 
 @st.cache_data
@@ -105,3 +104,4 @@ with st.expander("Full record"):
 # ------------------------------------------------------------------ disclaimer
 st.divider()
 st.caption(FOOTER)
+page_footer()

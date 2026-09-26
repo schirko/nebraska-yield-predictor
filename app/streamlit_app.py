@@ -22,10 +22,8 @@ from yieldpred.appdata import (irrigation_gap, load_morans_pooled, load_scores,
                                load_yields, missing_data_message, state_yield_history)
 
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import PAGE_ICON, show_logo
-st.set_page_config(page_title="Nebraska Corn Yield Predictor", page_icon=PAGE_ICON,
-                   layout="wide")
-show_logo()
+from yieldpred.brand import page_footer, page_setup
+page_setup("Nebraska Corn Yield Predictor")
 
 
 @st.cache_data
@@ -63,7 +61,7 @@ if morans is not None:
 st.divider()
 
 # ------------------------------------------------------------------ the story
-story, sidebar = st.columns([3, 2])
+story, aside = st.columns([3, 2])   # "aside" since the app no longer has a sidebar
 
 with story:
     st.subheader("What this project does")
@@ -99,24 +97,19 @@ Those answers differ a lot, and the gap between them is the most useful thing he
   14 bu/acre gap between the two states from its inputs alone.
 """)
 
-with sidebar:
+with aside:
     st.subheader("Statewide yields")
     trend = state_yield_history(yields)
     st.line_chart(trend, y_label="bu/acre", height=260)
     st.caption("Irrigated and non-irrigated series end in 2018, when USDA stopped "
                "publishing county estimates by practice.")
-
-    st.subheader("Explore")
-    st.page_link("pages/1_Maps.py", label="Maps", icon="🗺️")
-    st.page_link("pages/2_County_Explorer.py", label="County Explorer", icon="🔎")
-    st.page_link("pages/3_Model_and_Validation.py", label="Model & Validation", icon="📊")
-    st.page_link("pages/4_How_It_Works.py", label="How It Works", icon="🛠️")
-    st.page_link("pages/5_Does_It_Transfer.py", label="Does It Transfer?", icon="🔁")
-
-st.divider()
-st.caption("Data: USDA NASS Quick Stats · NASA POWER · US Census Bureau. "
-           "Built with Python, scikit-learn, GeoPandas and Streamlit.")
+    # The "Explore" list of page links used to sit here. It moved into the menu
+    # across the top of every page (yieldpred.brand.nav_bar), so this column is
+    # the chart it started as and nothing else. The data-sources line that used
+    # to follow moved into the green footer band for the same reason: one copy,
+    # on every page, instead of one copy on the home page.
 
 # ------------------------------------------------------------------ disclaimer
 st.divider()
 st.caption(FOOTER)
+page_footer()

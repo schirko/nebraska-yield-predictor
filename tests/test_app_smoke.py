@@ -101,15 +101,59 @@ def test_the_disclaimer_says_the_three_things_it_has_to():
     assert "not endorsed or certified" in README_BLOCK.lower()
 
 
-def test_every_page_shows_the_logo():
-    """The corn logo is in the browser tab and the top-left corner on every page."""
-    from yieldpred.brand import LOGO
+def test_every_page_wears_the_suite_chrome():
+    """One call sets up every page, so six pages cannot drift apart.
+
+    `page_setup()` is the only place that calls `st.set_page_config`, loads the
+    logo, injects the suite CSS and draws the menu; `page_footer()` closes the
+    page with the green band. A page that spelled any of that out itself would
+    look right today and diverge at the next change, so this checks the calls
+    rather than the appearance.
+    """
+    from yieldpred.brand import LOGO, NAV
 
     assert LOGO.exists(), f"missing {LOGO}"
     for page in PAGES:
         text = page.read_text(encoding="utf-8")
-        assert "page_icon=PAGE_ICON" in text, f"{page.name} has its own tab icon"
-        assert "show_logo()" in text, f"{page.name} does not show the logo"
+        assert "page_setup(" in text, f"{page.name} does not call page_setup()"
+        assert "page_footer()" in text, f"{page.name} does not call page_footer()"
+        assert "st.set_page_config" not in text, \
+            f"{page.name} configures itself instead of going through page_setup()"
+
+
+def test_the_menu_lists_exactly_the_pages_that_exist():
+    """This is what lets nav_bar() swallow StreamlitPageNotFoundError safely.
+
+    `st.page_link` resolves against the entrypoint file, so under
+    `AppTest.from_file(one_page)` the other five pages aren't registered and the
+    menu has to skip them or take every page test down. Swallowing that error at
+    runtime would normally risk hiding a typo in NAV - it doesn't, because this
+    test pins NAV and app/pages/ to the same set of files. Static check catches
+    the typo; the runtime catch only ever fires for a page that genuinely isn't
+    part of the app being run.
+    """
+    from yieldpred.brand import NAV
+
+    listed = {(APP / path).resolve() for path, _, _ in NAV}
+    assert listed == {p.resolve() for p in PAGES}, \
+        "brand.NAV and app/pages/ disagree about which pages there are"
+
+
+def test_the_menu_is_in_the_body_not_a_sidebar():
+    """The left rail is gone; the green header only spans the window without it.
+
+    Streamlit lays its header out beside the sidebar rather than above it
+    (measured: header x=300 width=1100, sidebar x=0 width=300), so a visible
+    sidebar cuts the green bar short - the look and the layout are one problem.
+    A later change that reinstates a sidebar would regress the header silently,
+    and this is the cheap guard against that.
+    """
+    from yieldpred.brand import SUITE_CSS
+
+    assert '[data-testid="stSidebar"]' in SUITE_CSS and "display: none" in SUITE_CSS
+    brand = (Path(__file__).resolve().parents[1] / "src" / "yieldpred" / "brand.py")
+    assert 'initial_sidebar_state="collapsed"' in brand.read_text(encoding="utf-8"), \
+        "the logo renders into the sidebar unless the sidebar starts collapsed"
 
 
 def test_suite_css_matches_the_master_copy():
@@ -125,7 +169,14 @@ def test_suite_css_matches_the_master_copy():
 
 
 def test_the_farm_apps_list_names_every_app_and_marks_this_one():
-    from yieldpred.brand import suite_menu_markdown
+    """The cross-app list, which now rides in the footer band rather than the
+    sidebar. Both renderings read the same JSON, so both are checked."""
+    from yieldpred.brand import _suite_menu_html, suite_menu_markdown
+
+    for text in (suite_menu_markdown(), _suite_menu_html()):
+        for name in ("Herd Planner", "Corn Yield Predictor", "Farm Equipment Planner"):
+            assert name in text
+        assert "you're here" in text
 
     text = suite_menu_markdown()
     for name in ("Herd Planner", "Corn Yield Predictor", "Farm Equipment Planner"):

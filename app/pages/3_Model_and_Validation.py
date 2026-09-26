@@ -20,9 +20,8 @@ from yieldpred.appdata import (feature_correlations, load_ablation,
                                scores_by_scheme, worst_years)
 
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import PAGE_ICON, show_logo
-st.set_page_config(page_title="Model & Validation", page_icon=PAGE_ICON, layout="wide")
-show_logo()
+from yieldpred.brand import page_footer, page_setup
+page_setup("Model & Validation")
 
 
 @st.cache_data
@@ -272,3 +271,4 @@ if errors is not None:
 # ------------------------------------------------------------------ disclaimer
 st.divider()
 st.caption(FOOTER)
+page_footer()

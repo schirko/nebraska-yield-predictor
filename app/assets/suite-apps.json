@@ -1,0 +1,15 @@
+{
+  "about": "The farm app suite: one list of apps for every app's 'Farm apps' menu. Master copy: herd-planner/brand/suite-apps.json. Set an app's url when it goes live; null shows 'Coming soon'.",
+  "version": 1,
+  "apps": [
+    {"id": "herd-planner", "name": "Herd Planner",
+     "what": "Keep-or-sell decisions for cow-calf ranches",
+     "url": "https://herd-planner.onrender.com/"},
+    {"id": "corn-yield-predictor", "name": "Corn Yield Predictor",
+     "what": "County corn yields from weather, soils and irrigation",
+     "url": null},
+    {"id": "farm-equipment-planner", "name": "Farm Equipment Planner",
+     "what": "Whether a tractor, combine or implement pays for itself",
+     "url": null}
+  ]
+}

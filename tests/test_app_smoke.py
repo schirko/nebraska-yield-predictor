@@ -99,3 +99,14 @@ def test_the_disclaimer_says_the_three_things_it_has_to():
         "limitations must state the Iowa leak correction in numbers"
 
     assert "not endorsed or certified" in README_BLOCK.lower()
+
+
+def test_every_page_shows_the_logo():
+    """The corn logo is in the browser tab and the top-left corner on every page."""
+    from yieldpred.brand import LOGO
+
+    assert LOGO.exists(), f"missing {LOGO}"
+    for page in PAGES:
+        text = page.read_text(encoding="utf-8")
+        assert "page_icon=PAGE_ICON" in text, f"{page.name} has its own tab icon"
+        assert "show_logo()" in text, f"{page.name} does not show the logo"

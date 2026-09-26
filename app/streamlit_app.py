@@ -22,8 +22,10 @@ from yieldpred.appdata import (irrigation_gap, load_morans_pooled, load_scores,
                                load_yields, missing_data_message, state_yield_history)
 
 from yieldpred.disclaimer import FOOTER
-st.set_page_config(page_title="Nebraska Corn Yield Predictor", page_icon="🌽",
+from yieldpred.brand import PAGE_ICON, show_logo
+st.set_page_config(page_title="Nebraska Corn Yield Predictor", page_icon=PAGE_ICON,
                    layout="wide")
+show_logo()
 
 
 @st.cache_data

@@ -87,12 +87,15 @@ def counties_with_geometry(state_fips: str):
 
 
 def summarize(daily: pd.DataFrame) -> pd.DataFrame:
-    """One row per year, using weather.py's functions and nothing else."""
-    season = weather.growing_season_features(daily)
-    spring = weather.spring_features(daily)
-    if spring is not None:
-        season = season.merge(spring, on="year", how="left")
-    return season
+    """One row per year, using weather.py's functions and nothing else.
+
+    `growing_season_features` already calls `spring_features` itself, on a frame it
+    has prepared with `year`, `month` and a daily `gdd` column. An earlier version
+    here called `spring_features` a second time on the raw daily frame and died with
+    `KeyError: 'month'` - the probe caught it on the first county. One call is both
+    correct and the whole point: POWER and gridMET must go through identical code.
+    """
+    return weather.growing_season_features(daily)
 
 
 def fetch_one(row, geometry, variant: str, start: int, end: int,
@@ -185,8 +188,12 @@ def main() -> None:
                 continue
             try:
                 daily = fetch_one(row, geometry, variant, args.start, args.start, 0)
+                span = (daily["date"].max() - daily["date"].min()).days + 1
+                gap = span - len(daily)
+                note = "" if gap == 0 else f"  ** {gap} day(s) missing inside the range **"
                 print(f"  {variant}: {len(daily)} daily rows, "
-                      f"{daily['date'].min().date()} to {daily['date'].max().date()}")
+                      f"{daily['date'].min().date()} to {daily['date'].max().date()}"
+                      f"{note}")
                 print(f"    tmax_c {daily['tmax_c'].min():6.1f} to "
                       f"{daily['tmax_c'].max():6.1f}   "
                       f"precip_mm total {daily['precip_mm'].sum():7.1f}")

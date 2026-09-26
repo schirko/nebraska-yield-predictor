@@ -17,7 +17,9 @@ from yieldpred.appdata import (county_choices, county_history, load_errors,
                                load_model_table, load_yields, missing_data_message)
 
 from yieldpred.disclaimer import FOOTER
-st.set_page_config(page_title="County Explorer", page_icon="🔎", layout="wide")
+from yieldpred.brand import PAGE_ICON, show_logo
+st.set_page_config(page_title="County Explorer", page_icon=PAGE_ICON, layout="wide")
+show_logo()
 
 
 @st.cache_data

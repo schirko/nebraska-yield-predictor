@@ -82,6 +82,76 @@ def test_dates_come_back_sorted():
     assert tidy["date"].is_monotonic_increasing
 
 
+# --------------------------------- regressions from the first real request
+
+def test_unit_suffixed_column_names_are_accepted():
+    """get_bycoords returns 'tmmx (K)', not 'tmmx'. Found on the first real county.
+
+    The polygon path returns bare names and the point path returns suffixed ones,
+    so matching the exact string passed one and failed the other. Both must work.
+    """
+    dates = pd.date_range("2000-01-01", periods=10, freq="D")
+    suffixed = pd.DataFrame(
+        {"tmmx (K)": 300.0, "tmmn (K)": 290.0, "pr (mm)": 2.0},
+        index=pd.Index(dates, name="date"))
+    tidy = _tidy(suffixed)
+    assert list(tidy.columns) == ["date", "tmax_c", "tmin_c", "precip_mm"]
+    assert tidy["tmax_c"].iloc[0] == pytest.approx(300.0 - KELVIN_OFFSET)
+
+
+def test_bare_and_suffixed_names_give_identical_results():
+    dates = pd.date_range("2000-01-01", periods=5, freq="D")
+    values = {"tmmx": 301.5, "tmmn": 288.25, "pr": 3.5}
+    bare = pd.DataFrame(values, index=pd.Index(dates, name="date"))
+    suffixed = pd.DataFrame({f"{k} (K)" if k != "pr" else "pr (mm)": v
+                             for k, v in values.items()},
+                            index=pd.Index(dates, name="date"))
+    pd.testing.assert_frame_equal(_tidy(bare), _tidy(suffixed))
+
+
+def test_a_genuinely_missing_variable_still_raises():
+    """Loosening the match must not make a real absence silent."""
+    dates = pd.date_range("2000-01-01", periods=5, freq="D")
+    frame = pd.DataFrame({"tmmx (K)": 300.0, "tmmn (K)": 290.0},
+                         index=pd.Index(dates, name="date"))
+    with pytest.raises(KeyError, match="pr"):
+        _tidy(frame)
+
+
+def test_an_unrelated_column_is_not_mistaken_for_a_wanted_one():
+    dates = pd.date_range("2000-01-01", periods=5, freq="D")
+    frame = pd.DataFrame(
+        {"tmmx (K)": 300.0, "tmmn (K)": 290.0, "pr (mm)": 2.0,
+         "prcp_other": 99.0, "srad (W/m2)": 210.0},
+        index=pd.Index(dates, name="date"))
+    tidy = _tidy(frame)
+    assert tidy["precip_mm"].iloc[0] == pytest.approx(2.0), "took the wrong column"
+
+
+def test_the_feature_summariser_is_called_exactly_once_per_source():
+    """Regression: summarize() called spring_features on a raw frame -> KeyError.
+
+    `growing_season_features` already calls `spring_features` internally, on a frame
+    it prepared with year/month/gdd. Calling it again on the raw daily rows died with
+    KeyError: 'month'. This pins the contract: the raw daily frame goes to
+    growing_season_features and nothing else.
+    """
+    dates = pd.date_range("2000-01-01", periods=400, freq="D")
+    daily = _tidy(pd.DataFrame(
+        {"tmmx (K)": 300.0, "tmmn (K)": 288.0, "pr (mm)": 2.0},
+        index=pd.Index(dates, name="date")))
+
+    # The raw frame has no month column - that is the point.
+    assert "month" not in daily.columns
+    with pytest.raises(KeyError):
+        weather.spring_features(daily)
+
+    # But the supported entry point copes, and returns spring columns anyway.
+    out = weather.growing_season_features(daily)
+    for column in ("gdd", "precip_mm", "workable_days", "last_frost_doy"):
+        assert column in out.columns, f"{column} missing from the summary"
+
+
 # ------------------------------------------------------------ point fetching
 
 def test_point_fetch_sends_lon_lat_in_that_order():

@@ -20,7 +20,9 @@ from yieldpred.appdata import (feature_correlations, load_ablation,
                                scores_by_scheme, worst_years)
 
 from yieldpred.disclaimer import FOOTER
-st.set_page_config(page_title="Model & Validation", page_icon="📊", layout="wide")
+from yieldpred.brand import PAGE_ICON, show_logo
+st.set_page_config(page_title="Model & Validation", page_icon=PAGE_ICON, layout="wide")
+show_logo()
 
 
 @st.cache_data

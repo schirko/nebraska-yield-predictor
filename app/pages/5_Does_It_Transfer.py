@@ -18,11 +18,13 @@ from yieldpred.appdata import (county_skill, load_counties, load_cross_state,
                                load_irrigation_comparison, load_model_table,
                                transfer_by_year, variance_decomposition)
 from yieldpred.disclaimer import FOOTER
+from yieldpred.brand import PAGE_ICON, show_logo
 from yieldpred.geo import display_geometry
 from yieldpred.spatial import align_to_geometry
 from yieldpred.viz import interactive_choropleth
 
-st.set_page_config(page_title="Does It Transfer?", page_icon="🔁", layout="wide")
+st.set_page_config(page_title="Does It Transfer?", page_icon=PAGE_ICON, layout="wide")
+show_logo()
 
 
 @st.cache_data

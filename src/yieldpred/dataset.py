@@ -42,10 +42,21 @@ def load_yields(state: str = "ne", practice: str = "all") -> pd.DataFrame:
 # Where each weather source lives. POWER is the default and the published one;
 # the gridMET variants exist so the choice of product can be measured instead of
 # assumed. See scripts/fetch_gridmet.py.
+# The weather sources, and how each one names its file.
+#
+# POWER predates the --state flag and is keyed by FIPS. The gridMET files follow
+# the project's own convention instead, which `output_path` owns: Nebraska keeps
+# the unsuffixed name, other states get a suffix.
+#
+# An earlier version of this table hardcoded "gridmet_point_{state}", which built
+# `gridmet_point_ne.parquet` while `fetch_gridmet.py` - correctly using
+# output_path - had written `gridmet_point.parquet`. The fetch succeeded, the
+# comparison silently reported "not available", and nothing raised. Two places
+# spelling one filename is the bug; `output_path` is the single speller.
 WEATHER_SOURCES = {
-    "power": "weather_county_{fips}",       # NASA POWER, one point per county, ~55 km
-    "gridmet_point": "gridmet_point_{state}",   # gridMET, same point, ~4 km
-    "gridmet_mean": "gridmet_mean_{state}",     # gridMET, county polygon mean, ~4 km
+    "power": "weather_county_{fips}",   # keyed by FIPS, predates --state
+    "gridmet_point": "gridmet_point",   # via output_path: NE unsuffixed, others suffixed
+    "gridmet_mean": "gridmet_mean",
 }
 
 
@@ -60,8 +71,11 @@ def load_weather(state_fips: str = "31", source: str = "power",
     if source not in WEATHER_SOURCES:
         raise ValueError(f"unknown weather source {source!r}; "
                          f"choose from {sorted(WEATHER_SOURCES)}")
-    stem = WEATHER_SOURCES[source].format(fips=state_fips, state=state)
-    path = PROCESSED / f"{stem}.parquet"
+    name = WEATHER_SOURCES[source]
+    if source == "power":
+        path = PROCESSED / f"{name.format(fips=state_fips)}.parquet"
+    else:
+        path = output_path(name, state)     # the one place this convention lives
     if not path.exists():
         raise FileNotFoundError(
             f"{path.name} not found. Run scripts/fetch_gridmet.py"

@@ -70,6 +70,27 @@ def _to_celsius(kelvin: pd.Series) -> pd.Series:
     return kelvin - KELVIN_OFFSET
 
 
+def _find_columns(columns) -> dict[str, str]:
+    """Map each wanted variable to the column that actually carries it.
+
+    Found the hard way, on the first real request: `get_bycoords` labels its
+    columns with units - `tmmx (K)`, `pr (mm)` - while `get_bygeom` returns the
+    bare names. Matching on the exact string worked against the polygon path and
+    failed against the point path, which is the kind of difference no amount of
+    reading the docs would have surfaced.
+
+    So the name is matched on its first token instead, which accepts both spellings
+    and any future unit suffix. Anything genuinely absent still raises, because a
+    silently missing variable would be far worse than a loud one.
+    """
+    lookup = {}
+    for name in columns:
+        head = str(name).split("(")[0].strip()
+        if head in GRIDMET_VARS and head not in lookup:
+            lookup[head] = name
+    return lookup
+
+
 def _tidy(frame: pd.DataFrame) -> pd.DataFrame:
     """Rename and convert gridMET's columns into the contract weather.py uses.
 
@@ -77,7 +98,8 @@ def _tidy(frame: pd.DataFrame) -> pd.DataFrame:
     indistinguishable from `weather.fetch_power_daily`'s, so the identical
     feature code runs over both.
     """
-    missing = [v for v in GRIDMET_VARS if v not in frame.columns]
+    found = _find_columns(frame.columns)
+    missing = [v for v in GRIDMET_VARS if v not in found]
     if missing:
         raise KeyError(
             f"gridMET response is missing {missing}; got {list(frame.columns)}. "
@@ -86,9 +108,9 @@ def _tidy(frame: pd.DataFrame) -> pd.DataFrame:
 
     out = pd.DataFrame({
         "date": pd.to_datetime(frame.index if frame.index.name else frame["date"]),
-        "tmax_c": _to_celsius(frame["tmmx"].astype(float)).round(2),
-        "tmin_c": _to_celsius(frame["tmmn"].astype(float)).round(2),
-        "precip_mm": frame["pr"].astype(float).round(2),
+        "tmax_c": _to_celsius(frame[found["tmmx"]].astype(float)).round(2),
+        "tmin_c": _to_celsius(frame[found["tmmn"]].astype(float)).round(2),
+        "precip_mm": frame[found["pr"]].astype(float).round(2),
     })
     return out.reset_index(drop=True).sort_values("date").reset_index(drop=True)
 

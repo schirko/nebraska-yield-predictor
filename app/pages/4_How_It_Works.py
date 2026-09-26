@@ -13,8 +13,10 @@ if str(_SRC) not in sys.path:
 import streamlit as st
 
 from yieldpred.disclaimer import DATA_SOURCES, FOOTER, LIMITATIONS
+from yieldpred.brand import PAGE_ICON, show_logo
 
-st.set_page_config(page_title="How It Works", page_icon="🛠️", layout="wide")
+st.set_page_config(page_title="How It Works", page_icon=PAGE_ICON, layout="wide")
+show_logo()
 
 st.title("How It Works")
 st.caption("The architecture, the data, and the ideas — for anyone who wants to know "

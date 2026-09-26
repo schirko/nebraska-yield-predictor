@@ -15,10 +15,12 @@ import streamlit as st
 from yieldpred.appdata import (county_values, load_counties, load_errors,
                                load_model_table, map_frame, missing_data_message)
 from yieldpred.disclaimer import FOOTER
+from yieldpred.brand import PAGE_ICON, show_logo
 from yieldpred.geo import display_geometry
 from yieldpred.viz import choropleth, interactive_choropleth
 
-st.set_page_config(page_title="Maps", page_icon="🗺️", layout="wide")
+st.set_page_config(page_title="Maps", page_icon=PAGE_ICON, layout="wide")
+show_logo()
 
 
 @st.cache_data

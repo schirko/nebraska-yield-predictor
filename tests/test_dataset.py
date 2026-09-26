@@ -93,3 +93,39 @@ def test_split_spring_skips_halves_that_are_absent():
     df = make_table().assign(**{feat: 1.0 for feat in SPRING_RAIN})
     labels = [label for label, _ in feature_groups(df, split_spring=True)]
     assert labels == ["spring rain (3)"]
+
+
+def test_gridmet_filenames_follow_the_project_convention(tmp_path, monkeypatch):
+    """Regression: the loader and the fetch script must spell one filename alike.
+
+    `fetch_gridmet.py` writes via `output_path`, which gives Nebraska the
+    unsuffixed name and every other state a suffix. An earlier `WEATHER_SOURCES`
+    hardcoded "gridmet_point_{state}" and so looked for `gridmet_point_ne.parquet`
+    while the file on disk was `gridmet_point.parquet`. Nothing raised - the fetch
+    reported success, and the comparison reported "not available". A silent
+    disagreement between two spellings of one name is worse than a crash.
+    """
+    from yieldpred import dataset
+
+    for state, expected in [("ne", "gridmet_point.parquet"),
+                            ("ia", "gridmet_point_ia.parquet"),
+                            ("ks", "gridmet_point_ks.parquet")]:
+        assert dataset.output_path("gridmet_point", state).name == expected
+
+    # And the loader must ask for exactly that path, not build its own.
+    monkeypatch.setattr(dataset, "PROCESSED", tmp_path)
+    for state, stem in [("ne", "gridmet_mean"), ("ia", "gridmet_mean_ia")]:
+        try:
+            dataset.load_weather("31", "gridmet_mean", state)
+        except FileNotFoundError as err:
+            assert f"{stem}.parquet" in str(err), \
+                f"loader looked for the wrong file for {state}: {err}"
+        else:
+            raise AssertionError("expected FileNotFoundError from an empty directory")
+
+
+def test_power_still_keyed_by_fips_not_state():
+    """POWER predates --state and is named by FIPS; don't 'tidy' it into the
+    state convention or every existing weather file stops being found."""
+    from yieldpred import dataset
+    assert dataset.WEATHER_SOURCES["power"].format(fips="31") == "weather_county_31"

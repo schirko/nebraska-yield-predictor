@@ -8,14 +8,18 @@ a PNG.
 
 Every page calls show_logo() right after st.set_page_config(), and passes
 PAGE_ICON as its page_icon, so every page gets the logo in the browser tab and
-top-left corner, and the suite's header bar and button colors.
+top-left corner, the suite's header bar and button colors, and the "Our farm
+apps" list at the foot of the sidebar.
 """
 
+import json
 from pathlib import Path
 
 ASSETS = Path(__file__).resolve().parents[2] / "app" / "assets"
 LOGO = ASSETS / "logo.png"
 PAGE_ICON = str(LOGO)
+APPS_FILE = ASSETS / "suite-apps.json"   # copy of herd-planner/brand/suite-apps.json
+APP_ID = "corn-yield-predictor"          # this app's id in that list
 
 # The pieces of the suite look (app/assets/suite.css) that .streamlit/config.toml
 # can't set. Streamlit's own element names (data-testid) can change between
@@ -43,3 +47,18 @@ def show_logo():
 
     st.logo(str(LOGO), size="large", icon_image=str(LOGO))
     st.html(SUITE_CSS)
+    st.sidebar.markdown(suite_menu_markdown())
+
+
+def suite_menu_markdown():
+    """The farm app suite's app list, as sidebar text: a link for each live app."""
+    apps = json.loads(APPS_FILE.read_text(encoding="utf-8"))["apps"]
+    lines = ["**Our farm apps**", ""]
+    for app in apps:
+        if app["id"] == APP_ID:
+            lines.append(f"- {app['name']} (you're here)")
+        elif app["url"]:
+            lines.append(f"- [{app['name']}]({app['url']})")
+        else:
+            lines.append(f"- {app['name']} (coming soon)")
+    return "\n".join(lines)

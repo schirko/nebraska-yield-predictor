@@ -113,11 +113,21 @@ def test_every_page_shows_the_logo():
 
 
 def test_suite_css_matches_the_master_copy():
-    """app/assets/suite.css is the farm app suite's shared look; the master lives with Herd Planner."""
+    """app/assets/suite.css and suite-apps.json are the farm app suite's shared files; the masters live with Herd Planner."""
     root = Path(__file__).resolve().parents[1]
     master = root.parent / "herd-planner" / "brand" / "suite.css"
     if not master.exists():
         pytest.skip("Herd Planner isn't checked out next to this project")
-    copy = root / "app" / "assets" / "suite.css"
-    assert copy.read_bytes().replace(b"\r\n", b"\n") == master.read_bytes().replace(b"\r\n", b"\n"), \
-        "suite.css drifted: copy herd-planner/brand/suite.css here again"
+    for name in ("suite.css", "suite-apps.json"):
+        copy, original = root / "app" / "assets" / name, master.parent / name
+        assert copy.read_bytes().replace(b"\r\n", b"\n") == original.read_bytes().replace(b"\r\n", b"\n"), \
+            f"{name} drifted: copy herd-planner/brand/{name} here again"
+
+
+def test_the_farm_apps_list_names_every_app_and_marks_this_one():
+    from yieldpred.brand import suite_menu_markdown
+
+    text = suite_menu_markdown()
+    for name in ("Herd Planner", "Corn Yield Predictor", "Farm Equipment Planner"):
+        assert name in text
+    assert "Corn Yield Predictor (you're here)" in text

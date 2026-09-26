@@ -1,0 +1,72 @@
+/* Farm app suite: the shared look of Herd Planner, Corn Yield Predictor and
+   Farm Equipment Planner. Suite version 1.
+
+   THE SAME FILE lives in all three apps. The master copy is
+   herd-planner/brand/suite.css: change it there, then copy it into the other
+   two (each app has a test that fails if its copy drifts from the master).
+
+   Each app loads this file first, then its own stylesheet for the pieces only
+   it has. Colors come from the logo family: deep green, wheat gold, cream. */
+
+:root {
+  /* Surfaces and text */
+  --suite-bg: #f7f6f2;          /* warm paper page background */
+  --suite-surface: #ffffff;     /* cards, tables, inputs */
+  --suite-ink: #1d1c1a;         /* body text */
+  --suite-muted: #5e5c57;       /* secondary text */
+  --suite-line: #e2e0d9;        /* borders and dividers */
+
+  /* Brand */
+  --suite-deep-green: #243b2f;  /* header bar, footer band, text on gold */
+  --suite-gold: #d9a441;        /* buttons, active tabs, focus rings */
+  --suite-gold-hover: #e6b75a;  /* lighter on hover: deep green on it stays 6.5:1 */
+  --suite-gold-line: #b8862b;   /* outline of secondary buttons */
+  --suite-gold-tint: #fbf3e2;   /* hover fill of secondary buttons */
+  --suite-link: #2a78d6;        /* links in body text */
+
+  /* Shape and type */
+  --suite-radius: 10px;
+  --suite-button-radius: 8px;
+  --suite-font: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--suite-font);
+  background: var(--suite-bg);
+  color: var(--suite-ink);
+  line-height: 1.45;
+}
+a { color: var(--suite-link); }
+
+/* Keyboard focus: a gold ring on anything focusable, on both light and green backgrounds. */
+:focus-visible { outline: 3px solid var(--suite-gold); outline-offset: 2px; }
+
+/* Buttons. White on gold is too faint (2.2:1), so text on gold is deep green (5.4:1).
+   .btn is Herd Planner's class name and .button is the equipment planner's: both get the same look. */
+.btn, .button {
+  display: inline-block; border: 1px solid transparent; border-radius: var(--suite-button-radius);
+  padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none;
+  background: var(--suite-gold); color: var(--suite-deep-green);
+}
+.btn:hover:not(:disabled), .button:hover:not(:disabled) { background: var(--suite-gold-hover); }
+.btn.secondary, .button.secondary { background: var(--suite-surface); color: var(--suite-deep-green); border-color: var(--suite-gold-line); }
+.btn.secondary:hover:not(:disabled), .button.secondary:hover:not(:disabled) { background: var(--suite-gold-tint); }
+.btn:disabled, .button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* The header bar: deep green, the app's logo and name in white. */
+.suite-bar { background: var(--suite-deep-green); color: #fff; }
+.suite-bar .suite-name { color: #fff; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
+.suite-bar a:not(.btn):not(.button) { color: rgba(255, 255, 255, .88); }
+.suite-bar a:not(.btn):not(.button):hover { color: #fff; }
+/* Outline buttons that sit on the green bar */
+.suite-bar .btn.secondary, .suite-bar .button.secondary { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .6); }
+.suite-bar .btn.secondary:hover:not(:disabled), .suite-bar .button.secondary:hover:not(:disabled) { background: rgba(255, 255, 255, .12); }
+
+/* The footer band: the same deep green as the header. */
+.site-footer { background: var(--suite-deep-green); color: rgba(255, 255, 255, .82); }
+.site-footer a { color: rgba(255, 255, 255, .82); }
+.site-footer a:hover, .site-footer a:focus-visible { color: #fff; }
+
+/* Cards */
+.card { background: var(--suite-surface); border: 1px solid var(--suite-line); border-radius: var(--suite-radius); }

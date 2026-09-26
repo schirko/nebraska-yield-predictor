@@ -1,15 +1,22 @@
-# Sky & Soil - the app's chrome, matching src/yieldpred/theme.py.
+# The app's chrome in the farm app suite's shared look (see app/assets/suite.css,
+# a copy of herd-planner/brand/suite.css): warm paper background, wheat-gold
+# buttons with deep-green text, a deep-green header bar.
 #
-# Streamlit themes only the frame (buttons, sidebar, headings, widgets); the
-# charts and maps get their colour from yieldpred.theme. Both are kept on the
-# same hex values on purpose, so the page and the plots don't disagree.
+# Streamlit themes only the frame (buttons, sidebar, headings, widgets) from
+# here. The header bar and the button text color can't be set in this file, so
+# yieldpred.brand adds a few lines of CSS for them on every page.
 #
-# Copy this file into the other apps in the suite. Consistent chrome is most of
-# what makes separate apps read as one family.
+# Charts and maps keep their own validated palette (Sky & Soil, in
+# src/yieldpred/theme.py): colour in a chart carries meaning, so it's chosen by
+# the colour-vision checks, not by the brand.
 
 [theme]
-primaryColor = "#1A5B96"              # plains blue - buttons, sliders, focus rings
-backgroundColor = "#FBFAF8"           # warm paper, not clinical white
-secondaryBackgroundColor = "#F4F2EE"  # sidebar and code blocks
-textColor = "#1C2024"
+primaryColor = "#d9a441"              # wheat gold - buttons, sliders, focus rings
+backgroundColor = "#f7f6f2"           # warm paper (suite --suite-bg)
+secondaryBackgroundColor = "#efece4"  # sidebar and code blocks
+textColor = "#1d1c1a"                 # suite --suite-ink
+linkColor = "#2a78d6"                 # suite --suite-link
+borderColor = "#e2e0d9"               # suite --suite-line
+baseRadius = "10px"
+buttonRadius = "8px"
 font = "sans serif"

@@ -110,3 +110,14 @@ def test_every_page_shows_the_logo():
         text = page.read_text(encoding="utf-8")
         assert "page_icon=PAGE_ICON" in text, f"{page.name} has its own tab icon"
         assert "show_logo()" in text, f"{page.name} does not show the logo"
+
+
+def test_suite_css_matches_the_master_copy():
+    """app/assets/suite.css is the farm app suite's shared look; the master lives with Herd Planner."""
+    root = Path(__file__).resolve().parents[1]
+    master = root.parent / "herd-planner" / "brand" / "suite.css"
+    if not master.exists():
+        pytest.skip("Herd Planner isn't checked out next to this project")
+    copy = root / "app" / "assets" / "suite.css"
+    assert copy.read_bytes().replace(b"\r\n", b"\n") == master.read_bytes().replace(b"\r\n", b"\n"), \
+        "suite.css drifted: copy herd-planner/brand/suite.css here again"

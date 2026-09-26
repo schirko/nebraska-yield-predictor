@@ -210,7 +210,7 @@ Honest limitations, in the order they'd matter:
 4. **Nebraska 2019 is still the second-largest miss.** That disaster was ice, not water — rain
    on frozen ground, ice jams, failed levees — and a precipitation column cannot see any of
    that.
-4. **Coverage is not missing at random.** NASS reported 91 Nebraska counties in 2000 and 46
+5. **Coverage is not missing at random.** NASS reported 91 Nebraska counties in 2000 and 46
    in 2025, and the counties that stop reporting are the ones that grow little corn.
 
 ## Data Sources
@@ -299,6 +299,10 @@ Run the tests with `pytest` — they use synthetic fixtures, so no network or AP
 - [ ] Cropland-weighted weather (Cropland Data Layer)
 - [ ] Wind and storm damage
 - [ ] A third state, to turn one transfer result into a pattern
+- [ ] Alfalfa: county hay yields from NASS (with the years available checked first, since NASS has
+      cut back some county estimates), a model for a crop cut several times a season from a
+      stand that lives for years, and hay prices from the USDA Nebraska Direct Hay Report, to
+      feed winter hay costs into Herd Planner
 
 ## Disclaimer
 

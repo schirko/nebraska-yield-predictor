@@ -15,24 +15,24 @@ import streamlit as st
 from yieldpred.appdata import (county_values, load_counties, load_errors,
                                load_model_table, map_frame, missing_data_message)
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import page_footer, page_heading, page_setup
+from yieldpred.brand import page_footer, page_heading, page_setup, state_fips
 from yieldpred.geo import display_geometry
 from yieldpred.viz import choropleth, interactive_choropleth
 
-page_setup("Maps")
+state = page_setup("Maps")
 
 
 @st.cache_data
-def data():
-    errors = load_errors()
-    counties = load_counties()
-    frame = map_frame(errors, load_model_table()) if errors is not None else None
+def data(state: str):
+    errors = load_errors(state)
+    counties = load_counties(state_fips(state))
+    frame = map_frame(errors, load_model_table(state)) if errors is not None else None
     # A lighter geometry for the interactive chart, which embeds its shapes in the page.
     display = display_geometry(counties) if counties is not None else None
     return frame, counties, display
 
 
-frame, counties, display = data()
+frame, counties, display = data(state)
 
 page_heading("Maps")
 

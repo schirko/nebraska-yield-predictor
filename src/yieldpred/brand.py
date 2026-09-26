@@ -66,9 +66,18 @@ APP_ID = "corn-yield-predictor"          # this app's id in that list - an inter
 # goes private, so that Streamlit Cloud is re-pointed once rather than twice.
 APP_NAME = "Yield Predictor"
 
-# The line beside the name in the header bar, matching Herd Planner's
-# "Ranch: Demo Ranch (demo)". It says what this instance is showing.
-APP_CONTEXT = "Corn · Nebraska & Iowa"
+# The states the app can show, and the FIPS code each one's geometry is filed
+# under. Every loader in appdata.py already took a `state` argument; what was
+# missing was any way for a reader to change it, which made the header's
+# "Nebraska & Iowa" a promise the app didn't keep.
+STATES = {"ne": ("Nebraska", "31"), "ia": ("Iowa", "19")}
+DEFAULT_STATE = "ne"
+
+# Pages whose content actually changes with the state. How It Works is static,
+# and Does It Transfer? is *about* both states at once - showing an inert state
+# toggle on those two would be worse than not showing one, because a control
+# that does nothing when you click it is how an app teaches you not to trust it.
+STATE_AWARE = {"Home", "Maps", "County Explorer", "Model & Validation"}
 
 # The suite's deep green, the one value the header, the footer and suite.css all
 # have to agree on. suite.css declares it as --suite-deep-green; Streamlit's own
@@ -97,7 +106,7 @@ BLOCK_PADDING_TOP_PX = 96
 # the 16px the two zero-height st.html elements above it contribute to the flow
 # (the CSS block and the header-bar block). Measured, not derived: the 16px is
 # not a flex gap on the parent, so there is nothing to read it from.
-NAV_PULL_PX = BLOCK_PADDING_TOP_PX - HEADER_HEIGHT_PX + 16
+NAV_PULL_PX = BLOCK_PADDING_TOP_PX - HEADER_HEIGHT_PX
 
 # Every page, in menu order: (path, label, icon, url).
 #
@@ -129,7 +138,9 @@ NAV = [
 # the repo's structure, not a reader's. A page that states its question tells
 # you whether you want to be on it, which is most of what a "flow" is.
 QUESTIONS = {
-    "Home": "Predicting county corn yields from weather, irrigation and soils — and being honest about how well that works.",
+    # No feature list here: it used to read "weather, irrigation and soils",
+    # which stopped being true the moment Iowa became reachable.
+    "Home": "Predicting county corn yields — and being honest about how well that works.",
     "How It Works": "Where do the numbers come from?",
     "Maps": "Where does corn do well — and where is the model wrong?",
     "County Explorer": "What happened in one county, year by year?",
@@ -180,11 +191,22 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
    a title, two controls and a figure it reads as an empty screen. These
    pull the title up under the menu band and close the gap between a
    heading and the thing it labels, without cramping body text. */
-[data-testid="stHeading"] h1 {{ padding-top: .25rem; margin-bottom: .1rem; }}
-[data-testid="stHeading"] h2 {{ padding-top: .75rem; margin-bottom: .1rem; }}
-[data-testid="stHeading"] h3 {{ padding-top: .5rem; margin-bottom: .1rem; }}
+[data-testid="stHeading"] h1 {{
+  font-size: 1.6rem; font-weight: 700; letter-spacing: .1px;
+  padding-top: 0; margin-bottom: .15rem;
+}}
+/* Streamlit's defaults made h2 larger than the h1 above once the h1 came
+   down to Herd Planner's scale. Note `st.subheader` renders an h3, not an
+   h2 - so h3 is a section heading here and has to stay comfortably bigger
+   than body text. Measured scale: 25.6 / 22.4 / 20 px. */
+[data-testid="stHeading"] h2 {{
+  font-size: 1.4rem; font-weight: 700; padding-top: 1rem; margin-bottom: .15rem;
+}}
+[data-testid="stHeading"] h3 {{
+  font-size: 1.25rem; font-weight: 700; padding-top: 1rem; margin-bottom: .2rem;
+}}
 .suite-question {{
-  color: #5e5c57; font-size: 1rem; margin: 0 0 1.1rem; max-width: 62ch;
+  color: #5e5c57; font-size: 1rem; margin: 0 0 1.2rem; max-width: 78ch;
 }}
 
 /* ---- the Start Here strip ---------------------------------------------
@@ -212,11 +234,11 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 /* Below this the Deploy button and the context line would collide. */
 @media (max-width: 760px) {{ .suite-headerbar .ctx {{ display: none; }} }}
 
-/* ---- the menu band ----------------------------------------------------
-   The menu sits in a green band pulled up against the header, so the two
-   read as one bar the way Herd Planner's does. The pull is the block
-   container's top padding minus the header height, plus the flow space
-   the zero-height html blocks above it take.
+/* ---- the menu row -----------------------------------------------------
+   On the paper, below the green bar - which is where Herd Planner puts
+   its step pills. An earlier version had them inside a green band flush
+   against the header, which made the header look like a two-storey bar
+   rather than a header with a page under it.
 
    NOTE: no angle brackets anywhere in this stylesheet, not even inside a
    comment. `st.html` runs its argument through an HTML sanitizer, which
@@ -226,45 +248,59 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
    STYLESHEET - no error, no warning, just an unstyled app. The test
    `test_the_stylesheet_has_no_angle_brackets` guards it now. */
 .suite-nav {{
-  background: {DEEP_GREEN};
-  margin: -{NAV_PULL_PX}px calc(50% - 50vw) 1.5rem;
-  padding: .6rem calc(50vw - 50%) .7rem;
+  margin: -{NAV_PULL_PX}px 0 1.4rem;
   display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
 }}
 
 /* The pills. Herd Planner's shape: fully rounded, a number in a circle,
-   the current one gold. Inactive pills are outlined rather than filled,
-   because six filled pills on green is a lot of boxes. */
+   the current one gold. On paper the inactive pills are white with a
+   hairline border, the way its steps 2 to 5 are. */
 .suite-nav .pill {{
   display: inline-flex; align-items: center; gap: 8px;
-  border: 1px solid rgba(255, 255, 255, .35); border-radius: 999px;
-  padding: 6px 14px 6px 8px; text-decoration: none;
-  color: #fff; font-weight: 600; font-size: .92rem; line-height: 1.2;
-  background: transparent; transition: background .12s, border-color .12s;
+  background: #fff; border: 1px solid #e2e0d9; border-radius: 999px;
+  padding: 6px 16px 6px 8px; text-decoration: none;
+  color: #1d1c1a; font-weight: 500; font-size: .95rem; line-height: 1.2;
+  transition: background .12s, border-color .12s;
 }}
-.suite-nav .pill:hover {{
-  background: rgba(255, 255, 255, .14); border-color: rgba(255, 255, 255, .6);
-}}
+.suite-nav .pill:hover {{ border-color: #b8862b; background: #fdfcf8; }}
 .suite-nav .pill .n {{
   display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 50%; flex: none;
-  background: rgba(255, 255, 255, .18); color: #fff;
-  font-size: .78rem; font-weight: 700;
+  width: 24px; height: 24px; border-radius: 50%; flex: none;
+  background: #efece4; color: #5e5c57;
+  font-size: .8rem; font-weight: 600;
 }}
 /* Home has no number, so it needs the padding a number would have given. */
-.suite-nav .pill:not(:has(.n)) {{ padding-left: 14px; }}
+.suite-nav .pill:not(:has(.n)) {{ padding-left: 16px; }}
 
-/* The current page: gold, with deep-green text. Never white on gold -
-   that is 2.2:1. The number circle inverts to deep green on gold, which
-   is how Herd Planner marks its active step. */
+/* The current page: gold, with deep-green text and an inverted number
+   circle. Never white on gold - that is 2.2:1. */
 .suite-nav .pill.active {{
-  background: {GOLD}; border-color: {GOLD}; color: {DEEP_GREEN};
+  background: {GOLD}; border-color: {GOLD}; color: {DEEP_GREEN}; font-weight: 600;
 }}
 .suite-nav .pill.active:hover {{ background: #e6b75a; border-color: #e6b75a; }}
 .suite-nav .pill.active .n {{ background: {DEEP_GREEN}; color: #fff; }}
 
+/* The state switch, at the right end of the row. Squarer than the page
+   pills on purpose: it is a setting, not a destination, and two controls
+   that look identical but behave differently is worse than two that look
+   different. Its active state is deep green rather than gold, so the row
+   never shows two gold controls meaning two different things. */
+.suite-state {{ margin-left: auto; display: flex; gap: 0; }}
+.suite-state .spill {{
+  border: 1px solid #e2e0d9; border-right-width: 0; background: #fff;
+  padding: 6px 14px; text-decoration: none; color: #5e5c57;
+  font-weight: 600; font-size: .88rem;
+}}
+.suite-state .spill:first-child {{ border-radius: 8px 0 0 8px; }}
+.suite-state .spill:last-child {{ border-radius: 0 8px 8px 0; border-right-width: 1px; }}
+.suite-state .spill:hover {{ background: #fdfcf8; }}
+.suite-state .spill.active {{
+  background: {DEEP_GREEN}; color: #fff; border-color: {DEEP_GREEN};
+}}
+
 @media (max-width: 760px) {{
-  .suite-nav .pill {{ font-size: .86rem; padding: 5px 11px 5px 6px; }}
+  .suite-nav .pill {{ font-size: .88rem; padding: 5px 12px 5px 6px; }}
+  .suite-state {{ margin-left: 0; }}
 }}
 
 /* ---- the footer band --------------------------------------------------
@@ -296,7 +332,33 @@ button[kind="primary"]:hover, [data-testid="stBaseButton-primary"]:hover {{
 """
 
 
-def page_setup(page_title: str, *, layout: str = "wide") -> None:
+def current_state() -> str:
+    """Which state the reader is looking at, from the URL.
+
+    A query parameter rather than `st.session_state`, for a reason the pills
+    forced: they are plain anchors, so following one is a full page load and
+    starts a *new* Streamlit session - session state would be wiped on every
+    click. The URL survives that, and it also makes a view shareable and
+    bookmarkable, which session state never was.
+    """
+    import streamlit as st
+
+    try:
+        value = st.query_params.get("state", DEFAULT_STATE)
+    except Exception:                      # AppTest has no query params
+        return DEFAULT_STATE
+    return value if value in STATES else DEFAULT_STATE
+
+
+def state_name(state: str) -> str:
+    return STATES[state][0]
+
+
+def state_fips(state: str) -> str:
+    return STATES[state][1]
+
+
+def page_setup(page_title: str, *, layout: str = "wide") -> str:
     """The first Streamlit call on every page: config, logo, chrome, menu.
 
     `initial_sidebar_state="collapsed"` matters even though the sidebar is
@@ -315,28 +377,35 @@ def page_setup(page_title: str, *, layout: str = "wide") -> None:
                        initial_sidebar_state="collapsed")
     st.logo(str(LOGO), size="large", icon_image=str(LOGO))
     st.html(SUITE_CSS)
-    header_bar()
-    nav_bar(current=page_title)
+    state = current_state()
+    header_bar(state)
+    nav_bar(current=page_title, state=state)
+    return state
 
 
-def page_heading(page_title: str, display: str | None = None) -> None:
+def page_heading(page_title: str, display: str | None = None,
+                 show_title: bool = True) -> None:
     """The page's title and the question it answers.
 
     The question comes from one dict in this module rather than from six page
     files, so the menu, the tab title and the heading can't drift apart.
 
-    `display` is for the home page, whose menu label is "Home" but whose
-    heading should say what the page is actually about.
+    `display` is for a page whose menu label and heading differ.
+
+    `show_title=False` drops the heading and keeps only the question. The home
+    page uses it: the green bar already says "Yield Predictor - Corn, Nebraska",
+    so a display headline underneath repeated the header in larger type.
     """
     import streamlit as st
 
-    st.title(display or page_title)
+    if show_title:
+        st.title(display or page_title)
     question = QUESTIONS.get(page_title)
     if question:
         st.html(f'<p class="suite-question">{question}</p>')
 
 
-def header_bar() -> None:
+def header_bar(state: str = DEFAULT_STATE) -> None:
     """The app name and context, in white, beside the logo in the green bar.
 
     This is the piece Herd Planner has and this app was missing - its header
@@ -350,12 +419,12 @@ def header_bar() -> None:
     st.html(f"""
     <div class="suite-headerbar">
       <span class="name">{APP_NAME}</span>
-      <span class="ctx">{APP_CONTEXT}</span>
+      <span class="ctx">Corn · {state_name(state)}</span>
     </div>
     """)
 
 
-def nav_bar(current: str | None = None) -> None:
+def nav_bar(current: str | None = None, state: str = DEFAULT_STATE) -> None:
     """The menu, as Herd Planner's numbered step pills.
 
     Herd Planner shows "1 Your ranch / 2 Your cattle / ..." as rounded pills
@@ -379,14 +448,26 @@ def nav_bar(current: str | None = None) -> None:
     """
     import streamlit as st
 
+    query = f"?state={state}" if state != DEFAULT_STATE else ""
     pills = []
     for _path, label, _icon, url in NAV:
         step = STEPS.get(label)
         number = f'<span class="n">{step}</span>' if step else ""
-        state = " active" if label == current else ""
-        pills.append(f'<a class="pill{state}" href="{url or "./"}">'
+        active = " active" if label == current else ""
+        pills.append(f'<a class="pill{active}" href="{url or "./"}{query}">'
                      f'{number}<span class="l">{label}</span></a>')
-    st.html(f'<div class="suite-nav">{"".join(pills)}</div>')
+
+    switch = ""
+    if current in STATE_AWARE:
+        here = next((u for _p, lab, _i, u in NAV if lab == current), "")
+        options = "".join(
+            f'<a class="spill{" active" if code == state else ""}" '
+            f'href="{here or "./"}'
+            f'{"" if code == DEFAULT_STATE else f"?state={code}"}">{name}</a>'
+            for code, (name, _fips) in STATES.items())
+        switch = f'<div class="suite-state">{options}</div>'
+
+    st.html(f'<div class="suite-nav">{"".join(pills)}{switch}</div>')
 
 
 def load_suite_apps() -> list[dict]:

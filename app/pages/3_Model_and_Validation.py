@@ -21,17 +21,18 @@ from yieldpred.appdata import (feature_correlations, load_ablation,
 
 from yieldpred.disclaimer import FOOTER
 from yieldpred.brand import page_footer, page_heading, page_setup
-page_setup("Model & Validation")
+state = page_setup("Model & Validation")
 
 
 @st.cache_data
-def data():
-    return (load_scores(), load_model_table(), load_errors(),
-            load_irrigation_comparison(), load_ablation(),
-            load_morans_by_year(), load_morans_pooled(), load_leak_control())
+def data(state: str):
+    return (load_scores(state), load_model_table(state), load_errors(state),
+            load_irrigation_comparison(state), load_ablation(state),
+            load_morans_by_year(state), load_morans_pooled(state),
+            load_leak_control(state))
 
 
-scores, model_table, errors, comparison, ablation, morans_year, morans_pooled, leak = data()
+scores, model_table, errors, comparison, ablation, morans_year, morans_pooled, leak = data(state)
 
 page_heading("Model & Validation")
 

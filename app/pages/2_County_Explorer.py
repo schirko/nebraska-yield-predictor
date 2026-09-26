@@ -18,15 +18,15 @@ from yieldpred.appdata import (county_choices, county_history, load_errors,
 
 from yieldpred.disclaimer import FOOTER
 from yieldpred.brand import page_footer, page_heading, page_setup
-page_setup("County Explorer")
+state = page_setup("County Explorer")
 
 
 @st.cache_data
-def data():
-    return load_model_table(), load_errors(), load_yields()
+def data(state: str):
+    return load_model_table(state), load_errors(state), load_yields(state)
 
 
-model_table, errors, yields = data()
+model_table, errors, yields = data(state)
 
 page_heading("County Explorer")
 

@@ -142,3 +142,86 @@ def fetch_county_corn_yields(
     if end_year is not None:
         params["year__LE"] = end_year
     return tidy_county_yields(query(params, api_key))
+
+
+# ------------------------------------------------------------------ alfalfa hay
+#
+# NASS publishes alfalfa under commodity HAY, class ALFALFA, as three statistics.
+# County estimates for hay stopped after the 2018 crop year (NASS notice of
+# 2020-02-13: the Risk Management Agency ended the funding), so a county query
+# returns 2018 as its last year. State totals continue.
+
+ALFALFA_STATS = {
+    ("YIELD", "TONS / ACRE"): "yield_tons_acre",
+    ("AREA HARVESTED", "ACRES"): "acres_harvested",
+    ("PRODUCTION", "TONS"): "production_tons",
+}
+ALFALFA_COLUMNS = list(ALFALFA_STATS.values())
+
+
+def _alfalfa_params(state_alpha: str, level: str, start_year: int, end_year: int | None) -> dict:
+    params = {
+        "source_desc": "SURVEY",
+        "sector_desc": "CROPS",
+        "commodity_desc": "HAY",
+        "class_desc": "ALFALFA",
+        "agg_level_desc": level,
+        "reference_period_desc": "YEAR",
+        "state_alpha": state_alpha,
+        "year__GE": start_year,
+    }
+    if end_year is not None:
+        params["year__LE"] = end_year
+    return params
+
+
+def _alfalfa_wide(df: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
+    """Keep the three alfalfa statistics and put each in its own column."""
+    df = df.copy()
+    df["stat"] = [ALFALFA_STATS.get((s, u)) for s, u in zip(df["statisticcat_desc"], df["unit_desc"])]
+    df = df[df["stat"].notna() & df["prodn_practice_desc"].isin(PRACTICE_MAP)]
+    df["practice"] = df["prodn_practice_desc"].map(PRACTICE_MAP)
+    df["year"] = df["year"].astype(int)
+    df["value"] = parse_value(df["Value"])
+    wide = (df.dropna(subset=["value"])
+              .pivot_table(index=keys + ["year", "practice"], columns="stat", values="value", aggfunc="first")
+              .reset_index())
+    wide.columns.name = None
+    for col in ALFALFA_COLUMNS:
+        if col not in wide:
+            wide[col] = float("nan")
+    return wide.sort_values(keys + ["year", "practice"]).reset_index(drop=True)
+
+
+def tidy_county_alfalfa(raw: pd.DataFrame) -> pd.DataFrame:
+    """Clean raw county alfalfa rows into one row per county, year and practice.
+
+    Columns: fips, state_alpha, county_name, asd_code, asd_desc, year, practice,
+    yield_tons_acre, acres_harvested, production_tons (NaN where NASS withheld it).
+    """
+    keys = ["fips", "state_alpha", "county_name", "asd_code", "asd_desc"]
+    if raw.empty:
+        return pd.DataFrame(columns=keys + ["year", "practice"] + ALFALFA_COLUMNS)
+    df = raw[raw["county_code"].astype(str) != "998"].copy()   # "other (combined) counties"
+    df["fips"] = df["state_fips_code"].astype(str).str.zfill(2) + df["county_code"].astype(str).str.zfill(3)
+    df["county_name"] = df["county_name"].str.title()
+    return _alfalfa_wide(df, keys)
+
+
+def tidy_state_alfalfa(raw: pd.DataFrame) -> pd.DataFrame:
+    """Clean raw state alfalfa rows: one row per year and practice."""
+    if raw.empty:
+        return pd.DataFrame(columns=["state_alpha", "year", "practice"] + ALFALFA_COLUMNS)
+    return _alfalfa_wide(raw, ["state_alpha"])
+
+
+def fetch_county_alfalfa(state_alpha: str = "NE", start_year: int = 2000, end_year: int | None = None,
+                         api_key: str | None = None) -> pd.DataFrame:
+    """County alfalfa hay: yield (tons/acre), acres harvested and production."""
+    return tidy_county_alfalfa(query(_alfalfa_params(state_alpha, "COUNTY", start_year, end_year), api_key))
+
+
+def fetch_state_alfalfa(state_alpha: str = "NE", start_year: int = 2000, end_year: int | None = None,
+                        api_key: str | None = None) -> pd.DataFrame:
+    """Statewide alfalfa hay, which NASS still publishes every year."""
+    return tidy_state_alfalfa(query(_alfalfa_params(state_alpha, "STATE", start_year, end_year), api_key))

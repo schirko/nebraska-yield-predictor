@@ -1,6 +1,8 @@
 {
-  "about": "The farm app suite: one list of apps for every app's 'Farm apps' menu. Master copy: herd-planner/brand/suite-apps.json. Set an app's url when it goes live; null shows 'Coming soon'.",
+  "about": "The farm app suite: one list of apps for every app's 'Farm apps' menu. Master copy: herd-planner/brand/suite-apps.json. Set an app's url when it goes live; null shows 'Coming soon'. 'company' is the company site every app links back to (top left and the top of this menu); change its name and url here when the company is named. 'account' is the suite's one account page (farm-account), linked at the top of this menu in every app but itself.",
   "version": 1,
+  "company": {"name": "Cornerpost Logic", "url": "https://schirko.github.io/company-site/"},
+  "account": {"name": "Your Account", "url": "https://farm-account.onrender.com/app/"},
   "apps": [
     {"id": "herd-planner", "name": "Herd Planner",
      "what": "Keep-or-sell decisions for cow-calf ranches",

@@ -214,6 +214,12 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
   padding-top: 17px;
 }}
 .suite-headerbar .name {{ font-weight: 700; font-size: 1.15rem; letter-spacing: .2px; }}
+/* The way back to the company site, before the app's name (the suite's .suite-company). The bar
+   ignores clicks so Streamlit's own header keeps working; this one link takes them back. */
+.suite-headerbar a.company {{ pointer-events: auto; color: rgba(255, 255, 255, .78); font-weight: 600;
+  font-size: .9rem; text-decoration: none; white-space: nowrap; }}
+.suite-headerbar a.company:hover {{ color: #fff; text-decoration: underline; text-underline-offset: 3px; }}
+.suite-headerbar .sep {{ color: rgba(255, 255, 255, .5); margin: 0 -6px; }}
 .suite-headerbar .ctx {{ font-size: .95rem; opacity: .9; }}
 
 /* ---- vertical rhythm --------------------------------------------------
@@ -441,12 +447,24 @@ def header_bar(state: str = DEFAULT_STATE) -> None:
     """
     import streamlit as st
 
-    st.html(f"""
+    st.html(header_bar_html(state))
+
+
+def header_bar_html(state: str = DEFAULT_STATE) -> str:
+    """The header bar's HTML: the company link first (back to the company site, like every app in
+    the suite), then the app's name and context. target="_top" because Streamlit Community Cloud
+    shows the app inside a frame, and the company site should replace the whole page, not the frame."""
+    company = load_company()
+    back = ""
+    if company:
+        back = (f'<a class="company" href="{company["url"]}" target="_top">{company["name"]}</a>'
+                f'<span class="sep" aria-hidden="true">›</span>')
+    return f"""
     <div class="suite-headerbar">
-      <span class="name">{APP_NAME}</span>
+      {back}<span class="name">{APP_NAME}</span>
       <span class="ctx">Corn · {state_name(state)}</span>
     </div>
-    """)
+    """
 
 
 def nav_bar(current: str | None = None, state: str = DEFAULT_STATE) -> None:
@@ -502,6 +520,16 @@ def load_suite_apps() -> list[dict]:
     so a new app appears in both by editing the JSON and nothing else.
     """
     return json.loads(APPS_FILE.read_text(encoding="utf-8"))["apps"]
+
+
+def load_company() -> dict | None:
+    """The company site every app links back to: "company" in the shared suite-apps.json."""
+    return json.loads(APPS_FILE.read_text(encoding="utf-8")).get("company")
+
+
+def load_account() -> dict | None:
+    """The suite's account page (farm-account): "account" in the shared suite-apps.json."""
+    return json.loads(APPS_FILE.read_text(encoding="utf-8")).get("account")
 
 
 def suite_menu_markdown() -> str:
@@ -602,6 +630,11 @@ def page_footer(state: str = DEFAULT_STATE) -> None:
         else f'<a href="./">{app["name"]}</a>' if app["id"] == APP_ID
         else f'<a class="soon" aria-disabled="true">{app["name"]} (coming soon)</a>'
         for app in load_suite_apps())
+    # The suite account, last in the Farm apps column (the other apps put it at the top of their Farm Apps
+    # menu; this app has no menu). target="_top": Streamlit Cloud shows the app inside a frame.
+    account = load_account()
+    if account:
+        apps += f'<a href="{account["url"]}" target="_top">{account["name"]}</a>'
 
     sources = "".join(
         f'<a href="{url}" target="_blank" rel="noopener">{label}</a>'

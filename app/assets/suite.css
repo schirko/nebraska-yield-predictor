@@ -58,8 +58,32 @@ a { color: var(--suite-link); }
 /* The header bar: deep green, the app's logo and name in white. */
 .suite-bar { background: var(--suite-deep-green); color: #fff; }
 .suite-bar .suite-name { color: #fff; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 10px; }
-.suite-bar a:not(.btn):not(.button):not(.suite-app) { color: rgba(255, 255, 255, .88); }
-.suite-bar a:not(.btn):not(.button):not(.suite-app):hover { color: #fff; }
+.suite-bar a:not(.btn):not(.button):not(.suite-app):not(.suite-apps-home):not(.suite-apps-account) { color: rgba(255, 255, 255, .88); }
+.suite-bar a:not(.btn):not(.button):not(.suite-app):not(.suite-apps-home):not(.suite-apps-account):hover { color: #fff; }
+/* The way back to the company site, top left, before the app's name (suite version 3):
+     <span class="suite-crumbs"><a class="suite-company" data-suite-company href="...">Company</a>
+       <span class="suite-crumb-sep" aria-hidden="true">›</span> ...the app's own name... </span>
+   Top left because that's where people expect the way home; lighter than the app's name so the
+   app still reads first. */
+.suite-crumbs { display: inline-flex; align-items: center; gap: 8px; }
+.suite-crumbs .suite-name { white-space: nowrap; }
+.suite-bar a.suite-company { color: rgba(255, 255, 255, .78); font-weight: 600; font-size: .9rem; text-decoration: none; white-space: nowrap; }
+.suite-bar a.suite-company:hover { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.suite-crumb-sep { color: rgba(255, 255, 255, .5); font-size: 1rem; line-height: 1; }
+/* The first line of the Farm Apps menu: back to the company site */
+.suite-apps-home { display: block; padding: 6px 8px 10px; margin-bottom: 6px; border-bottom: 1px solid var(--suite-line);
+  color: var(--suite-link); font-weight: 600; font-size: .9rem; text-decoration: none; }
+.suite-apps-home::before { content: "\2190  "; }
+.suite-apps-home:hover { text-decoration: underline; }
+/* Suite version 4: the menu's top row holds the way home (left) and "Your Account" (right, the suite's
+   account page). Either can be missing: the company site has no "home" link, farm-account no account link. */
+.suite-apps-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px;
+  padding: 6px 8px 10px; margin-bottom: 6px; border-bottom: 1px solid var(--suite-line); }
+.suite-apps-top .suite-apps-home { padding: 0; margin: 0; border-bottom: 0; white-space: nowrap; }
+.suite-apps-account { margin-left: auto; color: var(--suite-link); font-weight: 600; font-size: .9rem;
+  text-decoration: none; white-space: nowrap; }
+.suite-apps-account:hover { text-decoration: underline; }
+@media (max-width: 480px) { .suite-bar a.suite-company { font-size: .8rem; } }
 /* Outline buttons that sit on the green bar */
 .suite-bar .btn.secondary, .suite-bar .button.secondary { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .6); }
 .suite-bar .btn.secondary:hover:not(:disabled), .suite-bar .button.secondary:hover:not(:disabled) { background: rgba(255, 255, 255, .12); }
@@ -164,7 +188,7 @@ a { color: var(--suite-link); }
 .suite-apps > summary::before { content: "\25A6"; font-size: 1rem; line-height: 1; }  /* a small grid */
 .suite-apps > summary:hover, .suite-apps[open] > summary { background: rgba(255, 255, 255, .12); }
 .suite-apps-panel {
-  position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: min(340px, calc(100vw - 32px));
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: min(360px, calc(100vw - 32px));
   background: var(--suite-surface); color: var(--suite-ink); border: 1px solid var(--suite-line);
   border-radius: var(--suite-radius); box-shadow: 0 8px 24px rgba(0, 0, 0, .18); padding: 8px;
 }

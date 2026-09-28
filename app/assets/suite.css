@@ -1,5 +1,5 @@
 /* Farm app suite: the shared look of Herd Planner, Yield Predictor and
-   Farm Equipment Planner. Suite version 3.
+   Farm Equipment Planner. Suite version 5.
 
    THE SAME FILE lives in all three apps. The master copy is
    herd-planner/brand/suite.css: change it there, then copy it into the other
@@ -73,7 +73,6 @@ a { color: var(--suite-link); }
 /* The first line of the Farm Apps menu: back to the company site */
 .suite-apps-home { display: block; padding: 6px 8px 10px; margin-bottom: 6px; border-bottom: 1px solid var(--suite-line);
   color: var(--suite-link); font-weight: 600; font-size: .9rem; text-decoration: none; }
-.suite-apps-home::before { content: "\2190  "; }
 .suite-apps-home:hover { text-decoration: underline; }
 /* Suite version 4: the menu's top row holds the way home (left) and "Your Account" (right, the suite's
    account page). Either can be missing: the company site has no "home" link, farm-account no account link. */
@@ -84,6 +83,19 @@ a { color: var(--suite-link); }
   text-decoration: none; white-space: nowrap; }
 .suite-apps-account:hover { text-decoration: underline; }
 @media (max-width: 480px) { .suite-bar a.suite-company { font-size: .8rem; } }
+/* Suite version 5: the company's round icon (the Cornerpost Logic sunrise C) before the way home, in every
+   app's header and at the top of the Farm Apps menu. It lives here, in the one shared stylesheet, as a data
+   address, so no app needs another image file and the drift tests already cover it. Source: company-site
+   static/brand/icon.svg. On the green header the badge's green circle disappears into the bar; on the
+   white menu panel it shows. */
+:root { --suite-company-icon: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIiByb2xlPSJpbWciIGFyaWEtbGFiZWw9IkNvcm5lcnBvc3QgTG9naWMiPjx0aXRsZT5Db3JuZXJwb3N0IExvZ2ljPC90aXRsZT48ZGVmcz48Y2xpcFBhdGggaWQ9ImJhZGdlIj48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSI0OCIvPjwvY2xpcFBhdGg+PC9kZWZzPjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjQ4IiBmaWxsPSIjMjQzYjJmIi8+PGcgY2xpcC1wYXRoPSJ1cmwoI2JhZGdlKSI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNTAgNTIpIHNjYWxlKC44NikgdHJhbnNsYXRlKC01MCAtNTIpIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9InN1bmljb24iIHgxPSIwIiB5MT0iMCIgeDI9IjAiIHkyPSIxIiBncmFkaWVudFVuaXRzPSJvYmplY3RCb3VuZGluZ0JveCI+PHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjZjBjMzVhIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSIjZTA3NzJmIi8+PC9saW5lYXJHcmFkaWVudD48Y2xpcFBhdGggaWQ9ImFib3ZlaWNvbiI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSI3NiIvPjwvY2xpcFBhdGg+PC9kZWZzPjxwYXRoIGNsaXAtcGF0aD0idXJsKCNhYm92ZWljb24pIiBkPSJNNzMuMDQgMjkuMjZBMzEgMzEgMCAxIDAgNzMuMDQgNzAuNzQiIGZpbGw9Im5vbmUiIHN0cm9rZT0idXJsKCNzdW5pY29uKSIgc3Ryb2tlLXdpZHRoPSIxMyIvPjxwYXRoIGQ9Ik01MCA0NEg3NU01MCA1N0g3NSIgc3Ryb2tlPSIjZjNlYWQ4IiBzdHJva2Utd2lkdGg9IjMuMiIvPjxyZWN0IHg9IjQwIiB5PSIzMCIgd2lkdGg9IjExIiBoZWlnaHQ9IjQ2IiByeD0iMS41IiBmaWxsPSIjZjNlYWQ4Ii8+PHBhdGggZD0iTTI2IDc2IDQyIDQ2IiBzdHJva2U9IiNmM2VhZDgiIHN0cm9rZS13aWR0aD0iNS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48cmVjdCB4PSItMTAiIHk9Ijc1IiB3aWR0aD0iMTIwIiBoZWlnaHQ9IjQiIHJ4PSIyIiBmaWxsPSIjZjNlYWQ4Ii8+PC9nPjwvZz48L3N2Zz4="); }
+.suite-bar a.suite-company { display: inline-flex; align-items: center; gap: 7px; }
+.suite-bar a.suite-company::before, .suite-apps-home::before { content: ""; flex: none; display: inline-block;
+  background: var(--suite-company-icon) center / contain no-repeat; }
+.suite-bar a.suite-company::before { width: 30px; height: 30px; margin: -4px -3px -4px -4px; }
+.suite-apps-home::before { width: 20px; height: 20px; margin-right: 7px; vertical-align: -5px; }
+/* Phones: the icon alone (the name stays in the page for screen readers), so the app's name keeps its line. */
+@media (max-width: 480px) { .suite-bar a.suite-company { font-size: 0; gap: 0; } .suite-bar a.suite-company::before { width: 30px; height: 30px; } }
 /* Outline buttons that sit on the green bar */
 .suite-bar .btn.secondary, .suite-bar .button.secondary { background: transparent; color: #fff; border-color: rgba(255, 255, 255, .6); }
 .suite-bar .btn.secondary:hover:not(:disabled), .suite-bar .button.secondary:hover:not(:disabled) { background: rgba(255, 255, 255, .12); }
@@ -188,7 +200,7 @@ a { color: var(--suite-link); }
 .suite-apps > summary::before { content: "\25A6"; font-size: 1rem; line-height: 1; }  /* a small grid */
 .suite-apps > summary:hover, .suite-apps[open] > summary { background: rgba(255, 255, 255, .12); }
 .suite-apps-panel {
-  position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: min(360px, calc(100vw - 32px));
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 50; width: min(390px, calc(100vw - 32px));
   background: var(--suite-surface); color: var(--suite-ink); border: 1px solid var(--suite-line);
   border-radius: var(--suite-radius); box-shadow: 0 8px 24px rgba(0, 0, 0, .18); padding: 8px;
 }

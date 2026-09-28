@@ -49,6 +49,7 @@ place.
 """
 
 import json
+import re
 from pathlib import Path
 
 ASSETS = Path(__file__).resolve().parents[2] / "app" / "assets"
@@ -184,6 +185,19 @@ FOOTER_MARK_END = "/* == suite-footer:end == */"
 # versions; if the header turns white again after an upgrade, check them here.
 SHARED_FOOTER_CSS = shared_footer_css()
 
+
+def company_icon() -> str:
+    """The company's round icon (suite version 5), read out of the shared suite.css, where it is
+    --suite-company-icon: a url("data:...") so no app needs another image file. Streamlit can't link
+    suite.css, so the header's company link borrows the value here. "none" if it's missing (a test
+    fails then)."""
+    found = re.search(r'--suite-company-icon:\s*(url\("data:image/svg\+xml;base64,[A-Za-z0-9+/=]+"\))',
+                      SUITE_CSS_FILE.read_text(encoding="utf-8"))
+    return found.group(1) if found else "none"
+
+
+COMPANY_ICON = company_icon()
+
 SUITE_CSS = f"""
 <style>
 /* ---- the header bar -------------------------------------------------- */
@@ -219,6 +233,8 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 .suite-headerbar a.company {{ pointer-events: auto; color: rgba(255, 255, 255, .78); font-weight: 600;
   font-size: .9rem; text-decoration: none; white-space: nowrap; }}
 .suite-headerbar a.company:hover {{ color: #fff; text-decoration: underline; text-underline-offset: 3px; }}
+.suite-headerbar a.company::before {{ content: ""; display: inline-block; width: 30px; height: 30px;
+  margin: 0 5px 0 -4px; vertical-align: -10px; background: {COMPANY_ICON} center / contain no-repeat; }}
 .suite-headerbar .sep {{ color: rgba(255, 255, 255, .5); margin: 0 -6px; }}
 .suite-headerbar .ctx {{ font-size: .95rem; opacity: .9; }}
 

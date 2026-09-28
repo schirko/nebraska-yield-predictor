@@ -272,6 +272,26 @@ def test_the_header_bar_names_the_app():
     assert "suite-headerbar" in brand.SUITE_CSS, "no styling for the header name"
 
 
+def test_the_header_bar_links_back_to_the_company_site_first():
+    """Top left, before the app's name: the way home every app in the suite has."""
+    from yieldpred import brand
+
+    company = brand.load_company()
+    html = brand.header_bar_html()
+    assert f'href="{company["url"]}" target="_top">{company["name"]}</a>' in html
+    assert html.index('class="company"') < html.index('class="name"')
+    assert "pointer-events: auto" in brand.SUITE_CSS, "the bar ignores clicks; the link must take them back"
+
+
+def test_the_company_link_shows_the_company_icon():
+    """Suite version 5: the round Cornerpost Logic icon before the company name, as in every app. The icon
+    lives in the shared suite.css; the header borrows it because Streamlit can't link that file."""
+    from yieldpred import brand
+
+    assert brand.COMPANY_ICON.startswith('url("data:image/svg+xml;base64,')
+    assert f"background: {brand.COMPANY_ICON}" in brand.SUITE_CSS
+
+
 def test_no_page_still_carries_the_old_app_name():
     """The rename has to be complete, or the tab and the bar disagree."""
     for page in PAGES:

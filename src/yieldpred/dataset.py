@@ -6,6 +6,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from yieldpred.crops import DEFAULT_CROP, crop_stem, yields_file
+
 ROOT = Path(__file__).resolve().parents[2]
 PROCESSED = ROOT / "data" / "processed"
 
@@ -34,8 +36,8 @@ SPRING_CALENDAR = ["last_frost_doy", "gdd_may"]
 SPRING_FEATURES = SPRING_RAIN + SPRING_CALENDAR
 
 
-def load_yields(state: str = "ne", practice: str = "all") -> pd.DataFrame:
-    df = pd.read_parquet(PROCESSED / f"{state}_corn_yield_county.parquet")
+def load_yields(state: str = "ne", practice: str = "all", crop: str = DEFAULT_CROP) -> pd.DataFrame:
+    df = pd.read_parquet(PROCESSED / yields_file(state, crop))
     return df[df["practice"] == practice] if practice else df
 
 
@@ -83,31 +85,32 @@ def load_weather(state_fips: str = "31", source: str = "power",
     return pd.read_parquet(path)
 
 
-def load_irrigation(state: str = "ne") -> pd.DataFrame | None:
-    """County irrigation share, if scripts/fetch_irrigation.py has been run."""
-    path = PROCESSED / f"irrigation_share_{state}.parquet"
+def load_irrigation(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    """County irrigation share of this crop's acres, if scripts/fetch_irrigation.py has been run."""
+    path = PROCESSED / f"{crop_stem(f'irrigation_share_{state}', crop)}.parquet"
     return pd.read_parquet(path) if path.exists() else None
 
 
-def load_irrigation_observed(state: str = "ne") -> pd.DataFrame | None:
+def load_irrigation_observed(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
     """The raw (non-interpolated) irrigation observations, if available.
 
     Kept separately so an experiment can rebuild the feature using only the
     years it is allowed to see, avoiding look-ahead in the temporal test.
     """
-    path = PROCESSED / f"irrigation_observed_{state}.parquet"
+    path = PROCESSED / f"{crop_stem(f'irrigation_observed_{state}', crop)}.parquet"
     return pd.read_parquet(path) if path.exists() else None
 
 
-def output_path(name: str, state: str = "ne") -> Path:
-    """Where a derived file lives for a given state.
+def output_path(name: str, state: str = "ne", crop: str = DEFAULT_CROP) -> Path:
+    """Where a derived file lives for a given state and crop.
 
     Nebraska keeps the original unsuffixed names so existing files and the app
     keep working; other states get a suffix. Slightly ugly, deliberately chosen
-    over renaming files the app already reads.
+    over renaming files the app already reads. The same rule for crops: corn keeps
+    the names, soybeans add `_soy` after the state (model_table_ia_soy).
     """
     stem = name if state == "ne" else f"{name}_{state}"
-    return PROCESSED / f"{stem}.parquet"
+    return PROCESSED / f"{crop_stem(stem, crop)}.parquet"
 
 
 def load_rotation(state: str = "ne") -> pd.DataFrame | None:
@@ -124,21 +127,25 @@ def load_static(state: str = "ne") -> pd.DataFrame | None:
 
 def build_modeling_table(state: str = "ne", state_fips: str = "31",
                          practice: str = "all",
-                         weather_source: str = "power") -> pd.DataFrame:
+                         weather_source: str = "power",
+                         crop: str = DEFAULT_CROP) -> pd.DataFrame:
     """One row per county-year: the yield to predict plus its weather.
+
+    `crop` picks the yields and the irrigation share (share of that crop's acres);
+    weather, rotation, soils and terrain are the county's, whatever is planted.
 
     `year` is kept as a column so models can use the long-run yield trend
     (~2 bu/acre per year), either as a feature or via DetrendedRegressor.
     Irrigation share is joined when available.
     """
-    yields = load_yields(state, practice)
+    yields = load_yields(state, practice, crop)
     weather = load_weather(state_fips, weather_source, state)
     if "county_name" in weather.columns:
         weather = weather.drop(columns=["county_name"])
 
     df = yields.merge(weather, on=["fips", "year"], how="inner", validate="one_to_one")
 
-    irrigation = load_irrigation(state)
+    irrigation = load_irrigation(state, crop)
     if irrigation is not None:
         df = df.merge(irrigation, on=["fips", "year"], how="left", validate="one_to_one")
 

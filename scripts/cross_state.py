@@ -31,6 +31,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import GroupKFold, cross_val_predict
 
+from yieldpred.crops import get_crop
 from yieldpred.dataset import (available_extras, available_spring,
                                build_modeling_table, feature_matrix, output_path)
 from yieldpred.trend import DetrendedRegressor
@@ -55,8 +56,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--train", default="NE")
     parser.add_argument("--test", default="IA")
+    parser.add_argument("--crop", default="corn", help="corn (default) or soybeans")
     args = parser.parse_args()
     train_state, test_state = args.train.lower(), args.test.lower()
+    crop = get_crop(args.crop).key
 
     tables = {}
     for state in (train_state, test_state):
@@ -64,7 +67,7 @@ def main() -> None:
         if fips is None:
             raise SystemExit(f"Unknown state {state!r}; add it to STATE_FIPS.")
         try:
-            tables[state] = build_modeling_table(state=state, state_fips=fips)
+            tables[state] = build_modeling_table(state=state, state_fips=fips, crop=crop)
         except FileNotFoundError as exc:
             raise SystemExit(f"Missing data for {state.upper()}: {exc}\n"
                              f"Run the fetch scripts with --state {state.upper()} first.")
@@ -119,10 +122,10 @@ def main() -> None:
     out["predicted"] = np.round(transferred, 1)
     out["error"] = (out["predicted"] - out["yield_bu_acre"]).round(1)
     out["predicted_corrected"] = np.round(corrected, 1)
-    path = output_path(f"cross_state_{train_state}_to_{test_state}", "ne")
+    path = output_path(f"cross_state_{train_state}_to_{test_state}", "ne", crop)
     out.to_parquet(path, index=False)
     results.reset_index().to_parquet(
-        output_path(f"cross_state_scores_{train_state}_to_{test_state}", "ne"), index=False)
+        output_path(f"cross_state_scores_{train_state}_to_{test_state}", "ne", crop), index=False)
 
     print(f"\nSaved {len(out):,} predictions to {path.relative_to(ROOT)}")
 

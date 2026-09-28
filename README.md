@@ -197,6 +197,29 @@ means sunshine and fields that aren't waterlogged, and a dry spring just means t
 moving. Same columns, same units, same code, opposite signs. A model fitted on pooled Corn Belt
 data would average these into nothing.
 
+### 8. Honest Ranges: Checked, Not Claimed
+
+Every prediction now comes with an 80% range, and the range is scored on how often the real yield
+landed inside (`scripts/honest_ranges.py`, method in `src/yieldpred/ranges.py`).
+
+| Test | Nebraska | Iowa |
+|---|---|---|
+| Unseen districts, one width for all | 78.3% held (dryland 68.4, irrigated 85.9) | 79.7% held |
+| Unseen districts, width scaled to irrigation | **78.1% held** (dryland 81.2, mixed 75.9, irrigated 78.5) | — |
+| Next season, trained on earlier seasons only | 74.4% held on average, 1 of 16 seasons under 60% | 75.6% on average, 5 of 16 under 60% |
+| Share of next-season miss shared by every county | 25% | **52%** |
+
+- **Cross-conformal ranges.** Each county's range comes only from the misses on other districts,
+  using the finite-sample rank ceil((n+1)·0.9) rather than the plain percentile.
+- **The average can hide a failure.** One width held 78% overall but only 68% for dryland counties.
+  Dividing misses by an expected miss size from irrigation share (normalized conformal) fixed
+  every group. Letting all features set the width overfit (70%).
+- **Season shocks break the next-season test.** When a drought or derecho hits, the whole state
+  misses together, so ranges hold in calm seasons and fail together in shock seasons. Adaptive
+  conformal inference (step 0.02) nudges the level after each season. A step of 0.05 chased
+  Iowa's shocks and left later ranges near 100%, and shorter look-back windows didn't help,
+  because the shock isn't knowable before the season. The app says so in plain words.
+
 ## What I'd Fix Next
 
 Honest limitations, in the order they'd matter:
@@ -229,6 +252,7 @@ Honest limitations, in the order they'd matter:
 ```
 app/                  Streamlit app (multipage)
 src/yieldpred/        Core logic
+  crops.py            The crops --crop accepts (corn, soybeans): NASS codes and file names
   nass.py             USDA NASS Quick Stats client and cleaning
   weather.py          NASA POWER download and growing-season features
   irrigation.py       Irrigated share of corn acres from NASS acreage
@@ -242,6 +266,7 @@ src/yieldpred/        Core logic
   viz.py              Static and interactive choropleths
   gridmet.py          gridMET at 4 km - the measured alternative to POWER's 55 km
   leak.py             Leak-free spatial CV, and the control that makes it readable
+  ranges.py           Honest 80% ranges: cross-conformal, irrigation-scaled, next-season check
   theme.py            Sky & Soil - the one place colour is defined
   disclaimer.py       Legal notices, one source for the app and this README
   appdata.py          Streamlit-free data access for the app
@@ -250,6 +275,7 @@ scripts/              Runnable steps, all --state aware
   train_baseline.py   Models, validation, feature ladder, ablation, controls
   analyze_errors.py   Moran's I and error maps
   cross_state.py      Train on one state, predict another
+  honest_ranges.py    Builds and checks the 80% ranges the app shows
   probe_weather_grid.py  Is one weather point per county good enough? (no downloads)
   check_network.py    Which of the five data sources can this machine reach?
 notebooks/            Exploration
@@ -274,11 +300,26 @@ python scripts/fetch_irrigation.py     # irrigation share
 python scripts/fetch_soil_terrain.py   # NCCPI + elevation
 python scripts/train_baseline.py       # models, validation, feature study
 python scripts/analyze_errors.py       # spatial diagnostics + maps
+python scripts/honest_ranges.py        # 80% ranges and how often they held (~2 min)
 streamlit run app/streamlit_app.py
 ```
 
 Any script runs for another state by passing `--state IA --state-fips 19`. The transfer test
 is `python scripts/cross_state.py --train NE --test IA`.
+
+Any script also runs for another crop by passing `--crop soybeans` (default `corn`). Weather,
+soils, terrain and rotation are the county's and are shared; only the yields and the irrigation
+share (irrigated share of that crop's acres) are fetched again. Corn keeps every file name it
+always had; soybean files add `_soy` (`model_table_soy.parquet`, `model_table_ia_soy.parquet`,
+`ne_soybeans_yield_county.parquet`). Crop names and NASS codes live only in
+`src/yieldpred/crops.py`.
+
+```bash
+python scripts/fetch_nass_yields.py --crop soybeans
+python scripts/fetch_irrigation.py  --crop soybeans
+python scripts/train_baseline.py    --crop soybeans
+python scripts/honest_ranges.py     --crop soybeans
+```
 
 The suite's home page (farm-account) shows each county's trend corn yield and its 1-in-10 low.
 `python scripts/export_suite_card.py` writes them to `data/processed/suite_card.json` (method in
@@ -299,6 +340,9 @@ Run the tests with `pytest` — they use synthetic fixtures, so no network or AP
 - [x] Cross-state transfer test
 - [x] Spring / planting-window features, including a workable-fieldwork-days measure
 - [x] Deployed to Streamlit Community Cloud
+- [x] Honest 80% ranges, checked by district and by next season
+- [x] `--crop` for the whole pipeline (corn default; soybeans next)
+- [ ] Soybean Yield Predictor: fetch, model, and the corn feature set tested on soybeans
 - [ ] Corn-soybean rotation features and the prevented-planting test
 - [ ] Cropland-weighted weather (Cropland Data Layer)
 - [ ] Wind and storm damage

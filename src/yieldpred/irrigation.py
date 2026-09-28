@@ -1,4 +1,4 @@
-"""County irrigation share for corn: what fraction of harvested acres is irrigated.
+"""County irrigation share for a crop (corn by default): what fraction of harvested acres is irrigated.
 
 The model needs to know which counties are buffered against drought. NASS reports
 harvested acres by production practice from two programs:
@@ -18,19 +18,20 @@ from __future__ import annotations
 
 import pandas as pd
 
+from yieldpred.crops import DEFAULT_CROP, Crop, get_crop
 from yieldpred.nass import parse_value, query
 
 PRACTICE_MAP = {"ALL PRODUCTION PRACTICES": "all", "IRRIGATED": "irrigated"}
 
 
 def fetch_harvested_acres(source_desc: str = "SURVEY", state_alpha: str = "NE",
-                          start_year: int = 2000, api_key: str | None = None) -> pd.DataFrame:
-    """Corn-for-grain harvested acres by county and production practice."""
+                          start_year: int = 2000, api_key: str | None = None,
+                          crop: str | Crop = DEFAULT_CROP) -> pd.DataFrame:
+    """Harvested acres of one crop (corn for grain by default) by county and production practice."""
     params = {
         "source_desc": source_desc,
         "sector_desc": "CROPS",
-        "commodity_desc": "CORN",
-        "util_practice_desc": "GRAIN",
+        **get_crop(crop).nass,
         "statisticcat_desc": "AREA HARVESTED",
         "unit_desc": "ACRES",
         "domain_desc": "TOTAL",

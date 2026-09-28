@@ -15,6 +15,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from yieldpred.crops import crop_stem, get_crop
 from yieldpred.dataset import output_path
 from yieldpred.geo import (county_boundaries, load_boundaries, neighbor_report,
                            save_boundaries)
@@ -35,10 +36,13 @@ def main() -> None:
                         help="Re-download and rebuild the county geometry")
     parser.add_argument("--state", default="NE")
     parser.add_argument("--state-fips", default="31")
+    parser.add_argument("--crop", default="corn", help="corn (default) or soybeans")
     args = parser.parse_args()
     state, fips = args.state.lower(), args.state_fips
+    crop = get_crop(args.crop)
+    tag = state + (f"_{crop.suffix}" if crop.suffix else "")   # figure names
 
-    errors = pd.read_parquet(output_path("model_errors", state))
+    errors = pd.read_parquet(output_path("model_errors", state, crop.key))
 
     counties = None if args.rebuild_boundaries else load_boundaries(fips)
     if counties is None:
@@ -94,11 +98,11 @@ def main() -> None:
                      "mean_error": round(group["error"].mean(), 1),
                      "verdict": year_result.verdict})
     by_year = pd.DataFrame(rows).set_index("year")
-    by_year.reset_index().to_parquet(output_path("morans_by_year", state), index=False)
+    by_year.reset_index().to_parquet(output_path("morans_by_year", state, crop.key), index=False)
     pd.DataFrame([{"scope": "pooled", "morans_i": result.i, "expected": result.expected,
                    "p_value": result.p_value, "counties": result.n,
                    "mean_neighbors": report["mean_neighbors"]}]
-                 ).to_parquet(output_path("morans_pooled", state), index=False)
+                 ).to_parquet(output_path("morans_pooled", state, crop.key), index=False)
     print(by_year.to_string())
 
     clustered = by_year[by_year["p_value"] < 0.05]
@@ -121,12 +125,12 @@ def main() -> None:
                "Average prediction error by county, 2000-2025. "
                "Blue = model predicts too low, orange = too high.",
                SOURCE, diverging=True, legend_label="bu/acre (predicted - actual)",
-               out_path=FIGURES / f"error_map_{state}.png")
+               out_path=FIGURES / f"error_map_{tag}.png")
 
     choropleth(mapped, "actual",
-               "Average corn yield by county",
+               f"Average {crop.name.lower()} yield by county",
                "Nebraska, 2000-2025", SOURCE,
-               legend_label="bu/acre", out_path=FIGURES / f"yield_map_{state}.png")
+               legend_label="bu/acre", out_path=FIGURES / f"yield_map_{tag}.png")
 
     for year in (2012, 2019):
         year_rows = errors[errors["year"] == year]
@@ -138,19 +142,19 @@ def main() -> None:
                    f"Prediction error in {year}",
                    {2012: "The drought year", 2019: "The flood year"}.get(year, ""),
                    SOURCE, diverging=True, legend_label="bu/acre (predicted - actual)",
-                   out_path=FIGURES / f"error_map_{state}_{year}.png")
+                   out_path=FIGURES / f"error_map_{tag}_{year}.png")
 
-    share_path = PROCESSED / f"irrigation_share_{state}.parquet"
+    share_path = PROCESSED / f"{crop_stem(f'irrigation_share_{state}', crop)}.parquet"
     if share_path.exists():
         share = pd.read_parquet(share_path)
         latest = share[share["year"] == share["year"].max()][["fips", "irrigation_share"]]
         share_merged, _ = align_to_geometry(counties, latest,
                                             value_col="irrigation_share", how="left")
         choropleth(share_merged, "irrigation_share",
-                   "Share of corn acres irrigated",
+                   f"Share of {crop.name.lower()} acres irrigated",
                    f"{share['year'].max()}, interpolated from NASS survey and census data",
                    SOURCE, legend_label="share of harvested acres",
-                   out_path=FIGURES / f"irrigation_map_{state}.png")
+                   out_path=FIGURES / f"irrigation_map_{tag}.png")
 
     for path in sorted(FIGURES.glob("*.png")):
         print(f"  {path.relative_to(ROOT)}")

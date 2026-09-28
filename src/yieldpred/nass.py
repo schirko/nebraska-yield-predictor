@@ -13,6 +13,8 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
+from yieldpred.crops import DEFAULT_CROP, Crop, get_crop
+
 BASE_URL = "https://quickstats.nass.usda.gov/api"
 MAX_RECORDS = 50_000  # Quick Stats refuses requests that would return more rows
 
@@ -120,18 +122,13 @@ def tidy_county_yields(raw: pd.DataFrame) -> pd.DataFrame:
             .reset_index(drop=True))
 
 
-def fetch_county_corn_yields(
-    state_alpha: str = "NE",
-    start_year: int = 2000,
-    end_year: int | None = None,
-    api_key: str | None = None,
-) -> pd.DataFrame:
-    """County corn-for-grain yields (bu/acre), all / irrigated / non-irrigated."""
+def yield_params(crop: str | Crop = DEFAULT_CROP, state_alpha: str = "NE", start_year: int = 2000,
+                 end_year: int | None = None) -> dict:
+    """The Quick Stats filters for one crop's county yields (bu/acre, surveyed, yearly)."""
     params = {
         "source_desc": "SURVEY",
         "sector_desc": "CROPS",
-        "commodity_desc": "CORN",
-        "util_practice_desc": "GRAIN",
+        **get_crop(crop).nass,
         "statisticcat_desc": "YIELD",
         "unit_desc": "BU / ACRE",
         "agg_level_desc": "COUNTY",
@@ -141,7 +138,28 @@ def fetch_county_corn_yields(
     }
     if end_year is not None:
         params["year__LE"] = end_year
-    return tidy_county_yields(query(params, api_key))
+    return params
+
+
+def fetch_county_yields(
+    state_alpha: str = "NE",
+    start_year: int = 2000,
+    end_year: int | None = None,
+    api_key: str | None = None,
+    crop: str | Crop = DEFAULT_CROP,
+) -> pd.DataFrame:
+    """County yields (bu/acre) for one crop, all / irrigated / non-irrigated."""
+    return tidy_county_yields(query(yield_params(crop, state_alpha, start_year, end_year), api_key))
+
+
+def fetch_county_corn_yields(
+    state_alpha: str = "NE",
+    start_year: int = 2000,
+    end_year: int | None = None,
+    api_key: str | None = None,
+) -> pd.DataFrame:
+    """County corn-for-grain yields (bu/acre), all / irrigated / non-irrigated."""
+    return fetch_county_yields(state_alpha, start_year, end_year, api_key, crop="corn")
 
 
 # ------------------------------------------------------------------ alfalfa hay

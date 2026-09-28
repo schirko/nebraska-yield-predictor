@@ -1,6 +1,7 @@
 """Build the county irrigation-share feature from NASS harvested-acre data.
 
     python scripts/fetch_irrigation.py
+    python scripts/fetch_irrigation.py --crop soybeans
 
 Pulls annual SURVEY acreage and five-yearly CENSUS OF AGRICULTURE acreage, computes
 irrigated / total harvested acres per county-year, and interpolates across the gaps.
@@ -11,6 +12,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from yieldpred.crops import crop_stem, get_crop, yields_file
 from yieldpred.irrigation import (build_share_series, combine_sources,
                                   fetch_harvested_acres, observed_share)
 from yieldpred.nass import NASSError
@@ -24,12 +26,14 @@ def main() -> None:
     parser.add_argument("--state", default="NE")
     parser.add_argument("--start", type=int, default=2000)
     parser.add_argument("--end", type=int, default=2025)
+    parser.add_argument("--crop", default="corn", help="corn (default) or soybeans")
     args = parser.parse_args()
+    crop = get_crop(args.crop)
 
     frames = {}
     for source in ("SURVEY", "CENSUS"):
         try:
-            acres = fetch_harvested_acres(source, args.state, args.start)
+            acres = fetch_harvested_acres(source, args.state, args.start, crop=crop)
         except NASSError as exc:
             print(f"{source}: {exc}")
             continue
@@ -51,11 +55,11 @@ def main() -> None:
     series = build_share_series(observed, years)
 
     PROCESSED.mkdir(parents=True, exist_ok=True)
-    out = PROCESSED / f"irrigation_share_{args.state.lower()}.parquet"
+    out = PROCESSED / f"{crop_stem(f'irrigation_share_{args.state.lower()}', crop)}.parquet"
     series.to_parquet(out, index=False)
     # Keep the raw observations too, so the feature can be rebuilt using only
     # the years a given experiment is allowed to see (see train_baseline.py).
-    observed.to_parquet(PROCESSED / f"irrigation_observed_{args.state.lower()}.parquet",
+    observed.to_parquet(PROCESSED / f"{crop_stem(f'irrigation_observed_{args.state.lower()}', crop)}.parquet",
                         index=False)
 
     print(f"\nSaved {len(series):,} county-years to {out.relative_to(ROOT)}")
@@ -65,7 +69,7 @@ def main() -> None:
     latest = series[series["year"] == series["year"].max()].copy()
     # Attach county names if the yield data has been downloaded, so the sanity
     # check below is readable rather than a list of FIPS codes.
-    yields_path = PROCESSED / f"{args.state.lower()}_corn_yield_county.parquet"
+    yields_path = PROCESSED / yields_file(args.state, crop)
     if yields_path.exists():
         import pandas as pd
         names = (pd.read_parquet(yields_path)[["fips", "county_name"]]

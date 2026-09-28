@@ -1,9 +1,10 @@
-"""Download county corn yields from NASS Quick Stats and save them locally.
+"""Download county crop yields (corn by default) from NASS Quick Stats and save them locally.
 
 Run from the project root (with the virtual environment active):
 
     python scripts/fetch_nass_yields.py
     python scripts/fetch_nass_yields.py --state IA --start 2005
+    python scripts/fetch_nass_yields.py --crop soybeans
 """
 
 from __future__ import annotations
@@ -11,7 +12,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from yieldpred.nass import NASSError, fetch_county_corn_yields
+from yieldpred.crops import get_crop, yields_file
+from yieldpred.nass import NASSError, fetch_county_yields
 
 ROOT = Path(__file__).resolve().parents[1]
 PROCESSED = ROOT / "data" / "processed"
@@ -22,11 +24,13 @@ def main() -> None:
     parser.add_argument("--state", default="NE", help="Two-letter state code (default NE)")
     parser.add_argument("--start", type=int, default=2000, help="First year (default 2000)")
     parser.add_argument("--end", type=int, default=None, help="Last year (default: latest)")
+    parser.add_argument("--crop", default="corn", help="corn (default) or soybeans")
     args = parser.parse_args()
 
-    print(f"Requesting {args.state} county corn yields from {args.start}...")
+    crop = get_crop(args.crop)
+    print(f"Requesting {args.state} county {crop.name.lower()} yields from {args.start}...")
     try:
-        df = fetch_county_corn_yields(args.state, args.start, args.end)
+        df = fetch_county_yields(args.state, args.start, args.end, crop=crop)
     except NASSError as exc:
         raise SystemExit(f"Error: {exc}")
 
@@ -34,7 +38,7 @@ def main() -> None:
         raise SystemExit("No rows returned - check the state code and years.")
 
     PROCESSED.mkdir(parents=True, exist_ok=True)
-    stem = f"{args.state.lower()}_corn_yield_county"
+    stem = yields_file(args.state, crop).removesuffix(".parquet")
     df.to_parquet(PROCESSED / f"{stem}.parquet", index=False)
     df.to_csv(PROCESSED / f"{stem}.csv", index=False)
 

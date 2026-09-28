@@ -1,6 +1,7 @@
 """Build the modeling table and compare models under different validation schemes.
 
     python scripts/train_baseline.py
+    python scripts/train_baseline.py --crop soybeans
 
 Three models, three ways of validating them. The point of the exercise is that
 random cross-validation flatters a spatial model: neighbouring counties in the
@@ -26,6 +27,7 @@ from sklearn.preprocessing import StandardScaler
 from yieldpred.dataset import (PROCESSED, available_rotation, build_modeling_table,
                                feature_groups, feature_matrix,
                                load_irrigation_observed, output_path)
+from yieldpred.crops import get_crop
 from yieldpred.irrigation import build_share_series
 from yieldpred.leak import LeakFreeGroupKFold, leak_report, power_cells
 from yieldpred.trend import DetrendedRegressor
@@ -45,6 +47,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--state", default="NE", help="Two-letter state code")
     parser.add_argument("--state-fips", default="31")
+    parser.add_argument("--crop", default="corn", help="corn (default) or soybeans")
     parser.add_argument("--compare-weather", action="store_true",
                         help="Score POWER against the gridMET variants on one "
                              "row set, to measure what the 55 km grid costs")
@@ -54,9 +57,10 @@ def main() -> None:
                              "acting as county fingerprints rather than weather")
     args = parser.parse_args()
     state = args.state.lower()
+    crop = get_crop(args.crop).key
 
-    df = build_modeling_table(state=state, state_fips=args.state_fips)
-    out = output_path("model_table", state)
+    df = build_modeling_table(state=state, state_fips=args.state_fips, crop=crop)
+    out = output_path("model_table", state, crop)
     df.to_parquet(out, index=False)
     print(f"Modeling table: {len(df):,} county-years, "
           f"{df['fips'].nunique()} counties, {df['year'].min()}-{df['year'].max()}")
@@ -106,7 +110,7 @@ def main() -> None:
         })
 
     results = pd.DataFrame(rows).set_index("model")
-    results.reset_index().to_parquet(output_path("model_scores", state), index=False)
+    results.reset_index().to_parquet(output_path("model_scores", state, crop), index=False)
     for scheme, label in [("random", "Random 5-fold (optimistic)"),
                           ("spatial", "Leave-district-out (spatial)"),
                           ("future", "Train <=2018, test >=2019 (temporal)")]:
@@ -173,7 +177,7 @@ def main() -> None:
 
         # Control: rebuild irrigation share from pre-2019 observations only, so the
         # temporal test cannot borrow information from the 2022 Census.
-        observed = load_irrigation_observed(state)
+        observed = load_irrigation_observed(state, crop)
         if observed is not None and "irrigation_share" in extras:
             past_only = build_share_series(
                 observed[observed["year"] <= 2018],
@@ -204,7 +208,7 @@ def main() -> None:
         suffix = "_split" if args.split_spring else ""
 
         comparison_df = pd.DataFrame(ladder)
-        comparison_df.to_parquet(output_path(f"irrigation_comparison{suffix}", state),
+        comparison_df.to_parquet(output_path(f"irrigation_comparison{suffix}", state, crop),
                                  index=False)
         print("\n" + comparison_df.set_index("features").round(3).to_string())
         print("\nEach row adds one feature (or one group) to the row above.")
@@ -265,7 +269,7 @@ def main() -> None:
             ]).set_index("rows scored")
             print("\n" + comparison.round(3).to_string())
             comparison.reset_index().to_parquet(
-                output_path(f"rotation_carried_control{suffix}", state), index=False)
+                output_path(f"rotation_carried_control{suffix}", state, crop), index=False)
 
             gain_all = full_with["spatial_R2"] - full_without["spatial_R2"]
             gain_obs = obs_with["spatial_R2"] - obs_without["spatial_R2"]
@@ -283,7 +287,7 @@ def main() -> None:
                       f"measured subset is probably just harder.")
 
         ablation_df = pd.DataFrame(ablation)
-        ablation_df.to_parquet(output_path(f"feature_ablation{suffix}", state),
+        ablation_df.to_parquet(output_path(f"feature_ablation{suffix}", state, crop),
                                index=False)
         print("\n" + "=" * 78)
         print("WHAT EACH FEATURE IS WORTH ON ITS OWN (remove one, keep the rest)")
@@ -306,7 +310,7 @@ def main() -> None:
         for source in ("power", "gridmet_point", "gridmet_mean"):
             try:
                 tables[source] = build_modeling_table(
-                    state=state, state_fips=args.state_fips, weather_source=source)
+                    state=state, state_fips=args.state_fips, weather_source=source, crop=crop)
             except FileNotFoundError as err:
                 print(f"  {source}: not available ({err})")
 
@@ -348,7 +352,7 @@ def main() -> None:
             table = pd.DataFrame(rows).set_index("weather source")
             print("\n" + table.round(3).to_string())
             table.reset_index().to_parquet(
-                output_path("weather_source_comparison", state), index=False)
+                output_path("weather_source_comparison", state, crop), index=False)
 
             if "power" in table.index:
                 base = table.loc["power", "spatial_R2"]
@@ -432,7 +436,7 @@ def main() -> None:
             print(f"\nThe spatial score is inflated by roughly {attributable:.3f} R2.")
             print("Report the corrected figure, or report both.")
         leak_rows.reset_index().to_parquet(
-            output_path("leak_control", state), index=False)
+            output_path("leak_control", state, crop), index=False)
     else:
         print("\nNothing to correct: no cell spans a district boundary here.")
 
@@ -443,7 +447,7 @@ def main() -> None:
     errors = used[["fips", "county_name", "year", "asd_desc", "yield_bu_acre"]].copy()
     errors["predicted"] = pred.round(1)
     errors["error"] = (errors["predicted"] - errors["yield_bu_acre"]).round(1)
-    errors.to_parquet(output_path("model_errors", state), index=False)
+    errors.to_parquet(output_path("model_errors", state, crop), index=False)
 
     print("\n" + "=" * 70)
     print("WORST YEARS FOR THE MODEL (mean error, bu/acre)")
@@ -451,7 +455,7 @@ def main() -> None:
     by_year = errors.groupby("year")["error"].mean().round(1)
     print(by_year.reindex(by_year.abs().sort_values(ascending=False).index).head(6).to_string())
     print(f"\nSaved county-level errors to "
-          f"{output_path('model_errors', state).relative_to(ROOT)}")
+          f"{output_path('model_errors', state, crop).relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

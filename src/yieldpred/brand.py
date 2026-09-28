@@ -49,7 +49,6 @@ place.
 """
 
 import json
-import re
 from pathlib import Path
 
 ASSETS = Path(__file__).resolve().parents[2] / "app" / "assets"
@@ -185,19 +184,6 @@ FOOTER_MARK_END = "/* == suite-footer:end == */"
 # versions; if the header turns white again after an upgrade, check them here.
 SHARED_FOOTER_CSS = shared_footer_css()
 
-
-def company_icon() -> str:
-    """The company's round icon (suite version 5), read out of the shared suite.css, where it is
-    --suite-company-icon: a url("data:...") so no app needs another image file. Streamlit can't link
-    suite.css, so the header's company link borrows the value here. "none" if it's missing (a test
-    fails then)."""
-    found = re.search(r'--suite-company-icon:\s*(url\("data:image/svg\+xml;base64,[A-Za-z0-9+/=]+"\))',
-                      SUITE_CSS_FILE.read_text(encoding="utf-8"))
-    return found.group(1) if found else "none"
-
-
-COMPANY_ICON = company_icon()
-
 SUITE_CSS = f"""
 <style>
 /* ---- the header bar -------------------------------------------------- */
@@ -223,19 +209,20 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
    for the header underneath. */
 .suite-headerbar {{
   position: fixed; top: env(safe-area-inset-top, 0px); left: 60px;
-  height: {HEADER_HEIGHT_PX}px; display: flex; align-items: baseline; gap: 14px;
+  height: {HEADER_HEIGHT_PX}px; display: flex; align-items: center; gap: 14px;
   z-index: 999991; pointer-events: none; color: #fff;
-  padding-top: 17px;
 }}
+/* Suite version 6: the company ABOVE the app's name, as in every app in the suite (a hierarchy, like a
+   series name over a book title), with the app's own logo - Streamlit's, at x=16..48 - standing to the
+   left of both lines. */
+.suite-headerbar .titles {{ display: flex; flex-direction: column; line-height: 1.15; }}
 .suite-headerbar .name {{ font-weight: 700; font-size: 1.15rem; letter-spacing: .2px; }}
-/* The way back to the company site, before the app's name (the suite's .suite-company). The bar
-   ignores clicks so Streamlit's own header keeps working; this one link takes them back. */
+/* The way back to the company site (the suite's .suite-company). The bar ignores clicks so Streamlit's
+   own header keeps working; this one link takes them back. */
 .suite-headerbar a.company {{ pointer-events: auto; color: rgba(255, 255, 255, .78); font-weight: 600;
-  font-size: .9rem; text-decoration: none; white-space: nowrap; }}
+  font-size: .75rem; letter-spacing: .02em; text-decoration: none; white-space: nowrap; }}
 .suite-headerbar a.company:hover {{ color: #fff; text-decoration: underline; text-underline-offset: 3px; }}
-.suite-headerbar a.company::before {{ content: ""; display: inline-block; width: 30px; height: 30px;
-  margin: 0 5px 0 -4px; vertical-align: -10px; background: {COMPANY_ICON} center / contain no-repeat; }}
-.suite-headerbar .sep {{ color: rgba(255, 255, 255, .5); margin: 0 -6px; }}
+.suite-headerbar a.company::after {{ content: " ›"; }}
 .suite-headerbar .ctx {{ font-size: .95rem; opacity: .9; }}
 
 /* ---- vertical rhythm --------------------------------------------------
@@ -467,17 +454,16 @@ def header_bar(state: str = DEFAULT_STATE) -> None:
 
 
 def header_bar_html(state: str = DEFAULT_STATE) -> str:
-    """The header bar's HTML: the company link first (back to the company site, like every app in
-    the suite), then the app's name and context. target="_top" because Streamlit Community Cloud
+    """The header bar's HTML: the company link above the app's name (back to the company site, like
+    every app in the suite), then the context. target="_top" because Streamlit Community Cloud
     shows the app inside a frame, and the company site should replace the whole page, not the frame."""
     company = load_company()
     back = ""
     if company:
-        back = (f'<a class="company" href="{company["url"]}" target="_top">{company["name"]}</a>'
-                f'<span class="sep" aria-hidden="true">›</span>')
+        back = f'<a class="company" href="{company["url"]}" target="_top">{company["name"]}</a>'
     return f"""
     <div class="suite-headerbar">
-      {back}<span class="name">{APP_NAME}</span>
+      <span class="titles">{back}<span class="name">{APP_NAME}</span></span>
       <span class="ctx">Corn · {state_name(state)}</span>
     </div>
     """

@@ -283,13 +283,16 @@ def test_the_header_bar_links_back_to_the_company_site_first():
     assert "pointer-events: auto" in brand.SUITE_CSS, "the bar ignores clicks; the link must take them back"
 
 
-def test_the_company_link_shows_the_company_icon():
-    """Suite version 5: the round Cornerpost Logic icon before the company name, as in every app. The icon
-    lives in the shared suite.css; the header borrows it because Streamlit can't link that file."""
+def test_the_company_sits_above_the_app_name():
+    """Suite version 6: "Cornerpost Logic ›" stacked over the app's name, one picture (the app's logo),
+    as in every app; no company icon beside it any more."""
     from yieldpred import brand
 
-    assert brand.COMPANY_ICON.startswith('url("data:image/svg+xml;base64,')
-    assert f"background: {brand.COMPANY_ICON}" in brand.SUITE_CSS
+    html = brand.header_bar_html()
+    titles = html[html.index('class="titles"'):]
+    assert titles.index('class="company"') < titles.index('class="name"')
+    assert "flex-direction: column" in brand.SUITE_CSS
+    assert "suite-company-icon" not in brand.SUITE_CSS and 'class="sep"' not in html
 
 
 def test_no_page_still_carries_the_old_app_name():

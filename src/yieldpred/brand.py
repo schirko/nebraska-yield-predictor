@@ -288,31 +288,34 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 
 /* The step cards: Home, then the numbered pages, one card each with a few
    words on what the page answers. This is the only menu (it replaced a pill
-   row plus Home's three Start Here cards, whose numbers didn't match). The
-   current page is gold with deep-green text and an inverted number circle;
-   never white on gold, which is 2.2:1. */
+   row plus Home's three Start Here cards, whose numbers didn't match).
+   Every card is white with a gold number circle (mockup A). The current page
+   keeps the white card, gets an inverted number circle, and a flat gold bar
+   sits in the gap just below it, like a pointer (option C, Scott, 2026-09-30:
+   a whole gold card was overwhelming and a shadowed bar looked dated). */
 .suite-steps {{
-  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; width: 100%;
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 10px; width: 100%;
 }}
 .suite-steps .step {{
-  display: block; background: #fff; border: 1px solid #e2e0d9; border-radius: 10px;
-  padding: 9px 10px; text-decoration: none; color: #1d1c1a;
-  transition: background .12s, border-color .12s;
+  position: relative; display: block; background: #fff; border: 1px solid #e2e0d9; border-radius: 10px;
+  padding: 12px 14px 14px; text-decoration: none; color: #1d1c1a;
+  transition: border-color .12s;
 }}
-.suite-steps .step:hover {{ border-color: #b8862b; background: #fdfcf8; }}
+.suite-steps .step:hover {{ border-color: #b8862b; }}
 .suite-steps .t {{
-  display: flex; align-items: center; gap: 6px;
-  font-weight: 700; font-size: .92rem; line-height: 1.2; color: {DEEP_GREEN};
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 700; font-size: 1rem; line-height: 1.2; color: {DEEP_GREEN};
 }}
 .suite-steps .n {{
   display: inline-flex; align-items: center; justify-content: center;
   width: 22px; height: 22px; border-radius: 50%; flex: none;
-  background: #efece4; color: #5e5c57; font-size: .78rem; font-weight: 600;
+  background: {GOLD}; color: {DEEP_GREEN}; font-size: .78rem; font-weight: 700;
 }}
-.suite-steps .d {{ margin: 5px 0 0; font-size: .8rem; line-height: 1.3; color: #5e5c57; }}
-.suite-steps .step.active {{ background: {GOLD}; border-color: {GOLD}; }}
-.suite-steps .step.active:hover {{ background: #e6b75a; border-color: #e6b75a; }}
-.suite-steps .step.active .t, .suite-steps .step.active .d {{ color: {DEEP_GREEN}; }}
+.suite-steps .d {{ margin: 6px 0 0; font-size: .85rem; line-height: 1.35; color: #5e5c57; }}
+.suite-steps .step.active::after {{
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: -9px;
+  height: 4px; border-radius: 2px; background: {GOLD};
+}}
 .suite-steps .step.active .n {{ background: {DEEP_GREEN}; color: #fff; }}
 
 /* The state switch, at the right end of the row. Squarer than the page
@@ -338,8 +341,10 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
    so the menu doesn't fill the first screen. */
 @media (max-width: 1100px) {{ .suite-steps {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }} }}
 @media (max-width: 760px) {{
-  .suite-steps {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }}
-  .suite-steps .step {{ padding: 7px 9px; }}
+  .suite-steps {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 6px; }}
+  .suite-steps .step.active::after {{ bottom: -8px; height: 3px; }}
+  .suite-steps .step {{ padding: 8px 10px 10px; }}
+  .suite-steps .t {{ font-size: .92rem; }}
   .suite-steps .d {{ display: none; }}
   .suite-views {{ margin-left: 0; }}
 }}

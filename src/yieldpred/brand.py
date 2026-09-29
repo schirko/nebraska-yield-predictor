@@ -161,7 +161,6 @@ STEPS = {label: i for i, (_p, label, _ic, _u) in enumerate(NAV) if label != "Hom
 # old "Start here" cards did this for three pages; since 2026-09-30 the menu is the one step bar,
 # on every page, so its numbers and names always match.) Written for corn; for_crop() adapts them.
 NAV_BLURBS = {
-    "Home": "The story in one page.",
     "How It Works": "Where the numbers come from.",
     "Maps": "Where corn does well, and where the model misses.",
     "County Explorer": "One county, year by year.",
@@ -241,6 +240,20 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 .suite-headerbar a.company:hover {{ color: #fff; text-decoration: underline; text-underline-offset: 3px; }}
 .suite-headerbar a.company::after {{ content: " ›"; }}
 .suite-headerbar .ctx {{ font-size: .95rem; opacity: .9; }}
+/* The app's name and Home both go to the home page. Home is a small outlined
+   button after the context; on the home page it gets the same flat gold bar
+   the step cards use for the current page. */
+.suite-headerbar a.name {{ pointer-events: auto; color: #fff; text-decoration: none; }}
+.suite-headerbar a.home {{
+  pointer-events: auto; position: relative; color: #fff; text-decoration: none;
+  font-weight: 600; font-size: .9rem; padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, .45); border-radius: 999px; white-space: nowrap;
+}}
+.suite-headerbar a.home:hover {{ border-color: {GOLD}; }}
+.suite-headerbar a.home.active::after {{
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: -7px;
+  height: 3px; border-radius: 2px; background: {GOLD};
+}}
 
 /* ---- vertical rhythm --------------------------------------------------
    Streamlit's defaults leave a lot of air, and on a page that is mostly
@@ -286,7 +299,7 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
   display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
 }}
 
-/* The step cards: Home, then the numbered pages, one card each with a few
+/* The step cards: the numbered pages 1 to 5 (Home is in the green header), one card each with a few
    words on what the page answers. This is the only menu (it replaced a pill
    row plus Home's three Start Here cards, whose numbers didn't match).
    Every card is white with a gold number circle (mockup A). The current page
@@ -294,7 +307,7 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
    sits in the gap just below it, like a pointer (option C, Scott, 2026-09-30:
    a whole gold card was overwhelming and a shadowed bar looked dated). */
 .suite-steps {{
-  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 10px; width: 100%;
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px 10px; width: 100%;
 }}
 .suite-steps .step {{
   position: relative; display: block; background: #fff; border: 1px solid #e2e0d9; border-radius: 10px;
@@ -343,6 +356,7 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 @media (max-width: 760px) {{
   .suite-steps {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 6px; }}
   .suite-steps .step.active::after {{ bottom: -8px; height: 3px; }}
+
   .suite-steps .step {{ padding: 8px 10px 10px; }}
   .suite-steps .t {{ font-size: .92rem; }}
   .suite-steps .d {{ display: none; }}
@@ -457,7 +471,7 @@ def page_setup(page_title: str, *, layout: str = "wide") -> str:
     st.logo(str(LOGO), size="large", icon_image=str(LOGO))
     st.html(SUITE_CSS)
     state, crop = current_state(), current_crop()
-    header_bar(state, crop)
+    header_bar(state, crop, current=page_title)
     nav_bar(current=page_title, state=state, crop=crop)
     return state
 
@@ -485,7 +499,7 @@ def page_heading(page_title: str, display: str | None = None,
         st.html(f'<p class="suite-question">{question}</p>')
 
 
-def header_bar(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> None:
+def header_bar(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP, current: str | None = None) -> None:
     """The app name and context, in white, beside the logo in the green bar.
 
     This is the piece Herd Planner has and this app was missing - its header
@@ -496,21 +510,25 @@ def header_bar(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> None:
     """
     import streamlit as st
 
-    st.html(header_bar_html(state, crop))
+    st.html(header_bar_html(state, crop, current))
 
 
-def header_bar_html(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> str:
+def header_bar_html(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP, current: str | None = None) -> str:
     """The header bar's HTML: the company link above the app's name (back to the company site, like
     every app in the suite), then the context. target="_top" because Streamlit Community Cloud
     shows the app inside a frame, and the company site should replace the whole page, not the frame."""
     company = load_company()
+    # Home lives in the green header (Scott, 2026-09-30), so the step cards are just 1 to 5.
+    home_on = " active" if current == "Home" else ""
+    home_attr = ' aria-current="page"' if current == "Home" else ""
     back = ""
     if company:
         back = f'<a class="company" href="{company["url"]}" target="_top">{company["name"]}</a>'
     return f"""
     <div class="suite-headerbar">
-      <span class="titles">{back}<span class="name">{APP_NAME}</span></span>
+      <span class="titles">{back}<a class="name" href="./{view_query(state, crop)}" target="_self">{APP_NAME}</a></span>
       <span class="ctx">{state_name(state)} {crop_name(crop)}</span>
+      <a class="home{home_on}" href="./{view_query(state, crop)}" target="_self"{home_attr}>Home</a>
     </div>
     """
 
@@ -545,8 +563,9 @@ def nav_bar(current: str | None = None, state: str = DEFAULT_STATE, crop: str = 
     cards = []
     for _path, label, _icon, url in NAV:
         step = STEPS.get(label)
-        # Home has no step number: a small house in the circle instead.
-        number = f'<span class="n">{step}</span>' if step else '<span class="n" aria-hidden="true">&#8962;</span>'
+        if not step:
+            continue  # Home is in the green header, not a step
+        number = f'<span class="n">{step}</span>'
         active = " active" if label == current else ""
         here_attr = ' aria-current="page"' if label == current else ""
         cards.append(f'<a class="step{active}" href="{url or "./"}{query}"{here_attr}>'

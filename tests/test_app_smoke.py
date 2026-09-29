@@ -425,10 +425,10 @@ def test_one_step_bar_names_and_numbers_every_page():
     from yieldpred import brand
 
     page = _menu_html()
-    assert page.count('class="step') == len(brand.NAV)
+    assert page.count('class="step') == len(brand.STEPS)  # Home is in the green header
     for label, step in brand.STEPS.items():
         assert f'<span class="n">{step}</span><span class="l">{label}</span>' in page
-    assert set(brand.NAV_BLURBS) == {label for _p, label, _i, _u in brand.NAV}
+    assert set(brand.NAV_BLURBS) == set(brand.STEPS)
     assert 'class="step active" href="Maps" aria-current="page"' in page
     assert not hasattr(brand, "start_here")
 
@@ -436,3 +436,15 @@ def test_one_step_bar_names_and_numbers_every_page():
 def test_the_menu_words_follow_the_crop():
     page = _menu_html(crop="soybeans")
     assert "Where soybeans do well" in page and "Where corn does well" not in page
+
+
+def test_home_is_in_the_green_header():
+    """Home has no step number, so as a card it broke the numbered order on phones (1, 3, 5 on the
+    right). It sits in the green header instead, and the app's name there links home too."""
+    from yieldpred import brand
+
+    page = _menu_html("Maps")
+    assert ">Home<" not in page
+    head = brand.header_bar_html("ne", "soybeans", current="Maps")
+    assert 'class="home" href="./?crop=soybeans"' in head and 'class="name" href="./?crop=soybeans"' in head
+    assert 'class="home active"' in brand.header_bar_html(current="Home")

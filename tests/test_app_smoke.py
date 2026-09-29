@@ -372,7 +372,34 @@ def test_links_keep_the_crop_and_the_state():
     assert brand.view_query("ia") == "?state=ia"
     assert brand.view_query("ne", "soybeans") == "?crop=soybeans"
     assert brand.view_query("ia", "soybeans") == "?state=ia&crop=soybeans"
-    assert "Soybeans · Iowa" in brand.header_bar_html("ia", "soybeans")
-    assert "Corn · Nebraska" in brand.header_bar_html()
+    assert "Iowa Soybeans" in brand.header_bar_html("ia", "soybeans")
+    assert "Nebraska Corn" in brand.header_bar_html()
     assert brand.for_crop(brand.QUESTIONS["Maps"], "soybeans").startswith("Where do soybeans do well")
     assert brand.for_crop("Predicting county corn yields", "soybeans") == "Predicting county soybean yields"
+
+
+def test_the_switches_read_state_then_crop():
+    """ "Nebraska Corn", the way a farmer says it: the state switch comes before the crop switch."""
+    import streamlit as st
+
+    from yieldpred import brand
+
+    html = []
+    real = st.html
+    st.html = html.append
+    try:
+        brand.nav_bar("County Explorer")
+    finally:
+        st.html = real
+    page = html[0]
+    assert page.index(">Nebraska<") < page.index(">Corn<")
+
+
+def test_streamlit_never_draws_its_own_page_list():
+    """Streamlit's default page list lives in a left sidebar; drawn before brand.py's CSS hides it, it
+    flashed the old layout on every visit."""
+    import tomllib
+    from pathlib import Path
+
+    config = tomllib.loads((Path(__file__).resolve().parents[1] / ".streamlit" / "config.toml").read_text())
+    assert config["client"]["showSidebarNavigation"] is False

@@ -509,7 +509,7 @@ def header_bar_html(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> str
     return f"""
     <div class="suite-headerbar">
       <span class="titles">{back}<span class="name">{APP_NAME}</span></span>
-      <span class="ctx">{crop_name(crop)} · {state_name(state)}</span>
+      <span class="ctx">{state_name(state)} {crop_name(crop)}</span>
     </div>
     """
 
@@ -550,16 +550,16 @@ def nav_bar(current: str | None = None, state: str = DEFAULT_STATE, crop: str = 
     here = next((u for _p, lab, _i, u in NAV if lab == current), "") or "./"
     switch = ""
     # Both switches in one group pushed to the right, so they wrap together, never one per line.
-    if current in CROP_AWARE:
-        # Crop first: it changes every number on the page; the state switch keeps the crop, and the
-        # crop switch keeps the state.
-        switch += '<div class="suite-state suite-crop">' + "".join(
-            f'<a class="spill{" active" if key == crop else ""}" href="{here}{view_query(state, key)}">'
-            f'{c.name}</a>' for key, c in CROPS.items()) + "</div>"
+    # State first, then crop, so the pair reads "Nebraska Corn" (Scott, 2026-09-30), the way a farmer
+    # says it. The state switch keeps the crop, and the crop switch keeps the state.
     if current in STATE_AWARE:
         switch += '<div class="suite-state">' + "".join(
             f'<a class="spill{" active" if code == state else ""}" href="{here}{view_query(code, crop)}">'
             f'{name}</a>' for code, (name, _fips) in STATES.items()) + "</div>"
+    if current in CROP_AWARE:
+        switch += '<div class="suite-state suite-crop">' + "".join(
+            f'<a class="spill{" active" if key == crop else ""}" href="{here}{view_query(state, key)}">'
+            f'{c.name}</a>' for key, c in CROPS.items()) + "</div>"
 
     views = f'<div class="suite-views">{switch}</div>' if switch else ""
     st.html(f'<div class="suite-nav">{"".join(pills)}{views}</div>')

@@ -20,3 +20,10 @@ borderColor = "#e2e0d9"               # suite --suite-line
 baseRadius = "10px"
 buttonRadius = "8px"
 font = "sans serif"
+
+# The app has its own navigation in the page body (yieldpred.brand). Without this,
+# Streamlit draws its default page list in a left sidebar while the page loads, and
+# brand.py's CSS only hides it once the page's code has run: a 300 px flash of the
+# old layout on every visit.
+[client]
+showSidebarNavigation = false

@@ -23,7 +23,7 @@ from yieldpred.appdata import (irrigation_gap, load_morans_pooled, load_scores,
                                state_yield_history)
 
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import current_crop, crop_word, page_footer, page_heading, page_setup, start_here, state_name
+from yieldpred.brand import current_crop, crop_word, page_footer, page_heading, page_setup, state_name
 from yieldpred.yearcharts import year_chart
 state = page_setup("Home")
 crop = current_crop()
@@ -39,7 +39,6 @@ def data(state: str, crop: str):
 yields, scores, morans = data(state, crop)
 
 page_heading("Home", show_title=False)
-start_here()
 
 message = missing_data_message({"yields": yields is not None, "model": scores is not None})
 if message:

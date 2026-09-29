@@ -157,6 +157,18 @@ QUESTIONS = {
 # The reading order the menu numbers. Home is the cover, not a step.
 STEPS = {label: i for i, (_p, label, _ic, _u) in enumerate(NAV) if label != "Home"}
 
+# A few words under each step in the menu, so the menu says what each page answers. (Home's
+# old "Start here" cards did this for three pages; since 2026-09-30 the menu is the one step bar,
+# on every page, so its numbers and names always match.) Written for corn; for_crop() adapts them.
+NAV_BLURBS = {
+    "Home": "The story in one page.",
+    "How It Works": "Where the numbers come from.",
+    "Maps": "Where corn does well, and where the model misses.",
+    "County Explorer": "One county, year by year.",
+    "Model & Validation": "How much to trust it.",
+    "Does It Transfer?": "Other states, other crops.",
+}
+
 def shared_footer_css() -> str:
     """The deep footer's rules, read out of the shared suite.css.
 
@@ -253,28 +265,6 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
   color: #5e5c57; font-size: 1rem; margin: 0 0 1.2rem; max-width: 78ch;
 }}
 
-/* ---- the Start Here strip ---------------------------------------------
-   Three cards in a suggested reading order. Steps told honestly: this app
-   takes no input, so a numbered wizard would be five clicks pretending to
-   be a form. A reading order is a real thing to offer. */
-.suite-start {{
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 14px; margin: .25rem 0 1.75rem;
-}}
-.suite-start a {{
-  display: block; background: #fff; border: 1px solid #e2e0d9;
-  border-radius: 10px; padding: 14px 16px; text-decoration: none;
-}}
-.suite-start a:hover {{ border-color: #b8862b; background: #fdfcf8; }}
-.suite-start .n {{
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 50%;
-  background: {GOLD}; color: {DEEP_GREEN};
-  font-size: .8rem; font-weight: 700; margin-right: 8px;
-}}
-.suite-start .t {{ font-weight: 700; color: {DEEP_GREEN}; }}
-.suite-start .d {{ color: #5e5c57; font-size: .9rem; margin: 6px 0 0; }}
-@media (max-width: 760px) {{ .suite-start {{ grid-template-columns: 1fr; }} }}
 /* Below this the Deploy button and the context line would collide. */
 @media (max-width: 760px) {{ .suite-headerbar .ctx {{ display: none; }} }}
 
@@ -296,40 +286,41 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
   display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
 }}
 
-/* The pills. Herd Planner's shape: fully rounded, a number in a circle,
-   the current one gold. On paper the inactive pills are white with a
-   hairline border, the way its steps 2 to 5 are. */
-.suite-nav .pill {{
-  display: inline-flex; align-items: center; gap: 8px;
-  background: #fff; border: 1px solid #e2e0d9; border-radius: 999px;
-  padding: 6px 16px 6px 8px; text-decoration: none;
-  color: #1d1c1a; font-weight: 500; font-size: .95rem; line-height: 1.2;
+/* The step cards: Home, then the numbered pages, one card each with a few
+   words on what the page answers. This is the only menu (it replaced a pill
+   row plus Home's three Start Here cards, whose numbers didn't match). The
+   current page is gold with deep-green text and an inverted number circle;
+   never white on gold, which is 2.2:1. */
+.suite-steps {{
+  display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; width: 100%;
+}}
+.suite-steps .step {{
+  display: block; background: #fff; border: 1px solid #e2e0d9; border-radius: 10px;
+  padding: 9px 10px; text-decoration: none; color: #1d1c1a;
   transition: background .12s, border-color .12s;
 }}
-.suite-nav .pill:hover {{ border-color: #b8862b; background: #fdfcf8; }}
-.suite-nav .pill .n {{
+.suite-steps .step:hover {{ border-color: #b8862b; background: #fdfcf8; }}
+.suite-steps .t {{
+  display: flex; align-items: center; gap: 6px;
+  font-weight: 700; font-size: .92rem; line-height: 1.2; color: {DEEP_GREEN};
+}}
+.suite-steps .n {{
   display: inline-flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: 50%; flex: none;
-  background: #efece4; color: #5e5c57;
-  font-size: .8rem; font-weight: 600;
+  width: 22px; height: 22px; border-radius: 50%; flex: none;
+  background: #efece4; color: #5e5c57; font-size: .78rem; font-weight: 600;
 }}
-/* Home has no number, so it needs the padding a number would have given. */
-.suite-nav .pill:not(:has(.n)) {{ padding-left: 16px; }}
-
-/* The current page: gold, with deep-green text and an inverted number
-   circle. Never white on gold - that is 2.2:1. */
-.suite-nav .pill.active {{
-  background: {GOLD}; border-color: {GOLD}; color: {DEEP_GREEN}; font-weight: 600;
-}}
-.suite-nav .pill.active:hover {{ background: #e6b75a; border-color: #e6b75a; }}
-.suite-nav .pill.active .n {{ background: {DEEP_GREEN}; color: #fff; }}
+.suite-steps .d {{ margin: 5px 0 0; font-size: .8rem; line-height: 1.3; color: #5e5c57; }}
+.suite-steps .step.active {{ background: {GOLD}; border-color: {GOLD}; }}
+.suite-steps .step.active:hover {{ background: #e6b75a; border-color: #e6b75a; }}
+.suite-steps .step.active .t, .suite-steps .step.active .d {{ color: {DEEP_GREEN}; }}
+.suite-steps .step.active .n {{ background: {DEEP_GREEN}; color: #fff; }}
 
 /* The state switch, at the right end of the row. Squarer than the page
    pills on purpose: it is a setting, not a destination, and two controls
    that look identical but behave differently is worse than two that look
    different. Its active state is deep green rather than gold, so the row
    never shows two gold controls meaning two different things. */
-.suite-views {{ margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }}
+.suite-views {{ margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }}
 .suite-state {{ display: flex; gap: 0; }}
 .suite-state .spill {{
   border: 1px solid #e2e0d9; border-right-width: 0; background: #fff;
@@ -343,8 +334,13 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
   background: {DEEP_GREEN}; color: #fff; border-color: {DEEP_GREEN};
 }}
 
+/* Between phone and desktop: three cards a row. On phones: two a row, names only,
+   so the menu doesn't fill the first screen. */
+@media (max-width: 1100px) {{ .suite-steps {{ grid-template-columns: repeat(3, minmax(0, 1fr)); }} }}
 @media (max-width: 760px) {{
-  .suite-nav .pill {{ font-size: .88rem; padding: 5px 12px 5px 6px; }}
+  .suite-steps {{ grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }}
+  .suite-steps .step {{ padding: 7px 9px; }}
+  .suite-steps .d {{ display: none; }}
   .suite-views {{ margin-left: 0; }}
 }}
 
@@ -515,10 +511,12 @@ def header_bar_html(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> str
 
 
 def nav_bar(current: str | None = None, state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> None:
-    """The menu, as Herd Planner's numbered step pills.
+    """The menu: one card per page (Home, then the numbered steps), each with a few words on what
+    the page answers, the current one gold. Since 2026-09-30 this is the only step bar; it replaced
+    a pill row plus three "Start here" cards on Home whose numbers didn't match the menu's.
 
-    Herd Planner shows "1 Your ranch / 2 Your cattle / ..." as rounded pills
-    with the number in a circle, the current one gold. The same shape works
+    The numbering follows Herd Planner's step pills ("1 Your ranch / 2 Your cattle / ..."): a
+    number in a circle, the current one gold. The same idea works
     here, with one honest difference worth stating: those are steps with state,
     and these are a *reading order*. Nothing has to be completed before
     anything else, and the pages can be visited in any order - the numbers say
@@ -539,17 +537,19 @@ def nav_bar(current: str | None = None, state: str = DEFAULT_STATE, crop: str = 
     import streamlit as st
 
     query = view_query(state, crop)
-    pills = []
+    cards = []
     for _path, label, _icon, url in NAV:
         step = STEPS.get(label)
-        number = f'<span class="n">{step}</span>' if step else ""
+        # Home has no step number: a small house in the circle instead.
+        number = f'<span class="n">{step}</span>' if step else '<span class="n" aria-hidden="true">&#8962;</span>'
         active = " active" if label == current else ""
-        pills.append(f'<a class="pill{active}" href="{url or "./"}{query}">'
-                     f'{number}<span class="l">{label}</span></a>')
+        here_attr = ' aria-current="page"' if label == current else ""
+        cards.append(f'<a class="step{active}" href="{url or "./"}{query}"{here_attr}>'
+                     f'<span class="t">{number}<span class="l">{label}</span></span>'
+                     f'<p class="d">{for_crop(NAV_BLURBS[label], crop)}</p></a>')
 
     here = next((u for _p, lab, _i, u in NAV if lab == current), "") or "./"
     switch = ""
-    # Both switches in one group pushed to the right, so they wrap together, never one per line.
     # State first, then crop, so the pair reads "Nebraska Corn" (Scott, 2026-09-30), the way a farmer
     # says it. The state switch keeps the crop, and the crop switch keeps the state.
     if current in STATE_AWARE:
@@ -561,8 +561,9 @@ def nav_bar(current: str | None = None, state: str = DEFAULT_STATE, crop: str = 
             f'<a class="spill{" active" if key == crop else ""}" href="{here}{view_query(state, key)}">'
             f'{c.name}</a>' for key, c in CROPS.items()) + "</div>"
 
+    # The switches above the cards, on the right; then the one step bar.
     views = f'<div class="suite-views">{switch}</div>' if switch else ""
-    st.html(f'<div class="suite-nav">{"".join(pills)}{views}</div>')
+    st.html(f'<div class="suite-nav">{views}<nav class="suite-steps" aria-label="Pages">{"".join(cards)}</nav></div>')
 
 
 def load_suite_apps() -> list[dict]:
@@ -738,36 +739,3 @@ def show_logo() -> None:
     st.html(SUITE_CSS)
 
 
-# The suggested reading order offered on the home page: (url, title, why).
-START_HERE = [
-    ("How_It_Works", "How It Works",
-     "Where the numbers come from — the data, the model, the vocabulary."),
-    ("Maps", "Maps",
-     "Where corn does well, and where the model gets it wrong."),
-    ("Model_and_Validation", "How Much To Trust It",
-     "The same model scored four ways, and why the answers differ."),
-]
-
-
-def start_here() -> None:
-    """A suggested reading order, as three cards on the home page.
-
-    Deliberately not a wizard. A wizard implies the user supplies something at
-    step one, and this app reads precomputed files - numbered steps over a
-    read-only report would be ceremony, and a reader who clicked "1" expecting
-    to enter their county would be more lost than before. What the app can
-    honestly offer is an order to read it in.
-
-    Plain anchors rather than `st.page_link`, because these need to be cards
-    with a number, a title and a line of why; the hrefs are the page URLs
-    Streamlit serves, the same ones NAV carries.
-    """
-    import streamlit as st
-
-    query, crop = view_query(current_state(), current_crop()), current_crop()
-    cards = "".join(
-        f'<a href="{url}{query}"><div><span class="n">{i}</span>'
-        f'<span class="t">{title}</span></div>'
-        f'<p class="d">{for_crop(why, crop)}</p></a>'
-        for i, (url, title, why) in enumerate(START_HERE, start=1))
-    st.html(f'<div class="suite-start">{cards}</div>')

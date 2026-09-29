@@ -403,3 +403,36 @@ def test_streamlit_never_draws_its_own_page_list():
 
     config = tomllib.loads((Path(__file__).resolve().parents[1] / ".streamlit" / "config.toml").read_text())
     assert config["client"]["showSidebarNavigation"] is False
+
+
+def _menu_html(current="Maps", state="ne", crop="corn"):
+    import streamlit as st
+
+    from yieldpred import brand
+
+    html, real = [], st.html
+    st.html = html.append
+    try:
+        brand.nav_bar(current, state, crop)
+    finally:
+        st.html = real
+    return html[0]
+
+
+def test_one_step_bar_names_and_numbers_every_page():
+    """The menu is the only step bar: every page gets a card with the menu's own number and name,
+    and a few words on what it answers (Home's separate Start Here cards numbered only three)."""
+    from yieldpred import brand
+
+    page = _menu_html()
+    assert page.count('class="step') == len(brand.NAV)
+    for label, step in brand.STEPS.items():
+        assert f'<span class="n">{step}</span><span class="l">{label}</span>' in page
+    assert set(brand.NAV_BLURBS) == {label for _p, label, _i, _u in brand.NAV}
+    assert 'class="step active" href="Maps" aria-current="page"' in page
+    assert not hasattr(brand, "start_here")
+
+
+def test_the_menu_words_follow_the_crop():
+    page = _menu_html(crop="soybeans")
+    assert "Where soybeans do well" in page and "Where corn does well" not in page

@@ -32,11 +32,12 @@ class Crop:
     suffix: str                 # added to derived file names; "" keeps the original names
     nass: dict = field(default_factory=dict)   # Quick Stats filters that pick this crop
     unit: str = "bu/acre"
+    word: str = ""              # in a sentence, before a noun: "corn yields", "soybean yields"
 
 
 CROPS = {
-    "corn": Crop("corn", "Corn", "", {"commodity_desc": "CORN", "util_practice_desc": "GRAIN"}),
-    "soybeans": Crop("soybeans", "Soybeans", "soy", {"commodity_desc": "SOYBEANS"}),
+    "corn": Crop("corn", "Corn", "", {"commodity_desc": "CORN", "util_practice_desc": "GRAIN"}, word="corn"),
+    "soybeans": Crop("soybeans", "Soybeans", "soy", {"commodity_desc": "SOYBEANS"}, word="soybean"),
 }
 DEFAULT_CROP = "corn"
 

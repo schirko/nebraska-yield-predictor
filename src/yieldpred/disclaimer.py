@@ -29,7 +29,8 @@ from __future__ import annotations
 FOOTER = (
     "Not agronomic, financial or insurance advice. "
     "Predictions are county-level estimates with a typical error of roughly "
-    "14 bu/acre. Not endorsed or certified by USDA, NASA, USGS or the Census Bureau."
+    "14 bu/acre for corn and 6 bu/acre for soybeans (Nebraska; see Model & Validation). "
+    "Not endorsed or certified by USDA, NASA, USGS or the Census Bureau."
 )
 
 # The federal sources, each with the no-endorsement wording their terms expect.

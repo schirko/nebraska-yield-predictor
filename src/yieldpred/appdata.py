@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from yieldpred.crops import DEFAULT_CROP, crop_stem, yields_file
+
 ROOT = Path(__file__).resolve().parents[2]
 PROCESSED = ROOT / "data" / "processed"
 FIGURES = ROOT / "figures"
@@ -45,50 +47,51 @@ def _read(name: str) -> pd.DataFrame | None:
     return pd.read_parquet(path) if path.exists() else None
 
 
-def _stem(name: str, state: str) -> str:
-    """Nebraska keeps the unsuffixed filenames; other states get a suffix.
+def _stem(name: str, state: str, crop: str = DEFAULT_CROP) -> str:
+    """Nebraska keeps the unsuffixed filenames; other states get a suffix; soybeans add _soy after.
 
     Mirrors dataset.output_path, duplicated here so the app layer doesn't import
-    the modelling layer just to build a filename.
+    the modelling layer just to build a filename (crops.py is plain data, shared).
     """
-    return f"{name}.parquet" if state == "ne" else f"{name}_{state}.parquet"
+    stem = name if state == "ne" else f"{name}_{state}"
+    return f"{crop_stem(stem, crop)}.parquet"
 
 
-def load_model_table(state: str = "ne") -> pd.DataFrame | None:
-    return _read(_stem("model_table", state))
+def load_model_table(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(_stem("model_table", state, crop))
 
 
-def load_errors(state: str = "ne") -> pd.DataFrame | None:
-    return _read(_stem("model_errors", state))
+def load_errors(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(_stem("model_errors", state, crop))
 
 
-def load_scores(state: str = "ne") -> pd.DataFrame | None:
-    return _read(_stem("model_scores", state))
+def load_scores(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(_stem("model_scores", state, crop))
 
 
-def load_irrigation_comparison(state: str = "ne") -> pd.DataFrame | None:
-    return _read(_stem("irrigation_comparison", state))
+def load_irrigation_comparison(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(_stem("irrigation_comparison", state, crop))
 
 
-def load_ablation(state: str = "ne") -> pd.DataFrame | None:
-    return _read(_stem("feature_ablation", state))
+def load_ablation(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(_stem("feature_ablation", state, crop))
 
 
-def load_leak_control(state: str = "ne") -> pd.DataFrame | None:
+def load_leak_control(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
     """The three-row leak comparison written by train_baseline.
 
     Absent when a state has no cell spanning a district boundary, which is a
     real answer rather than missing data - the page says so instead of warning.
     """
-    return _read(_stem("leak_control", state))
+    return _read(_stem("leak_control", state, crop))
 
 
-def load_morans_by_year(state: str = "ne") -> pd.DataFrame | None:
-    return _read(_stem("morans_by_year", state))
+def load_morans_by_year(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(_stem("morans_by_year", state, crop))
 
 
-def load_morans_pooled(state: str = "ne") -> pd.DataFrame | None:
-    return _read(_stem("morans_pooled", state))
+def load_morans_pooled(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(_stem("morans_pooled", state, crop))
 
 
 def load_cross_state(train: str = "ne", test: str = "ia") -> pd.DataFrame | None:
@@ -100,8 +103,36 @@ def load_cross_state_scores(train: str = "ne", test: str = "ia") -> pd.DataFrame
     return _read(f"cross_state_scores_{train}_to_{test}.parquet")
 
 
-def load_yields(state: str = "ne") -> pd.DataFrame | None:
-    return _read(f"{state}_corn_yield_county.parquet")
+def load_ranges(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    """County-year 80% ranges from scripts/honest_ranges.py: low, high, and whether each held."""
+    return _read(_stem("ranges", state, crop))
+
+
+def load_range_coverage(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(_stem("ranges_coverage", state, crop))
+
+
+def load_forward_ranges(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(_stem("ranges_forward", state, crop))
+
+
+def load_crop_transfer(state: str = "ne") -> pd.DataFrame | None:
+    """Soybeans predicted four ways (scripts/crop_transfer.py): does the corn model help?"""
+    return _read(_stem("crop_transfer", state))
+
+
+def load_crop_transfer_forward(state: str = "ne") -> pd.DataFrame | None:
+    """The same comparison on seasons the models had not seen yet."""
+    return _read(_stem("crop_transfer_forward", state))
+
+
+def load_crop_importance(state: str = "ne") -> pd.DataFrame | None:
+    """What each input is worth for corn and for soybeans (scripts/crop_transfer.py)."""
+    return _read(_stem("crop_importance", state))
+
+
+def load_yields(state: str = "ne", crop: str = DEFAULT_CROP) -> pd.DataFrame | None:
+    return _read(yields_file(state, crop))
 
 
 def load_counties(state_fips: str = "31"):
@@ -120,6 +151,7 @@ def missing_data_message(available: dict[str, bool]) -> str | None:
         "irrigation": "python scripts/fetch_irrigation.py",
         "model": "python scripts/train_baseline.py",
         "spatial": "python scripts/analyze_errors.py",
+        "ranges": "python scripts/honest_ranges.py",
     }
     missing = [scripts[key] for key, ok in available.items() if not ok and key in scripts]
     if not missing:
@@ -278,3 +310,21 @@ def worst_years(errors: pd.DataFrame, n: int = 8) -> pd.DataFrame:
                .agg(mean_error=("error", "mean"), counties=("fips", "nunique"))
                .round(1).reset_index())
     return by_year.reindex(by_year["mean_error"].abs().sort_values(ascending=False).index).head(n)
+
+
+def range_record(ranges: pd.DataFrame, fips: str) -> dict[str, int]:
+    """How many of one county's years landed inside its 80% range."""
+    county = ranges[ranges["fips"] == fips]
+    return {"held": int(county["inside"].sum()), "years": int(len(county))}
+
+
+def range_summary(coverage: pd.DataFrame) -> pd.DataFrame:
+    """The coverage table shaped for display: one row per group, a column per kind of range."""
+    order = ["all", "dryland", "mixed", "irrigated"]
+    table = coverage.pivot_table(index="group", columns="ranges", values=["held_pct", "width_bu"])
+    table.columns = [f"{kind}: {'held %' if value == 'held_pct' else 'width (bu/acre)'}"
+                     for value, kind in table.columns]
+    table = table.reindex([g for g in order if g in table.index])
+    rows = coverage.drop_duplicates("group").set_index("group")["rows"]
+    table.insert(0, "county-years", rows.reindex(table.index).astype(int))
+    return table.rename_axis("group").reset_index()

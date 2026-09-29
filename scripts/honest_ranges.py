@@ -9,7 +9,8 @@ every feature), so the predictions match the ones the app already shows. Writes:
 
 - ranges(_ia).parquet: one row per county-year: yield, prediction, 80% range, whether it held
 - ranges_coverage(_ia).parquet: how often the ranges held, overall and by irrigation group, for a
-  single width and (Nebraska) for widths scaled to irrigation
+  single width and (where irrigation varies) for widths scaled to irrigation; the one whose
+  worst group lands closest to 80% is the one saved and shown (`shown` column)
 - ranges_forward(_ia).parquet: the next-season test, season by season
 
 Method and reasons: src/yieldpred/ranges.py.
@@ -25,6 +26,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import GroupKFold
 
 from yieldpred import ranges
+from yieldpred import twocrop
 from yieldpred.crops import get_crop
 from yieldpred.dataset import feature_groups, feature_matrix, output_path
 from yieldpred.trend import DetrendedRegressor
@@ -79,6 +81,11 @@ def main() -> None:
     scaled = "irrigation_share" in used and used["irrigation_share"].std() > 0.05
 
     pred, folds = spatial_predictions(X, y, groups)
+    both = twocrop.uses_both_crops(state, crop)
+    if both:   # Nebraska soybeans: the average with the two-crop model (see yieldpred/twocrop.py)
+        corn = pd.read_parquet(output_path("model_table", state, "corn"))
+        pred = twocrop.spatial_blend(X, y, groups, corn)
+        print("Predictions: average of the soybean model and the two-crop model")
     errors = y.to_numpy() - pred
     table = used[["fips", "county_name", "year", "asd_desc", "yield_bu_acre"]].copy()
     table["predicted"] = pred.round(1)
@@ -89,7 +96,7 @@ def main() -> None:
 
     print(f"{state.upper()} {crop}: {len(table):,} county-years, RMSE {np.sqrt(np.mean(errors ** 2)):.1f} bu/acre "
           f"(leave-district-out)")
-    coverage_rows = []
+    coverage_rows, frames = [], {}
     variants = [("one width", None)] + ([("width scaled to irrigation", used["irrigation_share"])] if scaled else [])
     for label, irrigation in variants:
         low, high = ranges.cross_conformal(errors, folds, irrigation)
@@ -105,9 +112,15 @@ def main() -> None:
               f"(aim 80), average width {np.mean(high - low):.1f} bu/acre; "
               f"worst season {100 * by_year.min():.0f}% ({by_year.idxmin()})")
         print(result.drop(columns="ranges").to_string(index=False))
-        chosen = frame   # the last variant is the one the app shows (scaled in Nebraska)
+        frames[label] = frame
 
     coverage_table = pd.concat(coverage_rows, ignore_index=True)
+    # Show the variant whose worst group is closest to the aim. Chosen by the data, not by habit:
+    # scaling to irrigation fixed corn's dryland counties but made soybeans' worse.
+    best, gap = ranges.pick_variant(coverage_table)
+    coverage_table["shown"] = coverage_table["ranges"] == best
+    chosen, scaled = frames[best], best != "one width"
+    print(f"\nShown in the app: {best} (worst group {gap:.1f} points from {100 * ranges.LEVEL:.0f}%)")
     coverage_table.to_parquet(output_path("ranges_coverage", state, crop), index=False)
 
     out = chosen[["fips", "county_name", "year", "asd_desc", "yield_bu_acre", "predicted"]].copy()
@@ -117,7 +130,8 @@ def main() -> None:
     out.to_parquet(output_path("ranges", state, crop), index=False)
 
     print("\nNEXT-SEASON TEST (train on earlier seasons only, predict the next)")
-    forward = forward_predictions(X, y, used)
+    forward = (twocrop.next_season_blend(X, y, used, corn, FIRST_FORWARD_YEAR) if both
+               else forward_predictions(X, y, used))
     print(f"RMSE {np.sqrt(np.mean(forward.error ** 2)):.1f} bu/acre over {forward.year.nunique()} seasons")
     seasons = ranges.forward_years(forward, scaled=scaled)
     seasons["season_share"] = round(ranges.season_share(forward), 3)   # same for every row

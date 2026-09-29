@@ -200,7 +200,8 @@ data would average these into nothing.
 ### 8. Honest Ranges: Checked, Not Claimed
 
 Every prediction now comes with an 80% range, and the range is scored on how often the real yield
-landed inside (`scripts/honest_ranges.py`, method in `src/yieldpred/ranges.py`).
+landed inside (`scripts/honest_ranges.py`, method in `src/yieldpred/ranges.py`). A plain-words
+walkthrough, with a worked example and a glossary: [docs/HONEST-RANGES.md](docs/HONEST-RANGES.md).
 
 | Test | Nebraska | Iowa |
 |---|---|---|
@@ -219,6 +220,32 @@ landed inside (`scripts/honest_ranges.py`, method in `src/yieldpred/ranges.py`).
   conformal inference (step 0.02) nudges the level after each season. A step of 0.05 chased
   Iowa's shocks and left later ranges near 100%, and shorter look-back windows didn't help,
   because the shock isn't knowable before the season. The app says so in plain words.
+
+### 9. Soybeans: What Carries Over From Corn
+
+The same pipeline with `--crop soybeans`. Relative to yield the soybean model is as good as the corn
+model (leave-district-out RMSE 12.0% of mean yield in Nebraska, 8.1% in Iowa; corn 11.5% and 7.4%).
+But which inputs matter shifts the way agronomy says it should: **August rain** (pod fill) is a top-3
+soybean input in both states and #17 for Nebraska corn; July rain (pollination) matters more for
+Iowa corn.
+
+Transfer learning (`scripts/crop_transfer.py`), tested with a season bootstrap (RMSE, bu/acre):
+
+| | Nebraska, unseen districts | Nebraska, next season | Iowa, unseen districts | Iowa, next season |
+|---|---|---|---|---|
+| Soybean model alone | 6.18 | 6.38 | **4.15** | **5.10** |
+| Corn model applied cold | 6.27 | - | 5.42 | - |
+| One model trained on both crops | 5.93 | 6.14 (78%, won 8 of 20 seasons) | 4.18 | 5.21 |
+| **Average of the two** | **5.94** (100%) | **6.08** (97%) | 4.11 | 5.04 |
+
+(% = share of 2,000 season resamples in which it beat the soybean model.) Corn teaches Nebraska soybeans something, because there the crops share drought. The two-crop model
+alone is erratic (big wins in the 2012 and 2022 droughts, small losses in ordinary seasons);
+averaging it with the soybean model keeps the win on both tests, so **the app shows the average for
+Nebraska soybeans** (`src/yieldpred/twocrop.py`). In Iowa the crops answer different weather and the
+gain is too small to count, so Iowa keeps the soybean model. The app shows soybeans with a Corn / Soybeans switch beside the state switch; one app for both
+crops, because the same farms grow both. And scaling range width to irrigation, which
+fixed corn's dryland coverage, made soybeans' worse, so `honest_ranges.py` now chooses the kind of
+range by which one lands every group closest to 80%.
 
 ## What I'd Fix Next
 
@@ -268,6 +295,7 @@ src/yieldpred/        Core logic
   leak.py             Leak-free spatial CV, and the control that makes it readable
   ranges.py           Honest 80% ranges: cross-conformal, irrigation-scaled, next-season check
   theme.py            Sky & Soil - the one place colour is defined
+  yearcharts.py       Charts by year with plain year labels (2005, not 2,005) in the Sky & Soil colours
   disclaimer.py       Legal notices, one source for the app and this README
   appdata.py          Streamlit-free data access for the app
 scripts/              Runnable steps, all --state aware
@@ -276,6 +304,7 @@ scripts/              Runnable steps, all --state aware
   analyze_errors.py   Moran's I and error maps
   cross_state.py      Train on one state, predict another
   honest_ranges.py    Builds and checks the 80% ranges the app shows
+  crop_transfer.py    Does the corn model help predict soybeans? (transfer learning)
   probe_weather_grid.py  Is one weather point per county good enough? (no downloads)
   check_network.py    Which of the five data sources can this machine reach?
 notebooks/            Exploration
@@ -319,6 +348,7 @@ python scripts/fetch_nass_yields.py --crop soybeans
 python scripts/fetch_irrigation.py  --crop soybeans
 python scripts/train_baseline.py    --crop soybeans
 python scripts/honest_ranges.py     --crop soybeans
+python scripts/crop_transfer.py              # needs both crops' tables
 ```
 
 The suite's home page (farm-account) shows each county's trend corn yield and its 1-in-10 low.
@@ -342,7 +372,8 @@ Run the tests with `pytest` — they use synthetic fixtures, so no network or AP
 - [x] Deployed to Streamlit Community Cloud
 - [x] Honest 80% ranges, checked by district and by next season
 - [x] `--crop` for the whole pipeline (corn default; soybeans next)
-- [ ] Soybean Yield Predictor: fetch, model, and the corn feature set tested on soybeans
+- [x] Soybeans: fetched, modelled, honest ranges, and the corn-to-soybean transfer test
+- [x] Soybeans in the app: a Corn / Soybeans switch on every page (`?crop=soybeans`)
 - [ ] Corn-soybean rotation features and the prevented-planting test
 - [ ] Cropland-weighted weather (Cropland Data Layer)
 - [ ] Wind and storm damage

@@ -351,3 +351,28 @@ def test_the_footer_rules_come_from_the_shared_suite_css():
     rules = re.sub(r"/\*.*?\*/", "", "/*" + section, flags=re.S)
     bare = [v for v in re.findall(r"var\(--[a-z-]+[^)]*\)", rules) if "," not in v]
     assert not bare, f"var() without a fallback in the shared footer section: {bare}"
+
+
+@pytest.mark.parametrize("page", PAGES, ids=lambda p: p.stem)
+@pytest.mark.parametrize("state", ["ne", "ia"])
+def test_every_page_runs_for_soybeans(page, state):
+    """The crop switch (?crop=soybeans): every page, both states, no exception."""
+    app = AppTest.from_file(str(page), default_timeout=120)
+    app.query_params["crop"] = "soybeans"
+    app.query_params["state"] = state
+    app.run()
+    assert not app.exception, f"{page.name} ({state}, soybeans): {[e.value for e in app.exception]}"
+
+
+def test_links_keep_the_crop_and_the_state():
+    """Following a menu pill, the state switch or a footer link must not drop back to Nebraska corn."""
+    from yieldpred import brand
+
+    assert brand.view_query() == ""                                  # Nebraska corn keeps plain URLs
+    assert brand.view_query("ia") == "?state=ia"
+    assert brand.view_query("ne", "soybeans") == "?crop=soybeans"
+    assert brand.view_query("ia", "soybeans") == "?state=ia&crop=soybeans"
+    assert "Soybeans · Iowa" in brand.header_bar_html("ia", "soybeans")
+    assert "Corn · Nebraska" in brand.header_bar_html()
+    assert brand.for_crop(brand.QUESTIONS["Maps"], "soybeans").startswith("Where do soybeans do well")
+    assert brand.for_crop("Predicting county corn yields", "soybeans") == "Predicting county soybean yields"

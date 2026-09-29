@@ -205,3 +205,9 @@ def test_county_skill_ignores_years_it_cannot_score():
                       "yield_bu_acre": [180.0], "predicted": [180.0], "error": [0.0]}),
     ], ignore_index=True)
     assert not np.isnan(county_skill(frame))
+
+
+def test_soybean_files_follow_the_crop_suffix():
+    assert _stem("model_errors", "ne", "soybeans") == "model_errors_soy.parquet"
+    assert _stem("model_errors", "ia", "soybeans") == "model_errors_ia_soy.parquet"
+    assert _stem("model_errors", "ia") == "model_errors_ia.parquet"

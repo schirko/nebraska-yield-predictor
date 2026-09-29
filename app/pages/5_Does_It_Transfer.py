@@ -1,4 +1,5 @@
-"""The hardest test in the app: train on Nebraska, predict Iowa."""
+"""The hardest tests in the app: train on Nebraska, predict Iowa (corn); train on corn, predict
+soybeans (soybeans)."""
 
 import sys
 from pathlib import Path
@@ -13,17 +14,92 @@ if str(_SRC) not in sys.path:
 import pandas as pd
 import streamlit as st
 
-from yieldpred.appdata import (county_skill, load_counties, load_cross_state,
+from yieldpred.appdata import (load_crop_transfer, load_crop_transfer_forward, county_skill, load_counties, load_cross_state,
                                load_cross_state_scores, load_errors,
                                load_irrigation_comparison, load_model_table,
                                transfer_by_year, variance_decomposition)
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import page_footer, page_heading, page_setup
+from yieldpred.brand import current_crop, page_footer, page_heading, page_setup
 from yieldpred.geo import display_geometry
 from yieldpred.spatial import align_to_geometry
 from yieldpred.viz import interactive_choropleth
+from yieldpred.yearcharts import year_chart
 
 page_setup("Does It Transfer?")
+crop = current_crop()
+
+# ------------------------------------------------------ soybeans: corn -> soybeans
+if crop == "soybeans":
+    page_heading("Does It Transfer?")
+    st.markdown("""
+For soybeans the transfer question is between crops: **does what the corn model learned help
+predict soybeans?** The same counties grow both, often on the same field in alternate years, so
+if the two crops answered weather the same way, the corn model would do the soybean model's job.
+
+Four ways to predict soybean yields in districts the model never saw:
+
+1. **Soybean model:** trained on soybeans. The benchmark.
+2. **Corn model, applied cold:** no soybean weather training at all; the corn model's \"how far
+   above or below trend\" is applied to the soybean trend.
+3. **Soybean model + corn signal:** the corn model's prediction as one more input.
+4. **One model for both crops:** trained on both at once, so each crop's data helps the other.
+""")
+    with st.expander("In plain words: what is a \"model for both crops\"?", expanded=True):
+        st.markdown("""
+Nothing changes on the farm. It is only about which past records the computer learns from.
+
+Think of a model as a student studying old report cards: each one is a county's yield for one year,
+next to that year's weather.
+
+- **The soybean model** studied only soybean report cards.
+- **The model for both crops** studied the soybean *and* the corn report cards, each labeled with
+  its crop. To make them comparable, each yield is turned into "how far above or below normal for
+  that crop", since corn yields about three times the bushels.
+
+Why add corn? Nebraska has had only a few really bad drought years, like 2012 and 2022, so a
+soybean-only student has seen very few examples of how bad things can get. The corn records add
+more drought examples, and in Nebraska a dry summer hurts both crops.
+
+**The average** then asks both students and splits the difference: if one says 52 bu/acre and the
+other 48, the app shows 50. One knows soybeans best; the other has seen more droughts. Together
+they miss less than either alone.
+""")
+    for code, name in (("ne", "Nebraska"), ("ia", "Iowa")):
+        table = load_crop_transfer(code)
+        st.subheader(name)
+        if table is None:
+            st.info("Run `python scripts/crop_transfer.py" + ("" if code == "ne" else " --state IA --state-fips 19")
+                    + "` to build this comparison.")
+            continue
+        show = table.rename(columns={"approach": "Approach", "RMSE": "Typical miss (RMSE, bu/acre)",
+                                     "vs soybean model": "vs soybean model (bu/acre)",
+                                     "90% interval": "90% interval (season resampling)",
+                                     "share of draws better": "Better in"})
+        st.dataframe(show, hide_index=True, width="stretch")
+        forward = load_crop_transfer_forward(code)
+        if forward is not None:
+            st.markdown("**The harder test: next season** (trained only on earlier seasons)")
+            st.dataframe(forward.rename(columns={
+                "approach": "Approach", "RMSE": "Typical miss (RMSE, bu/acre)",
+                "vs soybean model": "vs soybean model (bu/acre)", "90% interval": "90% interval (season resampling)",
+                "share of draws better": "Better in", "seasons won": "Seasons won"}), hide_index=True, width="stretch")
+    st.caption("Negative means better than the soybean model. The interval comes from resampling whole "
+               "seasons 2,000 times, because misses within one season move together.")
+    st.markdown("""
+**What it means.** In **Nebraska**, corn's data teaches soybeans something: the two crops share the
+same droughts, and even the corn model applied cold comes close. The two-crop model alone is
+erratic from season to season, winning big in unusual seasons (the 2012 and 2022 droughts) and
+losing a little in ordinary ones. **Averaging it with the soybean model** keeps most of the win: it
+is better on both tests, and it is what this app shows for Nebraska soybeans. (It was picked after
+seeing the next-season result; the unseen-district test is the independent check, and it agreed.) In **Iowa** nothing beats the soybean model,
+and corn applied cold is about 30% worse: soybeans there depend on August rain, when they fill
+their pods, and corn on July rain, when it pollinates. **Transfer is a hypothesis to test, not a
+free lunch**, and the same test gives opposite answers one state apart.
+""")
+    st.divider()
+    st.caption(FOOTER)
+    page_footer()
+    st.stop()
 
 
 @st.cache_data
@@ -173,8 +249,9 @@ yearly = transfer_by_year(predictions)
 tab_skill, tab_bias = st.tabs(["County ranking skill", "Level error"])
 
 with tab_skill:
-    st.line_chart(yearly.set_index("year")[["county_skill"]]
-                  .rename(columns={"county_skill": "within-year correlation"}), height=280)
+    st.altair_chart(year_chart(yearly.set_index("year")[["county_skill"]]
+                               .rename(columns={"county_skill": "within-year correlation"}),
+                               y_label="within-year correlation", height=280), width="stretch")
     medians = {"Nebraska's model on Nebraska": county_skill(ne_errors) if ne_errors is not None else None,
                "Iowa's own model on Iowa": county_skill(ia_errors) if ia_errors is not None else None,
                "Nebraska's model on Iowa": county_skill(predictions)}
@@ -202,8 +279,9 @@ in one place.
 """)
 
 with tab_bias:
-    st.bar_chart(yearly.set_index("year")[["mean_error"]]
-                 .rename(columns={"mean_error": "mean error (bu/acre)"}), height=280)
+    st.altair_chart(year_chart(yearly.set_index("year")[["mean_error"]]
+                               .rename(columns={"mean_error": "mean error (bu/acre)"}),
+                               y_label="mean error (bu/acre)", kind="bar", height=280), width="stretch")
     st.caption("Positive means the Nebraska-trained model predicted Iowa too high. Mean "
                "transfer error correlates −0.36 with Iowa's actual yield that year: the "
                "model under-predicts Iowa's best years and over-predicts its worst — "

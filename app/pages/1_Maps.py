@@ -15,24 +15,25 @@ import streamlit as st
 from yieldpred.appdata import (county_values, load_counties, load_errors,
                                load_model_table, map_frame, missing_data_message)
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import page_footer, page_heading, page_setup, state_fips
+from yieldpred.brand import current_crop, crop_word, page_footer, page_heading, page_setup, state_fips
 from yieldpred.geo import display_geometry
 from yieldpred.viz import choropleth, interactive_choropleth
 
 state = page_setup("Maps")
+crop = current_crop()
 
 
 @st.cache_data
-def data(state: str):
-    errors = load_errors(state)
+def data(state: str, crop: str):
+    errors = load_errors(state, crop)
     counties = load_counties(state_fips(state))
-    frame = map_frame(errors, load_model_table(state)) if errors is not None else None
+    frame = map_frame(errors, load_model_table(state, crop)) if errors is not None else None
     # A lighter geometry for the interactive chart, which embeds its shapes in the page.
     display = display_geometry(counties) if counties is not None else None
     return frame, counties, display
 
 
-frame, counties, display = data(state)
+frame, counties, display = data(state, crop)
 
 page_heading("Maps")
 
@@ -52,13 +53,14 @@ LAYERS = {
     "Prediction error": ("error", True, True, "bu/acre (predicted − actual)",
                          "Orange = predicted too high, blue = too low, grey = close.",
                          "+.1f"),
-    "Irrigation share": ("irrigation_share", False, True, "share of corn acres",
-                         "Fraction of harvested corn acres under irrigation.", ".2f"),
+    "Irrigation share": ("irrigation_share", False, True, f"share of {crop_word(crop)} acres",
+                         f"Fraction of harvested {crop_word(crop)} acres under irrigation.", ".2f"),
     "Soil water capacity": ("soil_water_cm", False, False, "cm of water",
                             "Plant-available water the top 150 cm of soil can hold — "
                             "about 10 cm in Sandhills sand, 30+ in deep loess.", ".1f"),
     "Soil productivity (NCCPI)": ("nccpi_corn", False, False, "0–1 index",
-                                  "USDA's rating of how productive the soil is for corn.",
+                                  "USDA's rating of how productive the soil is for corn "
+                                  "(its soybean rating tracks it closely).",
                                   ".2f"),
     "Elevation": ("elevation_m", False, False, "metres",
                   "County centre elevation. Higher ground means cooler nights and a "

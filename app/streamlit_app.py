@@ -23,18 +23,20 @@ from yieldpred.appdata import (irrigation_gap, load_morans_pooled, load_scores,
                                state_yield_history)
 
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import page_footer, page_heading, page_setup, start_here, state_name
+from yieldpred.brand import current_crop, crop_word, page_footer, page_heading, page_setup, start_here, state_name
+from yieldpred.yearcharts import year_chart
 state = page_setup("Home")
+crop = current_crop()
 
 
 @st.cache_data
-def data(state: str):
+def data(state: str, crop: str):
     """Keyed on the state: without that argument the cache would hand Iowa
     Nebraska's tables, which is the quietest possible way to be wrong."""
-    return (load_yields(state), load_scores(state), load_morans_pooled(state))
+    return (load_yields(state, crop), load_scores(state, crop), load_morans_pooled(state, crop))
 
 
-yields, scores, morans = data(state)
+yields, scores, morans = data(state, crop)
 
 page_heading("Home", show_title=False)
 start_here()
@@ -54,7 +56,7 @@ gap = irrigation_gap(yields)
 if not gap.empty:
     worst = gap.loc[gap["gap"].idxmax()]
     tiles.append(("Irrigation advantage", f"{gap['gap'].mean():.0f} bu/acre", None,
-                  "Average yield difference between irrigated and non-irrigated corn "
+                  f"Average yield difference between irrigated and non-irrigated {crop_word(crop)} "
                   "in counties reporting both, 2000–2018"))
     tiles.append((f"In {int(worst['year'])} (drought)", f"{worst['gap']:.0f} bu/acre",
                   f"{worst['gap'] - gap['gap'].mean():+.0f} vs average",
@@ -72,7 +74,7 @@ if morans is not None:
 # with the Model & Validation page would be worse than no tile.
 if yields is not None and not yields.empty:
     tiles.append(("Counties", f"{yields['fips'].nunique():,}", None,
-                  "Counties with a reported corn yield in this state"))
+                  f"Counties with a reported {crop_word(crop)} yield in this state"))
     tiles.append(("Years covered", f"{int(yields['year'].min())}–{int(yields['year'].max())}",
                   None, "Span of USDA NASS county yield estimates used here"))
     tiles.append(("Average yield", f"{yields['yield_bu_acre'].mean():.0f} bu/acre", None,
@@ -91,7 +93,14 @@ with story:
     # heading the moment the state switch existed, which made half of it false -
     # Iowa barely irrigates and has no east-west moisture gradient to speak of.
     st.subheader("What This App Does")
-    if state == "ne":
+    if crop == "soybeans":
+        st.markdown("""
+Most farms here grow soybeans alongside corn, often on the same field in alternate years.
+Same counties, same weather, same model and the same honest tests as corn, so the two
+crops can be compared directly, and one crop's data can be tested for what it teaches
+the other.
+""")
+    elif state == "ne":
         st.markdown("""
 Nebraska is a natural experiment. It is a top corn state, it is heavily irrigated,
 and rainfall drops sharply from east to west — so the same weather produces very
@@ -105,8 +114,8 @@ things that dominate in Nebraska barely move here, and what's left has to explai
 the yield on its own.
 """)
 
-    st.markdown("""
-This app predicts **county corn yields** from growing-season weather, soils and
+    st.markdown(f"""
+This app predicts **county {crop_word(crop)} yields** from growing-season weather, soils and
 the long-run yield trend, then asks how much of that prediction can be trusted.
 Four questions get separate answers:
 
@@ -119,7 +128,32 @@ Those answers differ a lot, and the gap between them is the most useful thing he
 """)
 
     st.subheader("What The Data Says")
-    if state == "ne":
+    if crop == "soybeans" and state == "ne":
+        st.markdown("""
+- **August rain matters for soybeans, not corn.** It is the #3 input for Nebraska soybeans
+  and #17 for corn: soybeans fill their pods in August, after corn has pollinated.
+- **Irrigation matters less than for corn.** Removing it costs the soybean model 0.08 of
+  unseen-county R², against 0.32 for corn.
+- **Corn helps predict soybeans here.** The app averages the soybean model with one trained
+  on both crops: typical miss 5.9 against 6.2 bu/acre on counties never seen, and 6.1 against
+  6.4 on seasons not yet seen. The gain comes in unusual seasons (the 2012 and 2022 droughts):
+  in Nebraska the two crops share the same droughts.
+- **A fix for corn broke soybeans.** Scaling the honest ranges to irrigation lifted corn's
+  dryland counties to 81% but dropped soybeans' to 68%, so soybeans keep one range width.
+""")
+    elif crop == "soybeans":
+        st.markdown("""
+- **August rain is the #2 soybean input in Iowa** (July rain matters more for corn):
+  pod fill against pollination.
+- **Rotation matters.** Removing last year's crop mix costs the soybean model 0.07 of
+  unseen-county R².
+- **Corn does not help here.** Applied to soybeans, the corn model is 30% worse than the
+  soybean model, and training on both crops adds nothing: in Iowa the two crops answer
+  different weather.
+- **Spring weather helps soybeans' next-season forecast** (R² 0.437 with it, 0.385
+  without), where it hurt corn's: soybeans are planted later.
+""")
+    elif state == "ne":
         st.markdown("""
 - **Irrigation is worth about 85 bu/acre on average** — and roughly 140 in the 2012
   drought. Irrigation's value rises exactly when weather turns bad.
@@ -150,9 +184,12 @@ Those answers differ a lot, and the gap between them is the most useful thing he
 with aside:
     st.subheader("Statewide yields")
     trend = state_yield_history(yields)
-    st.line_chart(trend, y_label="bu/acre", height=260)
+    st.altair_chart(year_chart(trend, y_label="bu/acre", height=260), width="stretch")
     st.caption("Irrigated and non-irrigated series end in 2018, when USDA stopped "
                "publishing county estimates by practice.")
+    if crop == "soybeans":
+        st.caption("Soybeans yield about a third of corn's bushels per acre; compare the crops "
+                   "by how far each year falls from its own trend, not by bushels.")
     # The "Explore" list of page links used to sit here. It moved into the menu
     # across the top of every page (yieldpred.brand.nav_bar), so this column is
     # the chart it started as and nothing else. The data-sources line that used

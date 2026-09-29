@@ -51,6 +51,8 @@ place.
 import json
 from pathlib import Path
 
+from yieldpred.crops import CROPS, DEFAULT_CROP, get_crop
+
 ASSETS = Path(__file__).resolve().parents[2] / "app" / "assets"
 LOGO = ASSETS / "logo.png"
 PAGE_ICON = str(LOGO)
@@ -79,6 +81,9 @@ DEFAULT_STATE = "ne"
 # toggle on those two would be worse than not showing one, because a control
 # that does nothing when you click it is how an app teaches you not to trust it.
 STATE_AWARE = {"Home", "Maps", "County Explorer", "Model & Validation"}
+# Pages with a Corn / Soybeans switch. Does It Transfer? has one too: for corn it asks "does a Nebraska
+# model predict Iowa?", for soybeans "does the corn model help predict soybeans?".
+CROP_AWARE = STATE_AWARE | {"Does It Transfer?"}
 
 # The suite's deep green, the one value the header, the footer and suite.css all
 # have to agree on. suite.css declares it as --suite-deep-green; Streamlit's own
@@ -324,7 +329,8 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
    that look identical but behave differently is worse than two that look
    different. Its active state is deep green rather than gold, so the row
    never shows two gold controls meaning two different things. */
-.suite-state {{ margin-left: auto; display: flex; gap: 0; }}
+.suite-views {{ margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }}
+.suite-state {{ display: flex; gap: 0; }}
 .suite-state .spill {{
   border: 1px solid #e2e0d9; border-right-width: 0; background: #fff;
   padding: 6px 14px; text-decoration: none; color: #5e5c57;
@@ -339,7 +345,7 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 
 @media (max-width: 760px) {{
   .suite-nav .pill {{ font-size: .88rem; padding: 5px 12px 5px 6px; }}
-  .suite-state {{ margin-left: 0; }}
+  .suite-views {{ margin-left: 0; }}
 }}
 
 /* ---- the footer -------------------------------------------------------
@@ -384,6 +390,44 @@ def current_state() -> str:
     return value if value in STATES else DEFAULT_STATE
 
 
+def current_crop() -> str:
+    """Which crop the reader is looking at, from the URL (?crop=soybeans), like current_state.
+    Corn, the default, keeps every existing address unchanged."""
+    import streamlit as st
+
+    try:
+        value = st.query_params.get("crop", DEFAULT_CROP)
+    except Exception:                      # AppTest has no query params
+        return DEFAULT_CROP
+    return value if value in CROPS else DEFAULT_CROP
+
+
+def view_query(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> str:
+    """The query string that keeps the reader's state and crop when they follow a link.
+    Defaults are left out, so Nebraska corn keeps the plain addresses it always had."""
+    parts = ([f"state={state}"] if state != DEFAULT_STATE else []) + \
+            ([f"crop={crop}"] if crop != DEFAULT_CROP else [])
+    return "?" + "&".join(parts) if parts else ""
+
+
+def crop_name(crop: str = DEFAULT_CROP) -> str:
+    return get_crop(crop).name
+
+
+def crop_word(crop: str = DEFAULT_CROP) -> str:
+    """The crop inside a sentence: "corn yields", "soybean yields"."""
+    return get_crop(crop).word
+
+
+def for_crop(text: str, crop: str = DEFAULT_CROP) -> str:
+    """Fixed wording written for corn (questions, cards), said about the crop being shown."""
+    if crop == DEFAULT_CROP:
+        return text
+    plural = crop_name(crop).lower()                   # "corn does well" -> "soybeans do well"
+    return (text.replace("does corn do", f"do {plural} do").replace("corn does", f"{plural} do")
+            .replace("corn", crop_word(crop)))
+
+
 def state_name(state: str) -> str:
     return STATES[state][0]
 
@@ -411,9 +455,9 @@ def page_setup(page_title: str, *, layout: str = "wide") -> str:
                        initial_sidebar_state="collapsed")
     st.logo(str(LOGO), size="large", icon_image=str(LOGO))
     st.html(SUITE_CSS)
-    state = current_state()
-    header_bar(state)
-    nav_bar(current=page_title, state=state)
+    state, crop = current_state(), current_crop()
+    header_bar(state, crop)
+    nav_bar(current=page_title, state=state, crop=crop)
     return state
 
 
@@ -436,10 +480,11 @@ def page_heading(page_title: str, display: str | None = None,
         st.title(display or page_title)
     question = QUESTIONS.get(page_title)
     if question:
+        question = for_crop(question, current_crop())
         st.html(f'<p class="suite-question">{question}</p>')
 
 
-def header_bar(state: str = DEFAULT_STATE) -> None:
+def header_bar(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> None:
     """The app name and context, in white, beside the logo in the green bar.
 
     This is the piece Herd Planner has and this app was missing - its header
@@ -450,10 +495,10 @@ def header_bar(state: str = DEFAULT_STATE) -> None:
     """
     import streamlit as st
 
-    st.html(header_bar_html(state))
+    st.html(header_bar_html(state, crop))
 
 
-def header_bar_html(state: str = DEFAULT_STATE) -> str:
+def header_bar_html(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> str:
     """The header bar's HTML: the company link above the app's name (back to the company site, like
     every app in the suite), then the context. target="_top" because Streamlit Community Cloud
     shows the app inside a frame, and the company site should replace the whole page, not the frame."""
@@ -464,12 +509,12 @@ def header_bar_html(state: str = DEFAULT_STATE) -> str:
     return f"""
     <div class="suite-headerbar">
       <span class="titles">{back}<span class="name">{APP_NAME}</span></span>
-      <span class="ctx">Corn · {state_name(state)}</span>
+      <span class="ctx">{crop_name(crop)} · {state_name(state)}</span>
     </div>
     """
 
 
-def nav_bar(current: str | None = None, state: str = DEFAULT_STATE) -> None:
+def nav_bar(current: str | None = None, state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP) -> None:
     """The menu, as Herd Planner's numbered step pills.
 
     Herd Planner shows "1 Your ranch / 2 Your cattle / ..." as rounded pills
@@ -493,7 +538,7 @@ def nav_bar(current: str | None = None, state: str = DEFAULT_STATE) -> None:
     """
     import streamlit as st
 
-    query = f"?state={state}" if state != DEFAULT_STATE else ""
+    query = view_query(state, crop)
     pills = []
     for _path, label, _icon, url in NAV:
         step = STEPS.get(label)
@@ -502,17 +547,22 @@ def nav_bar(current: str | None = None, state: str = DEFAULT_STATE) -> None:
         pills.append(f'<a class="pill{active}" href="{url or "./"}{query}">'
                      f'{number}<span class="l">{label}</span></a>')
 
+    here = next((u for _p, lab, _i, u in NAV if lab == current), "") or "./"
     switch = ""
+    # Both switches in one group pushed to the right, so they wrap together, never one per line.
+    if current in CROP_AWARE:
+        # Crop first: it changes every number on the page; the state switch keeps the crop, and the
+        # crop switch keeps the state.
+        switch += '<div class="suite-state suite-crop">' + "".join(
+            f'<a class="spill{" active" if key == crop else ""}" href="{here}{view_query(state, key)}">'
+            f'{c.name}</a>' for key, c in CROPS.items()) + "</div>"
     if current in STATE_AWARE:
-        here = next((u for _p, lab, _i, u in NAV if lab == current), "")
-        options = "".join(
-            f'<a class="spill{" active" if code == state else ""}" '
-            f'href="{here or "./"}'
-            f'{"" if code == DEFAULT_STATE else f"?state={code}"}">{name}</a>'
-            for code, (name, _fips) in STATES.items())
-        switch = f'<div class="suite-state">{options}</div>'
+        switch += '<div class="suite-state">' + "".join(
+            f'<a class="spill{" active" if code == state else ""}" href="{here}{view_query(code, crop)}">'
+            f'{name}</a>' for code, (name, _fips) in STATES.items()) + "</div>"
 
-    st.html(f'<div class="suite-nav">{"".join(pills)}{switch}</div>')
+    views = f'<div class="suite-views">{switch}</div>' if switch else ""
+    st.html(f'<div class="suite-nav">{"".join(pills)}{views}</div>')
 
 
 def load_suite_apps() -> list[dict]:
@@ -565,7 +615,7 @@ def _suite_menu_html() -> str:
 # of the footer that is deliberately product-specific, alongside the Tools
 # column - Farm Equipment Planner's reads "Is that machine worth it for your
 # farm? ..." in the same slot.
-FOOTER_DESCRIPTION = ("County corn yields from weather, soils and irrigation — "
+FOOTER_DESCRIPTION = ("County corn and soybean yields from weather, soils and irrigation — "
                       "and an honest account of how far each number can be trusted.")
 
 # The sources behind every number, as the footer's third column. Farm Equipment
@@ -597,7 +647,7 @@ def _logo_data_uri() -> str:
     return f"data:image/png;base64,{encode()}"
 
 
-def page_footer(state: str = DEFAULT_STATE) -> None:
+def page_footer(state: str = DEFAULT_STATE, crop: str | None = None) -> None:
     """The deep footer, matching Farm Equipment Planner's column for column.
 
     The shape is shared across the suite on purpose: brand and description on
@@ -621,9 +671,9 @@ def page_footer(state: str = DEFAULT_STATE) -> None:
     """
     import streamlit as st
 
+    crop = crop or current_crop()
     tools = "".join(
-        f'<a href="{url or "./"}'
-        f'{"" if state == DEFAULT_STATE or not url else f"?state={state}"}">{label}</a>'
+        f'<a href="{url or "./"}{view_query(state, crop) if url else ""}">{label}</a>'
         for _p, label, _i, url in NAV if label != "Home")
 
     apps = "".join(
@@ -714,9 +764,10 @@ def start_here() -> None:
     """
     import streamlit as st
 
+    query, crop = view_query(current_state(), current_crop()), current_crop()
     cards = "".join(
-        f'<a href="{url}"><div><span class="n">{i}</span>'
+        f'<a href="{url}{query}"><div><span class="n">{i}</span>'
         f'<span class="t">{title}</span></div>'
-        f'<p class="d">{why}</p></a>'
+        f'<p class="d">{for_crop(why, crop)}</p></a>'
         for i, (url, title, why) in enumerate(START_HERE, start=1))
     st.html(f'<div class="suite-start">{cards}</div>')

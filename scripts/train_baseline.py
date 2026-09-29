@@ -27,6 +27,7 @@ from sklearn.preprocessing import StandardScaler
 from yieldpred.dataset import (PROCESSED, available_rotation, build_modeling_table,
                                feature_groups, feature_matrix,
                                load_irrigation_observed, output_path)
+from yieldpred import twocrop
 from yieldpred.crops import get_crop
 from yieldpred.irrigation import build_share_series
 from yieldpred.leak import LeakFreeGroupKFold, leak_report, power_cells
@@ -444,6 +445,13 @@ def main() -> None:
     # Use every feature available, which is the model the app and the maps report on.
     best = DetrendedRegressor(boosting())
     pred = cross_val_predict(best, X, y, cv=GroupKFold(5), groups=groups)
+    if twocrop.uses_both_crops(state, crop):
+        # Nebraska soybeans: the app reports the average of the soybean model and the two-crop
+        # model, which won both honest tests there (yieldpred/twocrop.py, scripts/crop_transfer.py).
+        corn_table = pd.read_parquet(output_path("model_table", state, "corn"))
+        pred = twocrop.spatial_blend(X.reset_index(drop=True), y.reset_index(drop=True),
+                                     groups.reset_index(drop=True), corn_table)
+        print("\nReported predictions: average of the soybean model and the two-crop model")
     errors = used[["fips", "county_name", "year", "asd_desc", "yield_bu_acre"]].copy()
     errors["predicted"] = pred.round(1)
     errors["error"] = (errors["predicted"] - errors["yield_bu_acre"]).round(1)

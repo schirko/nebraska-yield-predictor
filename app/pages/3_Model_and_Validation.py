@@ -10,31 +10,42 @@ if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
 
+import altair as alt
+import pandas as pd
 import streamlit as st
 
-from yieldpred.appdata import (feature_correlations, load_ablation,
+from yieldpred.appdata import (FEATURE_LABELS, load_crop_importance, feature_correlations, load_ablation,
                                load_irrigation_comparison, load_leak_control,
                                load_model_table,
                                load_morans_by_year, load_morans_pooled,
-                               load_errors, load_scores, missing_data_message,
+                               load_errors, load_forward_ranges, load_range_coverage,
+                               load_scores, missing_data_message, range_summary,
                                scores_by_scheme, worst_years)
 
 from yieldpred.disclaimer import FOOTER
-from yieldpred.brand import page_footer, page_heading, page_setup
+from yieldpred.brand import current_crop, crop_name, page_footer, page_heading, page_setup
+from yieldpred.yearcharts import year_chart
 state = page_setup("Model & Validation")
+crop = current_crop()
 
 
 @st.cache_data
-def data(state: str):
-    return (load_scores(state), load_model_table(state), load_errors(state),
-            load_irrigation_comparison(state), load_ablation(state),
-            load_morans_by_year(state), load_morans_pooled(state),
-            load_leak_control(state))
+def data(state: str, crop: str):
+    return (load_scores(state, crop), load_model_table(state, crop), load_errors(state, crop),
+            load_irrigation_comparison(state, crop), load_ablation(state, crop),
+            load_morans_by_year(state, crop), load_morans_pooled(state, crop),
+            load_leak_control(state, crop), load_range_coverage(state, crop), load_forward_ranges(state, crop))
 
 
-scores, model_table, errors, comparison, ablation, morans_year, morans_pooled, leak = data(state)
+(scores, model_table, errors, comparison, ablation, morans_year, morans_pooled, leak,
+ range_coverage, forward_ranges) = data(state, crop)
 
 page_heading("Model & Validation")
+if crop != "corn":
+    st.info(f"**You're looking at {crop_name(crop).lower()}.** Every table and chart on this page is the "
+            f"{crop_name(crop).lower()} result. The written explanations were first written for Nebraska "
+            "corn: the ideas carry over, the numbers in the text don't. What changes for this crop is "
+            "summed up in *What Changes for Soybeans* further down, and on the *Does It Transfer?* page.")
 
 message = missing_data_message({"model": scores is not None})
 if message:
@@ -195,8 +206,9 @@ if morans_pooled is not None and morans_year is not None:
     cols[2].metric("Years clustered",
                    f"{int((morans_year['p_value'] < 0.05).sum())} of {len(morans_year)}")
 
-    st.line_chart(morans_year.set_index("year")[["morans_i"]]
-                  .rename(columns={"morans_i": "Moran's I"}), height=260)
+    st.altair_chart(year_chart(morans_year.set_index("year")[["morans_i"]]
+                               .rename(columns={"morans_i": "Moran's I"}),
+                               y_label="Moran's I", height=260), width="stretch")
     st.markdown("""
 Clustered errors are a **diagnostic, not a verdict**. They mean some spatially-varying
 driver is missing from the features — if the model had captured everything geographic, the
@@ -259,15 +271,118 @@ so the model gets a strong hint about one input, not about the target.
 Reproduce it yourself with `python scripts/probe_weather_grid.py`.
 """)
 
+# ------------------------------------------------------ what changes for soybeans
+if crop == "soybeans":
+    importance = load_crop_importance(state)
+    st.subheader("What Changes for Soybeans")
+    st.markdown("""
+Same counties, same weather, same model. What differs is which inputs matter, and it differs the
+way agronomy says it should: **August rain**, when soybeans fill their pods, carries far more
+weight for soybeans than for corn, which has already pollinated by then; **July rain** matters more
+for corn. The table measures each input on districts the model never saw: how much worse the
+typical miss gets when that input is shuffled, as a share of the crop's average yield.
+""")
+    if state == "ne":
+        st.markdown("""
+**The predictions here borrow from corn.** For Nebraska soybeans the app averages the soybean model
+with one trained on both crops, because that beat the soybean model alone on unseen districts
+(typical miss 5.9 against 6.2 bu/acre) and on unseen seasons (6.1 against 6.4). The scores in the
+first table are the soybean model alone; the maps, County Explorer and honest ranges use the
+average. Details on *Does It Transfer?*
+""")
+    if importance is not None:
+        show = (importance.rename(columns={"input": "Input", "corn %": "Corn (% of yield)",
+                                            "soybeans %": "Soybeans (% of yield)",
+                                            "corn rank": "Corn rank", "soy rank": "Soybean rank"})
+                .sort_values("Soybeans (% of yield)", ascending=False).head(8))
+        show["Input"] = show["Input"].map(lambda c: FEATURE_LABELS.get(c, c))
+        st.dataframe(show, hide_index=True, width="stretch")
+        st.caption("Year stands for the long-run trend. Ranked on held-out districts, averaged over "
+                   "five folds.")
+
+# ------------------------------------------------------------ honest ranges
+st.subheader("Honest Ranges")
+if range_coverage is None:
+    st.info("Run `python scripts/honest_ranges.py` to build and check the ranges.")
+else:
+    shown = (range_coverage[range_coverage["shown"]] if "shown" in range_coverage
+             else range_coverage[range_coverage["ranges"] == range_coverage["ranges"].iloc[-1]])
+    overall = shown[shown["group"] == "all"].iloc[0]
+    scaled_shown = shown["ranges"].iloc[0] != "one width"
+    st.markdown(f"""
+Every prediction comes with an **80% range**, and the range is checked against what really
+happened instead of just claimed. Aim: about 8 years in 10 inside. Result for counties the model
+never trained on: **{overall.held_pct:.0f}% held**, average width **{overall.width_bu:.0f} bu/acre**.
+
+How it's built: each county's range comes from the misses the model made on *other* districts
+(cross-conformal prediction), so no county helps set its own range.
+""")
+    st.dataframe(range_summary(range_coverage), hide_index=True, width="stretch")
+    if range_coverage["ranges"].nunique() > 1 and not scaled_shown:
+        st.markdown("""
+**Why the width here is the same for every county.** Two kinds of range were built and checked:
+one width for all, and a width scaled to each county's irrigation share. For corn in Nebraska the
+scaled one wins by a lot. For this crop it made the worst group worse, so the app shows one width.
+The choice is made by the data each time: the range whose worst group lands closest to 80% is the
+one shown.
+""")
+    if range_coverage["ranges"].nunique() > 1 and scaled_shown:
+        st.markdown("""
+**Why the width follows irrigation.** One width for every county was right on average and wrong
+almost everywhere: dryland counties, where rain decides the crop, fell outside far too often and
+irrigated counties almost never did. So misses are measured against how big a miss is *expected*
+for that county's irrigation share, and the range grows or shrinks to match. Each group now lands
+near 80%. Letting every input set the width was tried too — it chased noise and held less often.
+""")
+
+    if forward_ranges is not None and not forward_ranges.empty:
+        share = float(forward_ranges["season_share"].iloc[0]) if "season_share" in forward_ranges else None
+        st.markdown("**The Harder Test: Next Season**")
+        st.markdown(f"""
+Here the model trains only on earlier seasons and predicts the next one, and the range is built
+from earlier seasons' misses only — the situation a real forecast is in. Ranges held
+**{forward_ranges.held_pct.mean():.0f}%** of the time on average, but the average hides the story:
+""")
+        bars = alt.Chart(forward_ranges).mark_bar().encode(
+            x=alt.X("year:O", title=None),
+            y=alt.Y("held_pct:Q", title="% of counties inside", scale=alt.Scale(domain=[0, 100])),
+            color=alt.condition("datum.held_pct < 60", alt.value("#c0392b"), alt.value("#2f5d3a")),
+            tooltip=[alt.Tooltip("year:O", title="Season"), alt.Tooltip("held_pct:Q", title="Held %"),
+                     alt.Tooltip("bias_bu:Q", title="Average miss (bu/acre)")])
+        aim = alt.Chart(pd.DataFrame({"aim": [80]})).mark_rule(strokeDash=[5, 3], color="#e08a2e").encode(y="aim:Q")
+        st.altair_chart((bars + aim).properties(height=260), width="stretch")
+        st.caption("Dashed line: the 80% aim. Red: seasons where fewer than 60% of counties "
+                   "landed inside.")
+        shared = (f" In this state **{100 * share:.0f}% of the next-season miss was shared by every "
+                  "county at once**." if share is not None else "")
+        st.markdown(f"""
+Seasons come in two kinds. In a calm season nearly every county lands inside; in a shock season
+(drought, a flood, a cool summer, a derecho) the whole state misses the same way and most ranges
+miss together.{shared} Averaging over counties can't cancel a miss they all share, and no
+look-back window or adjustment speed fixed it, because the shock isn't known before the season.
+
+**What that means for you:** trust the range as "8 in 10 over many seasons", not "8 in 10
+counties this season". When a season is unusual, expect the ranges to miss together.
+""")
+        with st.expander("Season by season"):
+            st.dataframe(forward_ranges.drop(columns=["season_share"], errors="ignore").rename(columns={
+                "year": "Season", "counties": "Counties", "held_pct": "Held %",
+                "width_bu": "Width (bu/acre)", "bias_bu": "Average miss (bu/acre)",
+                "level_used": "Level used"}), hide_index=True, width="stretch")
+            st.caption("Average miss is actual minus predicted: positive means the season beat "
+                       "the forecast. Level used starts at 0.80 and moves a little after each "
+                       "season, up after a season that missed too often, down after one that "
+                       "held too often (adaptive conformal inference).")
+
 # ------------------------------------------------------------- worst years
 if errors is not None:
     st.subheader("Where the model misses worst")
     st.dataframe(worst_years(errors).rename(columns={
         "year": "Year", "mean_error": "Mean error (bu/acre)", "counties": "Counties"}),
         hide_index=True, width="stretch")
-    st.caption("Positive means the model predicted too high. 2019 was Nebraska's March "
-               "flood year — planting was delayed or prevented, which no April–September "
-               "weather feature can see.")
+    st.caption("Positive means the model predicted too high."
+               + (" 2019 was Nebraska's March flood year — planting was delayed or prevented, "
+                  "which no April–September weather feature can see." if state == "ne" else ""))
 
 # ------------------------------------------------------------------ disclaimer
 st.divider()

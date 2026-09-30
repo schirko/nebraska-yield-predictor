@@ -331,7 +331,9 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 }}
 .suite-steps .step.active .n {{ background: {DEEP_GREEN}; color: #fff; }}
 
-/* The state switch, at the right end of the row. Squarer than the page
+/* The state and crop switches, above the step cards on the right. Thin
+   (about 22 px tall, Scott, 2026-09-30) so they take little height and read
+   as settings, not pages. Squarer than the page
    pills on purpose: it is a setting, not a destination, and two controls
    that look identical but behave differently is worse than two that look
    different. Its active state is deep green rather than gold, so the row
@@ -340,11 +342,11 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 .suite-state {{ display: flex; gap: 0; }}
 .suite-state .spill {{
   border: 1px solid #e2e0d9; border-right-width: 0; background: #fff;
-  padding: 6px 14px; text-decoration: none; color: #5e5c57;
-  font-weight: 600; font-size: .88rem;
+  padding: 2px 11px; text-decoration: none; color: #5e5c57;
+  font-weight: 600; font-size: .78rem; line-height: 1.5;
 }}
-.suite-state .spill:first-child {{ border-radius: 8px 0 0 8px; }}
-.suite-state .spill:last-child {{ border-radius: 0 8px 8px 0; border-right-width: 1px; }}
+.suite-state .spill:first-child {{ border-radius: 6px 0 0 6px; }}
+.suite-state .spill:last-child {{ border-radius: 0 6px 6px 0; border-right-width: 1px; }}
 .suite-state .spill:hover {{ background: #fdfcf8; }}
 .suite-state .spill.active {{
   background: {DEEP_GREEN}; color: #fff; border-color: {DEEP_GREEN};

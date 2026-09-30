@@ -448,3 +448,23 @@ def test_home_is_in_the_green_header():
     head = brand.header_bar_html("ne", "soybeans", current="Maps")
     assert 'class="home" href="./?crop=soybeans"' in head and 'class="name" href="./?crop=soybeans"' in head
     assert 'class="home active"' in brand.header_bar_html(current="Home")
+
+
+def test_home_says_what_honest_means_and_links_to_the_proof():
+    """No hover (phones never show one): a plain line under the question, and the words
+    "how well that works" link to Model & Validation, keeping the state and crop."""
+    import streamlit as st
+
+    from yieldpred import brand
+
+    shown, real = [], st.html
+    st.html = shown.append
+    real_state, real_crop = brand.current_state, brand.current_crop
+    brand.current_state, brand.current_crop = (lambda: "ia"), (lambda: "soybeans")
+    try:
+        brand.page_heading("Home", show_title=False)
+    finally:
+        st.html, brand.current_state, brand.current_crop = real, real_state, real_crop
+    page = shown[0]
+    assert '<a href="Model_and_Validation?state=ia&crop=soybeans" target="_self">how well that works</a>' in page
+    assert brand.HONEST_NOTE in page and "soybean" in page

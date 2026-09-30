@@ -154,6 +154,10 @@ QUESTIONS = {
     "Does It Transfer?": "Does a model built on Nebraska work anywhere else?",
 }
 
+# What "being honest" means, in one line under the home page's question.
+HONEST_NOTE = ("Every number comes with how far off it tends to be, tested on places and "
+               "seasons the model never saw.")
+
 # The reading order the menu numbers. Home is the cover, not a step.
 STEPS = {label: i for i, (_p, label, _ic, _u) in enumerate(NAV) if label != "Home"}
 
@@ -276,6 +280,17 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 }}
 .suite-question {{
   color: #5e5c57; font-size: 1rem; margin: 0 0 1.2rem; max-width: 78ch;
+}}
+.suite-question a {{ color: #2a78d6; text-decoration: underline; text-underline-offset: 3px; }}
+/* Home only: the question and what "honest" means, set apart by a hairline
+   above and below so it doesn't blend into the menu or the numbers. */
+.suite-intro {{
+  border-top: 1px solid #e2e0d9; border-bottom: 1px solid #e2e0d9;
+  padding: 8px 0; margin: -22px 0 0;
+}}
+.suite-intro .suite-question {{ margin: 0 0 4px; }}
+.suite-question-note {{
+  color: #5e5c57; font-size: .9rem; font-style: italic; margin: 0; max-width: 90ch;
 }}
 
 /* Below this the Deploy button and the context line would collide. */
@@ -498,6 +513,17 @@ def page_heading(page_title: str, display: str | None = None,
     question = QUESTIONS.get(page_title)
     if question:
         question = for_crop(question, current_crop())
+        if page_title == "Home":
+            # "Honest" is the app's promise, so Home says what it means in plain view (not a
+            # hover, which phones never show) and links to the page that proves it (2026-09-30).
+            proof = f'Model_and_Validation{view_query(current_state(), current_crop())}'
+            question = question.replace("how well that works",
+                                        f'<a href="{proof}" target="_self">how well that works</a>')
+            # Set apart with a hairline above and below so it doesn't blend into the menu or the
+            # numbers (Scott, 2026-09-30); the explanation in italics, as a gloss on the line above.
+            st.html(f'<div class="suite-intro"><p class="suite-question">{question}</p>'
+                    f'<p class="suite-question-note">{HONEST_NOTE}</p></div>')
+            return
         st.html(f'<p class="suite-question">{question}</p>')
 
 

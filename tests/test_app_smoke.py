@@ -372,8 +372,8 @@ def test_links_keep_the_crop_and_the_state():
     assert brand.view_query("ia") == "?state=ia"
     assert brand.view_query("ne", "soybeans") == "?crop=soybeans"
     assert brand.view_query("ia", "soybeans") == "?state=ia&crop=soybeans"
-    assert "Iowa Soybeans" in brand.header_bar_html("ia", "soybeans")
-    assert "Nebraska Corn" in brand.header_bar_html()
+    assert ">Iowa Soybeans<" in _menu_html("Maps", "ia", "soybeans")     # the heading beside the switches
+    assert ">Nebraska Corn<" in _menu_html("Maps")
     assert brand.for_crop(brand.QUESTIONS["Maps"], "soybeans").startswith("Where do soybeans do well")
     assert brand.for_crop("Predicting county corn yields", "soybeans") == "Predicting county soybean yields"
 
@@ -393,6 +393,26 @@ def test_the_switches_read_state_then_crop():
         st.html = real
     page = html[0]
     assert page.index(">Nebraska<") < page.index(">Corn<")
+
+
+def test_the_state_and_crop_are_the_heading_beside_the_switches_not_in_the_green_bar():
+    """ "Nebraska Corn" crowded the app's name in the green bar (Scott, 2026-10-07). It is the heading on
+    the left of the switches now, on wide screens; a phone shows it in neither place, as before."""
+    from yieldpred import brand
+
+    for state, crop, words in (("ne", "corn", "Nebraska Corn"), ("ia", "soybeans", "Iowa Soybeans")):
+        head = brand.header_bar_html(state, crop)
+        assert words not in head and 'class="ctx"' not in head, "the green bar is the name and Home only"
+        page = _menu_html("County Explorer", state, crop)
+        assert f'<p class="suite-ctx">{words}</p>' in page
+        assert page.index('class="suite-ctx"') < page.index('class="suite-views"') < page.index('class="suite-steps"')
+    # No heading where it would mislead or say nothing: a page with no state switch.
+    assert "suite-ctx" not in _menu_html("How It Works")
+    assert "suite-ctx" not in _menu_html("Does It Transfer?") and "suite-state" in _menu_html("Does It Transfer?")
+    css = brand.SUITE_CSS
+    assert ".suite-headerbar .ctx" not in css
+    phone = css[css.index("@media (max-width: 760px)", css.index(".suite-ctx {")):]
+    assert ".suite-ctx { display: none; }" in phone[:phone.index("}\n}") + 3], "phones keep the switches only"
 
 
 def test_streamlit_never_draws_its_own_page_list():
@@ -531,5 +551,39 @@ def test_the_header_logo_is_the_suites_size():
 
     assert brand.LOGO_PX == 40
     assert '[data-testid="stHeaderLogo"] { height: 40px !important; width: 40px !important;' in brand.SUITE_CSS
-    assert "left: 68px;" in brand.SUITE_CSS          # 16 px margin + the 40 px logo + a 12 px gap
     assert brand.LOGO_PX < brand.HEADER_HEIGHT_PX    # it has to fit in Streamlit's 60 px header
+
+
+def test_the_header_starts_with_a_corner_in_the_logos_colour():
+    """Scott, 2026-10-07: "if the logo background color was also the same color as the background of the
+    logo... the logo would be more pronounced". The corner runs top to bottom in the tile's own brown, so the
+    tile's edge disappears into it; the symbol grows 30% and stays centred; the name starts after it."""
+    import re
+
+    from yieldpred import brand
+
+    tile = re.search(r'fill="(#[0-9a-fA-F]{6})"', (brand.ASSETS / "logo.svg").read_text(encoding="utf-8")).group(1)
+    assert brand.APP_COLOR.lower() == tile.lower(), "the corner must be exactly the tile's colour, or the tile shows"
+    css = brand.SUITE_CSS
+    corner = css[css.index('header[data-testid="stHeader"]::before'):]
+    corner = corner[:corner.index("}")]
+    assert f"width: {brand.CORNER_PX}px" in corner and f"background: {brand.APP_COLOR}" in corner
+    assert "top: 0; bottom: 0" in corner and "left: 0" in corner, "top to bottom, from the left edge"
+    assert f"transform: scale({brand.LOGO_SCALE})" in css
+    assert 16 + brand.LOGO_PX / 2 == brand.CORNER_PX / 2, "the logo (x = 16..56) is centred in the corner"
+    assert brand.LOGO_PX * brand.LOGO_SCALE <= brand.HEADER_HEIGHT_PX - 8, "the larger symbol still fits the bar"
+    assert f"left: {brand.CORNER_PX + 14}px;" in css, "the name starts 14 px after the corner"
+
+
+def test_home_is_a_plain_word_on_the_names_line():
+    """Scott, 2026-10-07, of the round outlined Home button: "I think it's the circle that's not right". Home
+    is the plain word now, lowered onto the app name's line (measured), and keeps its gold bar."""
+    from yieldpred import brand
+
+    css = brand.SUITE_CSS
+    home = css[css.index(".suite-headerbar a.home {"):]
+    home = home[:home.index("}")]
+    assert "border" not in home and "999px" not in home, "no outline, no pill"
+    assert f"top: {brand.HOME_DROP_PX}px" in home
+    bar = css[css.index(".suite-headerbar a.home.active::after"):]
+    assert f"background: {brand.GOLD}" in bar[:bar.index("}")], "the gold bar under Home on the home page stays"

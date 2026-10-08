@@ -106,12 +106,20 @@ GOLD = "#d9a441"
 # the header bar and the menu band have to line up against it exactly:
 #   header[data-testid="stHeader"]      60px tall, z-index 999990
 #   [data-testid="stHeaderLogo"]        x = 16..48 as Streamlit draws it (32 px); our CSS makes it
-#                                       40 px, x = 16..56, the size every app in the suite uses
+#                                       40 px, x = 16..56, the size every app in the suite uses, then
+#                                       draws it 1.3 times from its middle (x = 10..62) in the brown corner
 #   [data-testid="stMainBlockContainer"] padding-top: 96px
 # If a Streamlit upgrade changes any of these the menu band detaches from the
 # header by a visible gap - which is a cosmetic failure, not a broken page.
 HEADER_HEIGHT_PX = 60
 LOGO_PX = 40   # the header logo's side: the suite's size (suite.css draws the other apps' at 40 px)
+# The header's left end, top to bottom, in the logo's own colour (Scott, 2026-10-07: "if the logo background
+# color was also the same color as the background of the logo"). The tile's edge disappears into it, so the
+# symbol is drawn 30% larger (52 px) and centred in the corner: 16 + 40/2 = 72/2.
+APP_COLOR = "#4a3520"  # the logo tile's brown, from app/assets/logo.svg (a test keeps the two the same)
+CORNER_PX = 72
+LOGO_SCALE = 1.3
+HOME_DROP_PX = 7  # measured: puts Home's baseline on the app name's
 BLOCK_PADDING_TOP_PX = 96
 
 # How far up the menu band is pulled so it butts against the header with no
@@ -235,10 +243,17 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
    a test. `pointer-events: none` keeps it from swallowing clicks meant
    for the header underneath. */
 /* The logo at 40 px, as in Herd Planner and the Grazing Planner (Streamlit's largest size is 32 px, which
-   looked small beside them; Scott, 2026-10-07). The name moves right by the same 8 px. */
+   looked small beside them; Scott, 2026-10-07). */
 [data-testid="stHeaderLogo"] {{ height: {LOGO_PX}px !important; width: {LOGO_PX}px !important; max-width: none !important; }}
+/* The corner: the logo's brown fills the header's left end from top to bottom, and the logo (whose tile is
+   the same brown) stands in it, scaled up from its middle so it stays centred. Square, as the header is:
+   it runs edge to edge. Scott, 2026-10-07: "a strong entrance". */
+header[data-testid="stHeader"]::before {{
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: {CORNER_PX}px; background: {APP_COLOR};
+}}
+[data-testid="stHeaderLogo"] {{ position: relative; z-index: 1; transform: scale({LOGO_SCALE}); }}
 .suite-headerbar {{
-  position: fixed; top: env(safe-area-inset-top, 0px); left: {LOGO_PX + 28}px;
+  position: fixed; top: env(safe-area-inset-top, 0px); left: {CORNER_PX + 14}px;
   height: {HEADER_HEIGHT_PX}px; display: flex; align-items: center; gap: 14px;
   z-index: 999991; pointer-events: none; color: #fff;
 }}
@@ -253,19 +268,18 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
   font-size: .75rem; letter-spacing: .02em; text-decoration: none; white-space: nowrap; }}
 .suite-headerbar a.company:hover {{ color: #fff; text-decoration: underline; text-underline-offset: 3px; }}
 .suite-headerbar a.company::after {{ content: " ›"; }}
-.suite-headerbar .ctx {{ font-size: .95rem; opacity: .9; }}
-/* The app's name and Home both go to the home page. Home is a small outlined
-   button after the context; on the home page it gets the same flat gold bar
-   the step cards use for the current page. */
+/* The app's name and Home both go to the home page. Home is the plain word after the name, standing on
+   the name's line (HOME_DROP_PX lowers it from the bar's middle to there); on the home page it gets the
+   same flat gold bar the step cards use for the current page. Until 2026-10-07 it was a round outlined
+   button; Scott: "I think it's the circle that's not right" (option 1 of four drawn). */
 .suite-headerbar a.name {{ pointer-events: auto; color: #fff; text-decoration: none; }}
 .suite-headerbar a.home {{
-  pointer-events: auto; position: relative; color: #fff; text-decoration: none;
-  font-weight: 600; font-size: .9rem; padding: 4px 12px;
-  border: 1px solid rgba(255, 255, 255, .45); border-radius: 999px; white-space: nowrap;
+  pointer-events: auto; position: relative; top: {HOME_DROP_PX}px; color: #fff; text-decoration: none;
+  font-weight: 600; font-size: .95rem; padding: 4px 2px; white-space: nowrap;
 }}
-.suite-headerbar a.home:hover {{ border-color: {GOLD}; }}
+.suite-headerbar a.home:hover {{ text-decoration: underline; text-decoration-color: {GOLD}; text-underline-offset: 4px; }}
 .suite-headerbar a.home.active::after {{
-  content: ""; position: absolute; left: 10px; right: 10px; bottom: -7px;
+  content: ""; position: absolute; left: 0; right: 0; bottom: -7px;
   height: 3px; border-radius: 2px; background: {GOLD};
 }}
 
@@ -303,8 +317,6 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
   color: #5e5c57; font-size: .9rem; font-style: italic; margin: 0; max-width: 90ch;
 }}
 
-/* Below this the Deploy button and the context line would collide. */
-@media (max-width: 760px) {{ .suite-headerbar .ctx {{ display: none; }} }}
 
 /* ---- the menu row -----------------------------------------------------
    On the paper, below the green bar - which is where Herd Planner puts
@@ -364,6 +376,11 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
    different. Its active state is deep green rather than gold, so the row
    never shows two gold controls meaning two different things. */
 .suite-views {{ margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }}
+/* What the switches are set to, as the page's heading: "Nebraska Corn" on the left of the row, the
+   switches on its right. It used to sit in the green bar between the app's name and Home, where it
+   crowded the name (Scott, 2026-10-07). Wide screens only: a phone never showed it in the green bar
+   either, and there it would cost a line above the switches (the rule is further down). */
+.suite-ctx {{ margin: 0; font-size: 1.7rem; font-weight: 700; line-height: 1.2; color: {DEEP_GREEN}; }}
 .suite-state {{ display: flex; gap: 0; }}
 .suite-state .spill {{
   border: 1px solid #e2e0d9; border-right-width: 0; background: #fff;
@@ -388,6 +405,7 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
   .suite-steps .t {{ font-size: .92rem; }}
   .suite-steps .d {{ display: none; }}
   .suite-views {{ margin-left: 0; }}
+  .suite-ctx {{ display: none; }}
 }}
 
 /* ---- the footer -------------------------------------------------------
@@ -538,13 +556,11 @@ def page_heading(page_title: str, display: str | None = None,
 
 
 def header_bar(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP, current: str | None = None) -> None:
-    """The app name and context, in white, beside the logo in the green bar.
+    """The company link, the app's name and Home, in white, beside the logo in the green bar.
 
-    This is the piece Herd Planner has and this app was missing - its header
-    reads "Herd Planner   Ranch: Demo Ranch (demo)" and ours was a logo and
-    empty green. Same shape here: `h1`-weight name, then a lighter context line
-    at 0.95rem and 0.9 opacity, exactly matching `header.top .ranch` in
-    herd-planner/src/herd_planner/web/style.css.
+    Until 2026-10-07 the bar also carried the state and crop ("Nebraska Corn") as a lighter context
+    line, the way Herd Planner's header names the ranch. Here it crowded the name, and the switches
+    below already said it, so it moved down to be the heading beside them (see nav_bar).
     """
     import streamlit as st
 
@@ -553,8 +569,10 @@ def header_bar(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP, current: st
 
 def header_bar_html(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP, current: str | None = None) -> str:
     """The header bar's HTML: the company link above the app's name (back to the company site, like
-    every app in the suite), then the context. target="_top" because Streamlit Community Cloud
-    shows the app inside a frame, and the company site should replace the whole page, not the frame."""
+    every app in the suite), then Home. target="_top" because Streamlit Community Cloud
+    shows the app inside a frame, and the company site should replace the whole page, not the frame.
+    The state and crop are not here any more: they are the heading beside the switches (nav_bar);
+    they are still passed in, because the name and Home keep them in their links."""
     company = load_company()
     # Home lives in the green header (Scott, 2026-09-30), so the step cards are just 1 to 5.
     home_on = " active" if current == "Home" else ""
@@ -565,7 +583,6 @@ def header_bar_html(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP, curren
     return f"""
     <div class="suite-headerbar">
       <span class="titles">{back}<a class="name" href="./{view_query(state, crop)}" target="_self">{APP_NAME}</a></span>
-      <span class="ctx">{state_name(state)} {crop_name(crop)}</span>
       <a class="home{home_on}" href="./{view_query(state, crop)}" target="_self"{home_attr}>Home</a>
     </div>
     """
@@ -625,7 +642,13 @@ def nav_bar(current: str | None = None, state: str = DEFAULT_STATE, crop: str = 
 
     # The switches above the cards, on the right; then the one step bar.
     views = f'<div class="suite-views">{switch}</div>' if switch else ""
-    st.html(f'<div class="suite-nav">{views}<nav class="suite-steps" aria-label="Pages">{"".join(cards)}</nav></div>')
+    # On the left of the switches, what they are set to, as the heading: "Nebraska Corn". Only on a
+    # page that has both switches: a page with no state switch is not about one state, and "Corn"
+    # alone beside a Corn / Soybeans switch would say nothing new. Styled text, not an h1: every
+    # page keeps its own title below the cards.
+    title = (f'<p class="suite-ctx">{state_name(state)} {crop_name(crop)}</p>'
+             if current in STATE_AWARE and current in CROP_AWARE else "")
+    st.html(f'<div class="suite-nav">{title}{views}<nav class="suite-steps" aria-label="Pages">{"".join(cards)}</nav></div>')
 
 
 def load_suite_apps() -> list[dict]:

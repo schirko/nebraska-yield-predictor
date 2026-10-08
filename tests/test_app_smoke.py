@@ -613,3 +613,18 @@ def test_home_is_a_plain_word_on_the_names_line():
     # thinner ("It sticks out a little bit too much"): measured in a browser, about 6 px under the letters, 2 px.
     assert f"bottom: {brand.HOME_BAR_GAP_PX}px" in bar[:bar.index("}")] and 0 <= brand.HOME_BAR_GAP_PX <= 6
     assert f"height: {brand.HOME_BAR_PX}px" in bar[:bar.index("}")] and brand.HOME_BAR_PX == 2
+
+
+def test_pages_with_a_state_switch_say_more_states_are_coming():
+    """Scott, 2026-10-08 (option B): only Nebraska and Iowa today, so a farmer from elsewhere hears that more are
+    coming instead of hitting a dead end. "Tell us yours" opens the suite's waiting list, which asks for a state."""
+    from yieldpred import brand
+
+    line = "Nebraska and Iowa today. More states are coming: "
+    for page in brand.STATE_AWARE:
+        html = _menu_html(page)
+        assert line in html
+        assert f'<a href="https://herd-planner.onrender.com/#waitlist" {brand.OFF_APP}>tell us yours</a>' in html
+    others = [label for _p, label, _i, _u in brand.NAV if label not in brand.STATE_AWARE]
+    for page in others:
+        assert line not in _menu_html(page)            # a page that isn't about one state doesn't say it

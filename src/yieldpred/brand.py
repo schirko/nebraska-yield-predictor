@@ -397,6 +397,9 @@ header[data-testid="stHeader"]::before {{
 .suite-state .spill.active {{
   background: {DEEP_GREEN}; color: #fff; border-color: {DEEP_GREEN};
 }}
+/* "Nebraska and Iowa today. More states are coming: tell us yours." On its own line under the switches. */
+.suite-more {{ flex-basis: 100%; margin: 0; text-align: right; font-size: .82rem; color: #5e5c57; }}
+.suite-more a {{ color: #2a78d6; font-weight: 600; }}
 
 /* Between phone and desktop: three cards a row. On phones: two a row, names only,
    so the menu doesn't fill the first screen. */
@@ -410,6 +413,7 @@ header[data-testid="stHeader"]::before {{
   .suite-steps .d {{ display: none; }}
   .suite-views {{ margin-left: 0; }}
   .suite-ctx {{ display: none; }}
+  .suite-more {{ text-align: left; }}
 }}
 
 /* ---- the footer -------------------------------------------------------
@@ -654,6 +658,13 @@ def nav_bar(current: str | None = None, state: str = DEFAULT_STATE, crop: str = 
             f'<a class="spill{" active" if key == crop else ""}" href="{here}{view_query(state, key)}">'
             f'{c.name}</a>' for key, c in CROPS.items()) + "</div>"
 
+    # Under the state switch, one quiet line (Scott chose option B, 2026-10-08): only two states today, and a
+    # farmer from Kansas should hear that more are coming, not hit a dead end. "Tell us yours" goes to the
+    # suite's one waiting list (Herd Planner's, which asks for a state), in a new tab like every link that
+    # leaves this app (OFF_APP).
+    if current in STATE_AWARE:
+        switch += more_states_line()
+
     # The switches above the cards, on the right; then the one step bar.
     views = f'<div class="suite-views">{switch}</div>' if switch else ""
     # On the left of the switches, what they are set to, as the heading: "Nebraska Corn". Only on a
@@ -663,6 +674,18 @@ def nav_bar(current: str | None = None, state: str = DEFAULT_STATE, crop: str = 
     title = (f'<p class="suite-ctx">{state_name(state)} {crop_name(crop)}</p>'
              if current in STATE_AWARE and current in CROP_AWARE else "")
     st.html(f'<div class="suite-nav">{title}{views}<nav class="suite-steps" aria-label="Pages">{"".join(cards)}</nav></div>')
+
+
+def more_states_line() -> str:
+    """ "Nebraska and Iowa today. More states are coming: tell us yours." The names come from STATES, so a
+    third state shows up here by itself; the link is the suite's waiting list (Herd Planner's #waitlist,
+    which the app opens on its first screen), or nothing to click when that address isn't known."""
+    names = [name for name, _fips in STATES.values()]
+    which = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+    herd = next((a for a in load_suite_apps() if a["id"] == "herd-planner" and a.get("url")), None)
+    ask = (f'<a href="{herd["url"].rstrip("/")}/#waitlist" {OFF_APP}>tell us yours</a>' if herd
+           else "tell us yours")
+    return f'<p class="suite-more">{which} today. More states are coming: {ask}.</p>'
 
 
 def load_suite_apps() -> list[dict]:

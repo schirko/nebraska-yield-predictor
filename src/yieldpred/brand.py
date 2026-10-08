@@ -1,10 +1,15 @@
 """The app's logo, the farm app suite's shared look, and the page navigation.
 
-The logo is an ear of corn on a soil-brown circle, in the same family as Herd
-Planner's cow and Farm Equipment Planner's tractor: a colored circle, a cream
-drawing, a wheat-gold accent. The master SVG is app/assets/logo.svg; logo.png is
-rendered from it because Streamlit's tab icon and st.logo are most reliable with
-a PNG.
+The logo is an ear of corn in its husk, drawn as a line symbol on a soil-brown
+rounded square, in the same family as Herd Planner's cow, the Grazing Planner's
+grass and Farm Equipment Planner's tractor: a tile in the app's color, a cream
+line, one piece in wheat gold (here, the ear). The suite's logos were redrawn
+this way in October 2026; the masters and the rules of use live in
+herd-planner/brand. app/assets/logo.svg is a copy of the master's regular cut,
+and logo.png is rendered from it because st.logo is most reliable with a PNG.
+The browser tab uses favicon.png, rendered from the master's small cut (the same
+ear with a heavier line), because the regular line is under one pixel wide at
+tab size.
 
 WHY THE SIDEBAR IS GONE
 
@@ -55,7 +60,7 @@ from yieldpred.crops import CROPS, DEFAULT_CROP, get_crop
 
 ASSETS = Path(__file__).resolve().parents[2] / "app" / "assets"
 LOGO = ASSETS / "logo.png"
-PAGE_ICON = str(LOGO)
+PAGE_ICON = str(ASSETS / "favicon.png")  # the small cut: a heavier line for a 16 px browser tab
 SUITE_CSS_FILE = ASSETS / "suite.css"    # copy of herd-planner/brand/suite.css
 APPS_FILE = ASSETS / "suite-apps.json"   # copy of herd-planner/brand/suite-apps.json
 APP_ID = "corn-yield-predictor"          # this app's id in that list - an internal

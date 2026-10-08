@@ -468,3 +468,56 @@ def test_home_says_what_honest_means_and_links_to_the_proof():
     page = shown[0]
     assert '<a href="Model_and_Validation?state=ia&crop=soybeans" target="_self">how well that works</a>' in page
     assert brand.HONEST_NOTE in page and "soybean" in page
+
+
+# --- The logo, redrawn as a line symbol (October 2026) --------------------------------------------
+# One family across the farm app suite: a rounded-square tile in the app's colour, a cream line
+# symbol, one gold piece. The masters and the rules are in herd-planner/brand (README.md there).
+
+def _drawing(path):
+    """The drawing in an SVG file. Some tools add a note about where a file came from (a <metadata>
+    block) when they save it; that note isn't part of the picture, so two copies of one drawing still
+    compare as equal."""
+    import re
+
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n").strip()
+    text = re.sub(r"<metadata>.*?</metadata>", "", text, flags=re.S)
+    return text.replace(' xmlns:c2pa="http://c2pa.org/manifest"', "")
+
+
+def _png_shape(path):
+    """(width, height, has see-through corners), read from the file's first block: no picture library needed."""
+    head = path.read_bytes()[:26]
+    assert head[:8] == b"\x89PNG\r\n\x1a\n" and head[12:16] == b"IHDR", path.name
+    return int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big"), head[25] == 6
+
+
+def test_the_logo_is_the_corn_ear_on_a_rounded_brown_tile():
+    """Holds without Herd Planner beside the project."""
+    import re
+
+    assets = Path(__file__).resolve().parents[1] / "app" / "assets"
+    svg = _drawing(assets / "logo.svg")
+    assert '<rect x="2" y="2" width="96" height="96" rx="22" fill="#4a3520"/>' in svg
+    assert set(re.findall(r"#[0-9a-f]{6}", svg)) == {"#4a3520", "#f4efe3", "#d9a441"}   # tile, cream line, gold ear
+    assert _png_shape(assets / "logo.png") == (256, 256, True)       # what st.logo and the footer show
+    assert _png_shape(assets / "favicon.png") == (64, 64, True)      # the browser tab
+
+
+def test_the_browser_tab_uses_the_small_cut():
+    """The regular cut's line is under one pixel wide at 16 px; favicon.png is drawn from the heavier small cut."""
+    from yieldpred import brand
+
+    assert Path(brand.PAGE_ICON).name == "favicon.png" and Path(brand.PAGE_ICON).exists()
+    assert brand.LOGO.name == "logo.png" and brand.LOGO.exists()
+    source = Path(brand.__file__).read_text(encoding="utf-8")
+    assert "page_icon=PAGE_ICON" in source and "st.logo(str(LOGO)" in source
+
+
+def test_the_logo_matches_the_master_copy():
+    root = Path(__file__).resolve().parents[1]
+    master = root.parent / "herd-planner" / "brand" / "corn-yield-predictor-logo.svg"
+    if not (master.parent / "corn-yield-predictor-logo-small.svg").exists():
+        pytest.skip("Herd Planner with the redrawn logos isn't checked out next to this project")
+    assert _drawing(root / "app" / "assets" / "logo.svg") == _drawing(master), \
+        "logo.svg drifted: copy herd-planner/brand/corn-yield-predictor-logo.svg here again"

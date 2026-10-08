@@ -105,11 +105,13 @@ GOLD = "#d9a441"
 # Streamlit's own geometry, measured in a browser rather than guessed, because
 # the header bar and the menu band have to line up against it exactly:
 #   header[data-testid="stHeader"]      60px tall, z-index 999990
-#   [data-testid="stHeaderLogo"]        x = 16..48
+#   [data-testid="stHeaderLogo"]        x = 16..48 as Streamlit draws it (32 px); our CSS makes it
+#                                       40 px, x = 16..56, the size every app in the suite uses
 #   [data-testid="stMainBlockContainer"] padding-top: 96px
 # If a Streamlit upgrade changes any of these the menu band detaches from the
 # header by a visible gap - which is a cosmetic failure, not a broken page.
 HEADER_HEIGHT_PX = 60
+LOGO_PX = 40   # the header logo's side: the suite's size (suite.css draws the other apps' at 40 px)
 BLOCK_PADDING_TOP_PX = 96
 
 # How far up the menu band is pulled so it butts against the header with no
@@ -228,17 +230,20 @@ header[data-testid="stHeader"] [data-testid="stMainMenu"] * {{ color: #ffffff; }
 /* ---- the name beside the logo -----------------------------------------
    Streamlit gives no API for putting content in its header, so this is a
    real element of ours, fixed into the header's 60px and sitting just
-   right of the logo (which measures x=16..48). Real HTML rather than a
+   right of the logo (which measures x=16..56). Real HTML rather than a
    CSS `content:` string, so it is selectable, translatable and visible to
    a test. `pointer-events: none` keeps it from swallowing clicks meant
    for the header underneath. */
+/* The logo at 40 px, as in Herd Planner and the Grazing Planner (Streamlit's largest size is 32 px, which
+   looked small beside them; Scott, 2026-10-07). The name moves right by the same 8 px. */
+[data-testid="stHeaderLogo"] {{ height: {LOGO_PX}px !important; width: {LOGO_PX}px !important; max-width: none !important; }}
 .suite-headerbar {{
-  position: fixed; top: env(safe-area-inset-top, 0px); left: 60px;
+  position: fixed; top: env(safe-area-inset-top, 0px); left: {LOGO_PX + 28}px;
   height: {HEADER_HEIGHT_PX}px; display: flex; align-items: center; gap: 14px;
   z-index: 999991; pointer-events: none; color: #fff;
 }}
 /* Suite version 6: the company ABOVE the app's name, as in every app in the suite (a hierarchy, like a
-   series name over a book title), with the app's own logo - Streamlit's, at x=16..48 - standing to the
+   series name over a book title), with the app's own logo - Streamlit's, at x=16..56 - standing to the
    left of both lines. */
 .suite-headerbar .titles {{ display: flex; flex-direction: column; line-height: 1.15; }}
 .suite-headerbar .name {{ font-weight: 700; font-size: 1.15rem; letter-spacing: .2px; }}

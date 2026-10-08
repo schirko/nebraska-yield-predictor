@@ -521,3 +521,15 @@ def test_the_logo_matches_the_master_copy():
         pytest.skip("Herd Planner with the redrawn logos isn't checked out next to this project")
     assert _drawing(root / "app" / "assets" / "logo.svg") == _drawing(master), \
         "logo.svg drifted: copy herd-planner/brand/corn-yield-predictor-logo.svg here again"
+
+
+def test_the_header_logo_is_the_suites_size():
+    """Scott, 2026-10-07, once the new logos were live: "Both logos seem a bit small" (this app's and the
+    Equipment Planner's). Streamlit's largest logo is 32 px; the other apps in the suite draw theirs at 40,
+    so the suite CSS makes this one 40 and moves the name right by the same 8 px."""
+    from yieldpred import brand
+
+    assert brand.LOGO_PX == 40
+    assert '[data-testid="stHeaderLogo"] { height: 40px !important; width: 40px !important;' in brand.SUITE_CSS
+    assert "left: 68px;" in brand.SUITE_CSS          # 16 px margin + the 40 px logo + a 12 px gap
+    assert brand.LOGO_PX < brand.HEADER_HEIGHT_PX    # it has to fit in Streamlit's 60 px header

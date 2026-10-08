@@ -278,9 +278,31 @@ def test_the_header_bar_links_back_to_the_company_site_first():
 
     company = brand.load_company()
     html = brand.header_bar_html()
-    assert f'href="{company["url"]}" target="_top">{company["name"]}</a>' in html
+    assert f'href="{company["url"]}" target="_blank" rel="noopener">{company["name"]}</a>' in html
     assert html.index('class="company"') < html.index('class="name"')
     assert "pointer-events: auto" in brand.SUITE_CSS, "the bar ignores clicks; the link must take them back"
+
+
+def test_links_that_leave_the_app_open_a_new_tab():
+    """st.html keeps no link target but _blank (Streamlit 1.64). A target="_top" link to the company site or
+    Your Account came out with no target and opened inside Streamlit Cloud's frame, where the account service
+    refuses to be shown ("farm-account.onrender.com refused to connect", Scott, 2026-10-07)."""
+    import re
+
+    import streamlit as st
+
+    from yieldpred import brand
+
+    html, real = [], st.html
+    st.html = html.append
+    try:
+        brand.page_footer()
+    finally:
+        st.html = real
+    page = brand.header_bar_html() + "".join(html)
+    assert 'target="_top"' not in page and 'target="_parent"' not in page
+    for url in ("https://cornerpostlogic.com/", brand.load_account()["url"]):
+        assert re.search(rf'href="{re.escape(url)}" target="_blank" rel="noopener"', page), url
 
 
 def test_the_company_sits_above_the_app_name():
@@ -587,7 +609,7 @@ def test_home_is_a_plain_word_on_the_names_line():
     assert f"top: {brand.HOME_DROP_PX}px" in home
     bar = css[css.index(".suite-headerbar a.home.active::after"):]
     assert f"background: {brand.GOLD}" in bar[:bar.index("}")], "the gold bar under Home on the home page stays"
-    # Close under the word, not on the header's bottom edge (Scott: "too far down"); measured in a browser,
-    # 4 px under the letters, where the hover underline sits.
+    # Close under the word, not on the header's bottom edge (Scott: "too far down"), then a little lower and
+    # thinner ("It sticks out a little bit too much"): measured in a browser, about 6 px under the letters, 2 px.
     assert f"bottom: {brand.HOME_BAR_GAP_PX}px" in bar[:bar.index("}")] and 0 <= brand.HOME_BAR_GAP_PX <= 6
-    assert "text-underline-offset: 4px" in home or "text-underline-offset: 4px" in css
+    assert f"height: {brand.HOME_BAR_PX}px" in bar[:bar.index("}")] and brand.HOME_BAR_PX == 2

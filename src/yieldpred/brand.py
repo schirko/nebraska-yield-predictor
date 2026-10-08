@@ -120,7 +120,8 @@ APP_COLOR = "#4a3520"  # the logo tile's brown, from app/assets/logo.svg (a test
 CORNER_PX = 72
 LOGO_SCALE = 1.3
 HOME_DROP_PX = 7  # measured: puts Home's baseline on the app name's
-HOME_BAR_GAP_PX = 4  # the gold bar, up from the bottom of Home's box: 4 px under the letters, where the hover underline sits
+HOME_BAR_GAP_PX = 3  # the gold bar, up from the bottom of Home's box: about 6 px under the letters
+HOME_BAR_PX = 2      # its thickness (it was 3: Scott, "It sticks out a little bit too much")
 BLOCK_PADDING_TOP_PX = 96
 
 # How far up the menu band is pulled so it butts against the header with no
@@ -280,10 +281,10 @@ header[data-testid="stHeader"]::before {{
 }}
 .suite-headerbar a.home:hover {{ text-decoration: underline; text-decoration-color: {GOLD}; text-underline-offset: 4px; }}
 /* The gold bar sits just under the word (Scott, 2026-10-07: "too far down... closer to the word"), not on
-   the header's bottom edge. */
+   the header's bottom edge; then "down just a little bit and maybe thinner": 6 px under the letters, 2 px. */
 .suite-headerbar a.home.active::after {{
   content: ""; position: absolute; left: 0; right: 0; bottom: {HOME_BAR_GAP_PX}px;
-  height: 3px; border-radius: 2px; background: {GOLD};
+  height: {HOME_BAR_PX}px; border-radius: 1px; background: {GOLD};
 }}
 
 /* ---- vertical rhythm --------------------------------------------------
@@ -570,10 +571,20 @@ def header_bar(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP, current: st
     st.html(header_bar_html(state, crop, current))
 
 
+# How a link that leaves this app opens. Found 2026-10-07 (Scott clicked "Cornerpost Logic ›", then the
+# site's Sign In, and got "farm-account.onrender.com refused to connect"): st.html strips every link target
+# except _blank (measured with Streamlit 1.64: _top, _parent and _self all come out with no target). So the
+# company link and Your Account, written with target="_top", opened INSIDE Streamlit Cloud's frame. The
+# company site can be shown in a frame; the account service rightly refuses (X-Frame-Options: DENY, so no
+# other site can draw its sign-in form and trick someone into typing there). A new tab works everywhere,
+# and is what this app's other suite links already do.
+OFF_APP = 'target="_blank" rel="noopener"'
+
+
 def header_bar_html(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP, current: str | None = None) -> str:
     """The header bar's HTML: the company link above the app's name (back to the company site, like
-    every app in the suite), then Home. target="_top" because Streamlit Community Cloud
-    shows the app inside a frame, and the company site should replace the whole page, not the frame.
+    every app in the suite), then Home. The company link opens a new tab (OFF_APP): Streamlit
+    Community Cloud shows the app inside a frame, and target="_top" never survived st.html.
     The state and crop are not here any more: they are the heading beside the switches (nav_bar);
     they are still passed in, because the name and Home keep them in their links."""
     company = load_company()
@@ -582,7 +593,7 @@ def header_bar_html(state: str = DEFAULT_STATE, crop: str = DEFAULT_CROP, curren
     home_attr = ' aria-current="page"' if current == "Home" else ""
     back = ""
     if company:
-        back = f'<a class="company" href="{company["url"]}" target="_top">{company["name"]}</a>'
+        back = f'<a class="company" href="{company["url"]}" {OFF_APP}>{company["name"]}</a>'
     return f"""
     <div class="suite-headerbar">
       <span class="titles">{back}<a class="name" href="./{view_query(state, crop)}" target="_self">{APP_NAME}</a></span>
@@ -772,10 +783,10 @@ def page_footer(state: str = DEFAULT_STATE, crop: str | None = None) -> None:
         else f'<a class="soon" aria-disabled="true">{app["name"]} (coming soon)</a>'
         for app in load_suite_apps())
     # The suite account, last in the Farm apps column (the other apps put it at the top of their Farm Apps
-    # menu; this app has no menu). target="_top": Streamlit Cloud shows the app inside a frame.
+    # menu; this app has no menu). A new tab, like every link that leaves this app: see OFF_APP below.
     account = load_account()
     if account:
-        apps += f'<a href="{account["url"]}" target="_top">{account["name"]}</a>'
+        apps += f'<a href="{account["url"]}" {OFF_APP}>{account["name"]}</a>'
 
     sources = "".join(
         f'<a href="{url}" target="_blank" rel="noopener">{label}</a>'

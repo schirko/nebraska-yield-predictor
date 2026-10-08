@@ -587,3 +587,7 @@ def test_home_is_a_plain_word_on_the_names_line():
     assert f"top: {brand.HOME_DROP_PX}px" in home
     bar = css[css.index(".suite-headerbar a.home.active::after"):]
     assert f"background: {brand.GOLD}" in bar[:bar.index("}")], "the gold bar under Home on the home page stays"
+    # Close under the word, not on the header's bottom edge (Scott: "too far down"); measured in a browser,
+    # 4 px under the letters, where the hover underline sits.
+    assert f"bottom: {brand.HOME_BAR_GAP_PX}px" in bar[:bar.index("}")] and 0 <= brand.HOME_BAR_GAP_PX <= 6
+    assert "text-underline-offset: 4px" in home or "text-underline-offset: 4px" in css

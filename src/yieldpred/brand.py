@@ -120,6 +120,7 @@ APP_COLOR = "#4a3520"  # the logo tile's brown, from app/assets/logo.svg (a test
 CORNER_PX = 72
 LOGO_SCALE = 1.3
 HOME_DROP_PX = 7  # measured: puts Home's baseline on the app name's
+HOME_BAR_GAP_PX = 4  # the gold bar, up from the bottom of Home's box: 4 px under the letters, where the hover underline sits
 BLOCK_PADDING_TOP_PX = 96
 
 # How far up the menu band is pulled so it butts against the header with no
@@ -278,8 +279,10 @@ header[data-testid="stHeader"]::before {{
   font-weight: 600; font-size: .95rem; padding: 4px 2px; white-space: nowrap;
 }}
 .suite-headerbar a.home:hover {{ text-decoration: underline; text-decoration-color: {GOLD}; text-underline-offset: 4px; }}
+/* The gold bar sits just under the word (Scott, 2026-10-07: "too far down... closer to the word"), not on
+   the header's bottom edge. */
 .suite-headerbar a.home.active::after {{
-  content: ""; position: absolute; left: 0; right: 0; bottom: -7px;
+  content: ""; position: absolute; left: 0; right: 0; bottom: {HOME_BAR_GAP_PX}px;
   height: 3px; border-radius: 2px; background: {GOLD};
 }}
 
